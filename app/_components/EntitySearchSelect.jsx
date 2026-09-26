@@ -12,6 +12,7 @@ export function EntitySearchSelect({
   value = '',
   onChange,
   searchUrl,
+  options,
   locale = 'pt-BR',
   placeholder = '',
   disabled = false,
@@ -22,6 +23,7 @@ export function EntitySearchSelect({
 }) {
   const listId = useId();
   const wrapRef = useRef(null);
+  const typingReset = useRef(false);
   const [query, setQuery] = useState('');
   const [selectedLabel, setSelectedLabel] = useState('');
   const [open, setOpen] = useState(false);
@@ -41,6 +43,10 @@ export function EntitySearchSelect({
 
   useEffect(() => {
     if (!value) {
+      if (typingReset.current) {
+        typingReset.current = false;
+        return;
+      }
       setSelectedLabel('');
       setQuery('');
     }
@@ -58,6 +64,12 @@ export function EntitySearchSelect({
   }, [open]);
 
   useEffect(() => {
+    if (Array.isArray(options)) {
+      const q = String(query || '').trim().toLocaleLowerCase(locale);
+      setItems(options.filter((item) => item.label.toLocaleLowerCase(locale).includes(q)));
+      setLoading(false);
+      return undefined;
+    }
     if (disabled || !searchUrl) return undefined;
     const q = String(query || '').trim();
     if (q.length < minChars || (value && q === selectedLabel)) {
@@ -89,7 +101,7 @@ export function EntitySearchSelect({
       window.clearTimeout(timer);
       ctrl.abort();
     };
-  }, [query, searchUrl, minChars, debounceMs, disabled, value, selectedLabel]);
+  }, [query, searchUrl, options, locale, minChars, debounceMs, disabled, value, selectedLabel]);
 
   function pick(item) {
     setSelectedLabel(item.label);
@@ -123,7 +135,10 @@ export function EntitySearchSelect({
           onChange={(e) => {
             const next = e.target.value;
             setQuery(next);
-            if (value) onChange?.('', null);
+            if (value) {
+              typingReset.current = true;
+              onChange?.('', null);
+            }
             setSelectedLabel('');
             setOpen(true);
           }}

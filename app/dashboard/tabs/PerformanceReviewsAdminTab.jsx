@@ -37,9 +37,10 @@ import { CalibrationBlock } from '../../_components/CalibrationBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { htmlToPlainText } from '../../../lib/sanitize-html';
 import { FormalCompetencyReviewsBlock } from '../../_components/FormalCompetencyReviewsBlock';
+import { CompetencyCatalogBlock } from '../../_components/CompetencyCatalogBlock';
 
 export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
-  const [mode, setMode] = useState('goals');
+  const [mode, setMode] = useState('formal');
   const [cycles, setCycles] = useState([]);
   const [loading, setLoading] = useState(() => Boolean(companyId));
   const [page, setPage] = useState(1);
@@ -520,25 +521,17 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
     <div className="flex flex-col gap-6">
       <PanelSubNav
         ariaLabel={t('title')}
-        active={mode}
+        active={mode === 'goals' ? 'formal' : mode}
         onChange={setMode}
         scrollable={false}
         variant="pill"
         tabs={[
-          { id: 'goals', label: i18nT(locale, 'performanceReviews.formal.segmentGoals') },
-          { id: 'formal', label: i18nT(locale, 'performanceReviews.formal.segmentFormal') },
+          { id: 'formal', label: locale.startsWith('en') ? 'Reviews' : 'Avaliações' },
+          { id: 'catalog', label: locale.startsWith('en') ? 'Competencies' : 'Competências' },
         ]}
       />
-      <p className="m-0 max-w-[72ch] text-sm leading-[1.55] text-ink-muted" aria-live="polite">
-        {i18nT(
-          locale,
-          mode === 'formal'
-            ? 'performanceReviews.formal.segmentFormalHint'
-            : 'performanceReviews.formal.segmentGoalsHint'
-        )}
-      </p>
 
-      {mode === 'formal' ? (
+      {mode === 'catalog' ? <CompetencyCatalogBlock locale={locale} companyId={companyId} /> : mode === 'formal' ? (
         <FormalCompetencyReviewsBlock locale={locale} companyId={companyId} />
       ) : (
       <>

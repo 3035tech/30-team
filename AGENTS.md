@@ -15,3 +15,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Arquivos relacionados a `route*` devem usar somente o nome canônico esperado pelo framework, normalmente `route.js` ou `route.jsx`.
 - Não criar, manter ou referenciar variantes de `route*` com sufixos numéricos, como `route 2.js`, `route 3.js` ou similares.
 - Cada diretório de rota deve ter uma única implementação ativa; antes de criar ou duplicar qualquer arquivo `.jsx` ou `route*`, verificar se já existe uma implementação equivalente.
+
+## Modelagem de dados e migrations
+
+- Antes de criar ou alterar campos, avaliar identidade própria, cardinalidade, integridade, consultas/índices, edição, histórico e necessidade de cadastro.
+- Não escolher `JSONB` ou `TEXT` apenas pela facilidade de implementação. Justificar quando usar um campo, domínio fixo (`CHECK`/enum) ou tabela com relacionamento.
+- Entidades e cadastros gerenciáveis devem ter relações, chaves estrangeiras, unicidade e isolamento por empresa quando aplicável.
+- Textos livres podem usar `TEXT`; opções fixas precisam de restrição de domínio. Snapshots históricos também podem ser modelados em tabelas relacionais.
+- Registrar decisões relevantes de modelagem e verificar integridade, preservação de dados e reaplicação das migrations antes de concluir a entrega.

@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { errorMessage, t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { suggestSelfAssessment } from '../../lib/people/self-assessment-suggestion';
 import {
   FORMAL_LIKERT_MAX,
   FORMAL_LIKERT_MIN,
@@ -64,6 +65,7 @@ function cycleStatusTone(status) {
 }
 
 function cycleStatusLabel(locale, status) {
+  if (status === 'scheduled') return locale.startsWith('en') ? 'Scheduled' : 'Agendado';
   if (status === FORMAL_REVIEW_CYCLE_STATUS.OPEN) return tf(locale, 'statusOpen');
   if (status === FORMAL_REVIEW_CYCLE_STATUS.CLOSED) return tf(locale, 'statusClosed');
   return tf(locale, 'statusDraft');
@@ -259,12 +261,14 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
     }
   };
 
-  const createCycle = async () => {
+  const createCycle = async (draft = null) => {
+    if (!draft?.id) draft = null;
+    const choices = [...competencies, ...(draft?.questionnaire || []).filter(item => !competencies.some(c => String(c.id) === String(item.competencyId))).map(item => ({ id: item.competencyId, name: item.label, description: item.description, selfDescription: item.selfDescription }))];
     const values = await promptForm({
-      title: tf(locale, 'createCycle'),
+      title: draft ? (locale.startsWith('en') ? 'Edit draft' : 'Editar rascunho') : tf(locale, 'createCycle'),
       fields: [
-        { name: 'title', label: t(locale, 'performanceReviews.cycleTitle'), type: 'text', required: true },
-        { name: 'description', label: t(locale, 'performanceReviews.cycleDescription'), type: 'textarea' },
+        { name: 'title', label: t(locale, 'performanceReviews.cycleTitle'), type: 'text', required: true, defaultValue: draft?.title || '' },
+        { name: 'description', label: t(locale, 'performanceReviews.cycleDescription'), type: 'textarea', defaultValue: draft?.description || '' },
         {
           name: 'model',
           label: tf(locale, 'model'),
@@ -275,30 +279,62 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
             { value: FORMAL_REVIEW_MODEL.ONE_EIGHTY, label: tf(locale, 'model180') },
             { value: FORMAL_REVIEW_MODEL.THREE_SIXTY, label: tf(locale, 'model360') },
           ],
-          defaultValue: FORMAL_REVIEW_MODEL.NINETY,
+          defaultValue: draft?.model || FORMAL_REVIEW_MODEL.NINETY,
         },
         {
           name: 'includeSelf',
           label: tf(locale, 'includeSelf'),
           type: 'boolean',
-          defaultValue: false,
+          defaultValue: !!draft?.includeSelf,
         },
-        { name: 'periodStart', label: t(locale, 'performanceReviews.periodStart'), type: 'date' },
-        { name: 'periodEnd', label: t(locale, 'performanceReviews.periodEnd'), type: 'date' },
+        { name: 'periodStart', label: t(locale, 'performanceReviews.periodStart'), type: 'date', defaultValue: draft?.periodStart?.slice(0, 10) || '' },
+        { name: 'periodEnd', label: t(locale, 'performanceReviews.periodEnd'), type: 'date', defaultValue: draft?.periodEnd?.slice(0, 10) || '' },
+        { key: 'competencyIds', label: tf(locale, 'competenciesTitle'), type: 'checkboxGroup', defaultValue: (draft?.questionnaire || []).map(item => String(item.competencyId)), options: choices.map(item => ({ value: String(item.id), label: item.name })) },
+        { key: 'instructions', label: locale.startsWith('en') ? 'Instructions' : 'Instruções', type: 'textarea', maxLength: 4000, defaultValue: draft?.instructions || '' },
+        { key: 'responseScale', label: locale.startsWith('en') ? 'Response scale' : 'Escala de resposta', type: 'select', defaultValue: draft?.responseScale || 'agreement', options: [
+          { value: 'agreement', label: locale.startsWith('en') ? '1–5: strongly disagree → strongly agree' : '1–5: discordo totalmente → concordo totalmente' },
+          { value: 'frequency', label: locale.startsWith('en') ? '1–5: never → always' : '1–5: nunca → sempre' },
+        ] },
+        { key: 'openQuestionsText', label: locale.startsWith('en') ? 'Optional open questions (one per line, up to 10)' : 'Perguntas dissertativas opcionais (uma por linha, até 10)', type: 'textarea', defaultValue: (draft?.openQuestions || []).map(q => q.prompt).join('\n'), maxLength: 10000 },
       ],
     });
     if (!values) return;
+    values.openQuestions = String(values.openQuestionsText || '').split('\n').map(line => line.trim()).filter(Boolean);
+    delete values.openQuestionsText;
+    let questionnaire;
+    if (draft) {
+      questionnaire = (values.competencyIds || []).map(id => {
+        const previous = draft.questionnaire?.find(item => String(item.competencyId) === String(id));
+        const catalog = choices.find(item => String(item.id) === String(id));
+        return { competencyId: Number(id), selfDescription: previous?.selfDescription || catalog?.selfDescription || '' };
+      });
+      if (values.includeSelf && questionnaire.length) {
+        const wording = await promptForm({
+          title: locale.startsWith('en') ? 'Review self-assessment wording' : 'Revisar textos da autoavaliação',
+          fields: [...questionnaire.map(item => {
+            const catalog = choices.find(c => Number(c.id) === item.competencyId);
+            return { key: `self_${item.competencyId}`, label: catalog?.name || String(item.competencyId), type: 'textarea', required: true, maxLength: 4000, defaultValue: item.selfDescription || suggestSelfAssessment(catalog?.description, catalog?.name, locale),
+              help: catalog?.description || '' };
+          }), { key: 'reviewed', type: 'boolean', defaultValue: false, label: locale.startsWith('en') ? 'I reviewed the wording and confirm its meaning matches the original competencies.' : 'Revisei os textos e confirmo que preservam o significado das competências originais.' }],
+        });
+        if (!wording) return;
+        if (!wording.reviewed) { toast(locale.startsWith('en') ? 'Review and confirm the wording before saving.' : 'Revise e confirme os textos antes de salvar.', 'error'); return; }
+        questionnaire = questionnaire.map(item => ({ ...item, selfDescription: wording[`self_${item.competencyId}`] }));
+      }
+    }
     setBusy(true);
     try {
-      const res = await fetch('/api/admin/formal-review-cycles', {
-        method: 'POST',
+      const { competencyIds, ...configuration } = values;
+      const res = await fetch(draft ? `/api/admin/formal-review-cycles/${draft.id}` : '/api/admin/formal-review-cycles', {
+        method: draft ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(withCompany(values)),
+        body: JSON.stringify(withCompany(draft ? { ...configuration, questionnaire } : values)),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(apiToastError(locale, json, 'saveError'));
       toast(tf(locale, 'cycleCreated'), 'ok');
       await loadCatalogAndCycles();
+      if (draft) { setSelectedCycle(json.cycle); await loadReviews(draft.id); }
     } catch (err) {
       toast(err?.message || tf(locale, 'saveError'), 'error');
     } finally {
@@ -330,6 +366,33 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
     } finally {
       setBusy(false);
     }
+  };
+
+  const publishCycle = async () => {
+    if (!selectedCycle || busy) return;
+    setBusy(true);
+    try {
+      const matrix = await Promise.all(reviews.map(async review => {
+        const response = await fetch(`/api/admin/formal-reviews/${review.id}${companyQs()}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(apiToastError(locale, data, 'loadError'));
+        const r = data.review, manager = r.managerName || (locale.startsWith('en') ? 'MISSING MANAGER' : 'GESTOR NÃO DEFINIDO');
+        const rows = [`${manager} → ${r.subjectName}`];
+        if (r.model !== '90') rows.push(`${r.subjectName} → ${manager}`);
+        if (r.includeSelf) rows.push(`${r.subjectName} → ${r.subjectName}`);
+        if (r.model === '360') rows.push(`${r.raters.find(item => item.role === 'external')?.externalName || '—'} → ${r.subjectName}`);
+        return rows.join('; ');
+      }));
+      if (!await confirm({ title: locale.startsWith('en') ? 'Confirm respondents and publish cycle?' : 'Confirmar respondentes e publicar ciclo?', message: matrix.join('\n') })) return;
+      const response = await fetch(`/api/admin/formal-review-cycles/${selectedCycle.id}/publish`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(withCompany({})) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(apiToastError(locale, data, 'saveError'));
+      setSelectedCycle(previous => ({ ...previous, status: 'open', displayStatus: previous.periodStart?.slice(0, 10) > new Date().toISOString().slice(0, 10) ? 'scheduled' : 'open' }));
+      await loadReviews(selectedCycle.id);
+      await loadCatalogAndCycles();
+      toast(tf(locale, 'opened'), 'ok');
+    } catch (error) { toast(error.message, 'error'); }
+    finally { setBusy(false); }
   };
 
   const addPerson = async () => {
@@ -438,6 +501,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
       toast(tf(locale, successKey), 'ok');
       if (json.review) setSelectedReview(json.review);
       else await loadReviewDetail(selectedReview.id);
+      if (path === 'open') setSelectedCycle(previous => previous ? { ...previous, status: 'open', displayStatus: previous.periodStart?.slice(0, 10) > new Date().toISOString().slice(0, 10) ? 'scheduled' : 'open' } : previous);
       if (selectedCycle) await loadReviews(selectedCycle.id);
       await loadCatalogAndCycles();
     } catch (err) {
@@ -465,7 +529,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
 
   const inviteRaters = useMemo(() => {
     return (selectedReview?.raters || []).filter(
-      (r) => r.role !== FORMAL_RATER_ROLE.MANAGER && (r.inviteUrl || r.token)
+      (r) => r.inviteUrl || r.token
     );
   }, [selectedReview]);
 
@@ -482,7 +546,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
   }
 
   if (selectedReview) {
-    const collecting = selectedReview.status === FORMAL_REVIEW_STATUS.COLLECTING;
+    const collecting = selectedReview.status === FORMAL_REVIEW_STATUS.COLLECTING && selectedReview.cycleStatus !== 'closed';
     const mgrDone = (selectedReview.raters || []).some(
       (r) => r.role === FORMAL_RATER_ROLE.MANAGER && r.status === FORMAL_RATER_STATUS.SUBMITTED
     );
@@ -516,32 +580,44 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
                 {selectedReview.items.map((item) => (
                   <li key={item.id} className="rounded-control border border-ink/10 px-3 py-2 text-sm text-ink">
                     {item.label}
+                    {item.description ? <p className="m-0 text-sm text-ink-muted">{item.description}</p> : null}
                   </li>
                 ))}
               </ul>
             )}
-            {selectedReview.status === FORMAL_REVIEW_STATUS.DRAFT ? (
+            {selectedReview.status === FORMAL_REVIEW_STATUS.DRAFT && !selectedReview.questionnaire?.length ? (
               <AdminCreateButton label={tf(locale, 'addItem')} onClick={addItem} disabled={busy} />
             ) : null}
           </section>
 
-          {selectedReview.status === FORMAL_REVIEW_STATUS.DRAFT ? (
+          {selectedReview.status === FORMAL_REVIEW_STATUS.DRAFT && selectedReview.cycleStatus !== 'closed' ? (
+            <section className={S.stack}>
+            <h3 className={S.cardSection}>{locale.startsWith('en') ? 'Who reviews whom' : 'Quem avalia quem'}</h3>
+            <ul className="m-0 list-disc pl-5 text-sm">
+              <li>{selectedReview.managerName || (locale.startsWith('en') ? 'Manager not assigned' : 'Gestor não definido')} → {selectedReview.subjectName}</li>
+              {selectedReview.model !== '90' ? <li>{selectedReview.subjectName} → {selectedReview.managerName || (locale.startsWith('en') ? 'Manager not assigned' : 'Gestor não definido')}</li> : null}
+              {selectedReview.model === '360' ? <li>{selectedReview.raters?.find(r => r.role === FORMAL_RATER_ROLE.EXTERNAL)?.externalName || '—'} → {selectedReview.subjectName}</li> : null}
+              {selectedReview.includeSelf ? <li>{selectedReview.subjectName} → {selectedReview.subjectName} ({tf(locale, 'roleSelf')})</li> : null}
+            </ul>
+            {selectedReview.includeSelf && selectedReview.items?.some(item => !item.selfDescription?.trim()) ? <p role="alert">{locale.startsWith('en') ? 'Return to the cycle and edit the draft to review first-person wording before publishing.' : 'Volte ao ciclo e edite o rascunho para revisar os textos em primeira pessoa antes de publicar.'}</p> : null}
             <button
               type="button"
               className={S.btnPrimary}
               disabled={busy || !(selectedReview.items || []).length}
-              onClick={() => postAction('open', 'opened')}
+              onClick={async () => { if (await confirm({ title: tf(locale, 'openCollect'), message: locale.startsWith('en') ? 'Confirm the respondent matrix and publish this questionnaire?' : 'Confirmar a matriz de respondentes e publicar este questionário?' })) await postAction('open', 'opened'); }}
             >
               {tf(locale, 'openCollect')}
             </button>
+            </section>
           ) : null}
 
-          {collecting && !mgrDone ? (
+          {collecting && !mgrDone && !selectedReview.questionnaire?.length ? (
             <section className={cn(S.card, S.stack)}>
               <h3 className={S.cardSection}>{tf(locale, 'managerScores')}</h3>
               {(selectedReview.items || []).map((item) => (
                 <div key={item.id} className={S.stack}>
                   <div className="text-sm text-ink">{item.label}</div>
+                  {item.description ? <p className="m-0 text-sm text-ink-muted">{item.description}</p> : null}
                   <ScaleRatingButtons
                     min={FORMAL_LIKERT_MIN}
                     max={FORMAL_LIKERT_MAX}
@@ -593,7 +669,12 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
             </section>
           ) : null}
 
-          {showResults ? <ScoresMatrix locale={locale} review={selectedReview} /> : null}
+          {showResults ? <><ScoresMatrix locale={locale} review={selectedReview} />
+            {selectedReview.raters?.filter(r => r.status === FORMAL_RATER_STATUS.SUBMITTED).map(r => <section key={r.id} className={S.stack}>
+              <h3 className={S.cardSection}>{raterRoleLabel(locale, r.role)}</h3>
+              {(selectedReview.openQuestions || []).map(question => <div key={question.id}><p className="font-medium">{question.prompt}</p><p className="whitespace-pre-wrap">{r.openAnswers?.find(answer => String(answer.questionId) === String(question.id))?.answer || '—'}</p></div>)}
+            </section>)}
+          </> : null}
 
           {collecting && pendingRaters.length > 0 ? (
             <InlineCallout tone="warning">
@@ -668,8 +749,10 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
             actions={
               <div className="flex flex-wrap items-center gap-2">
                 <StatusToneChip tone={cycleStatusTone(selectedCycle.status)}>
-                  {cycleStatusLabel(locale, selectedCycle.status)}
+                  {cycleStatusLabel(locale, selectedCycle.displayStatus || selectedCycle.status)}
                 </StatusToneChip>
+                {selectedCycle.status === FORMAL_REVIEW_CYCLE_STATUS.DRAFT ? <button type="button" className={S.btnGhost} disabled={busy} onClick={() => createCycle(selectedCycle)}>{locale.startsWith('en') ? 'Edit draft' : 'Editar rascunho'}</button> : null}
+                {selectedCycle.status === FORMAL_REVIEW_CYCLE_STATUS.DRAFT ? <button type="button" className={S.btnPrimary} disabled={busy || !reviews.length || !selectedCycle.questionnaire?.length} onClick={publishCycle}>{locale.startsWith('en') ? 'Publish cycle' : 'Publicar ciclo'}</button> : null}
                 {selectedCycle.status !== FORMAL_REVIEW_CYCLE_STATUS.CLOSED ? (
                   <AdminCreateButton label={tf(locale, 'addPerson')} onClick={addPerson} disabled={busy} />
                 ) : null}
@@ -679,6 +762,13 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
           {selectedCycle.includeSelf ? (
             <InlineCallout tone="info">{tf(locale, 'includeSelfHint')}</InlineCallout>
           ) : null}
+          <section className={S.stack}>
+            <p>{selectedCycle.periodStart?.slice(0, 10) || '—'} — {selectedCycle.periodEnd?.slice(0, 10) || '—'}</p>
+            <p className="whitespace-pre-wrap">{selectedCycle.instructions}</p>
+            <p>{locale.startsWith('en') ? 'Scale' : 'Escala'}: {selectedCycle.responseScale === 'frequency' ? (locale.startsWith('en') ? '1 Never — 5 Always' : '1 Nunca — 5 Sempre') : (locale.startsWith('en') ? '1 Strongly disagree — 5 Strongly agree' : '1 Discordo totalmente — 5 Concordo totalmente')}</p>
+            <ul>{(selectedCycle.questionnaire || []).map(item => <li key={item.competencyId}>{item.label}</li>)}</ul>
+            {(selectedCycle.openQuestions || []).map(question => <p key={question.id}>{question.prompt}</p>)}
+          </section>
           {reviews.length === 0 ? (
             <EmptyState message={tf(locale, 'reviewsEmpty')} />
           ) : (
@@ -698,6 +788,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
                       <StatusToneChip tone={reviewStatusTone(r.status)}>
                         {reviewStatusLabel(locale, r.status)}
                       </StatusToneChip>
+                      <p className="m-0 mt-1 text-xs text-ink-muted">{r.submittedCount || 0}/{r.responseCount || 0} {locale.startsWith('en') ? 'responses completed' : 'respostas concluídas'}</p>
                     </td>
                     <td className="px-3 py-2">
                       <AdminActionsCell>
@@ -727,27 +818,6 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
           subtitle={tf(locale, 'subtitle')}
           actions={<AdminCreateButton label={tf(locale, 'createCycle')} onClick={createCycle} disabled={busy} />}
         />
-
-        <CollapsibleBlock title={tf(locale, 'competenciesTitle')} defaultOpen={false} locale={locale}>
-          <div className={S.stack}>
-            <p className={cn(S.muted, 'm-0')}>{tf(locale, 'catalogHint')}</p>
-            <AdminCreateButton label={tf(locale, 'addCompetency')} onClick={createCompetency} disabled={busy} />
-            {competencies.length === 0 ? (
-              <EmptyState message={tf(locale, 'competenciesEmpty')} />
-            ) : (
-              <ul className="m-0 list-none space-y-1 p-0">
-                {competencies.map((c) => (
-                  <li key={c.id} className="rounded-control border border-ink/10 px-3 py-2 text-sm text-ink">
-                    {c.name}
-                    {c.description ? (
-                      <div className="mt-0.5 font-mono text-2xs text-ink-faint">{c.description}</div>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </CollapsibleBlock>
 
         <h3 className={S.cardSection}>{tf(locale, 'cyclesTitle')}</h3>
         {cycles.length === 0 ? (
@@ -782,7 +852,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
                   </td>
                   <td className="px-3 py-2">
                     <StatusToneChip tone={cycleStatusTone(c.status)}>
-                      {cycleStatusLabel(locale, c.status)}
+                      {cycleStatusLabel(locale, c.displayStatus || c.status)}
                     </StatusToneChip>
                   </td>
                   <td className="px-3 py-2">

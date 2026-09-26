@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { query } from '../../../../../lib/db.js';
+import { query, withTransaction } from '../../../../../lib/db.js';
 import { apiError, apiErrorFromResult, ERR } from '../../../../../lib/api-error.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit.js';
 import {
@@ -44,6 +44,9 @@ export async function GET(request, props) {
       scaleMin: FORMAL_LIKERT_MIN,
       scaleMax: FORMAL_LIKERT_MAX,
       items: resolved.items,
+      instructions: resolved.instructions,
+      responseScale: resolved.responseScale,
+      openQuestions: resolved.openQuestions,
     });
   } catch (err) {
     if (err?.code === '42P01') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
@@ -70,11 +73,12 @@ export async function POST(request, props) {
 
     const token = params?.token;
     const body = await request.json().catch(() => ({}));
-    const result = await submitFormalRaterByToken(query, {
+    const result = await withTransaction(db => submitFormalRaterByToken(db, {
       token,
       scores: body.scores,
       overallNotes: body.overallNotes,
-    });
+      openAnswers: body.openAnswers,
+    }));
     if (!result.ok) {
       return apiErrorFromResult(request, result, {
         fallbackCode: ERR.INVALID_DATA,

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { verifySessionWithCapabilities } from '../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../lib/auth';
-import { query, queryRead } from '../../../../../lib/db';
+import { query, queryRead, withTransaction } from '../../../../../lib/db';
 import { audit } from '../../../../../lib/audit';
 import { apiError, ERR } from '../../../../../lib/api-error';
 import { normalizeCandidateProfile } from '../../../../../lib/candidate-profile';
@@ -199,6 +199,10 @@ export async function PATCH(request, props) {
     sqlParams.push(notes && !isRichTextEmpty(notes) ? notes : null);
   }
   if (body.phone !== undefined || body.telefone !== undefined) {
+    const rawPhone = body.phone !== undefined ? body.phone : body.telefone;
+    if (rawPhone != null && String(rawPhone).trim() && !/^\+?[\d\s().-]+$/.test(String(rawPhone).trim())) return apiError(request, ERR.INVALID_DATA, 400);
+    const digits = String(rawPhone || '').replace(/\D/g, '');
+    if (digits && (digits.length < 10 || digits.length > 15)) return apiError(request, ERR.INVALID_DATA, 400);
     sets.push(`phone = $${n++}`);
     sqlParams.push(profile.phone);
   }
@@ -231,7 +235,8 @@ export async function PATCH(request, props) {
     let birthDate = null;
     if (raw != null && String(raw).trim() !== '') {
       const s = String(raw).trim().slice(0, 10);
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const parsed = new Date(`${s}T00:00:00Z`);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || !Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== s) {
         return apiError(request, ERR.INVALID_DATE, 400);
       }
       birthDate = s;
@@ -241,6 +246,7 @@ export async function PATCH(request, props) {
   }
   if (body.personalEmail !== undefined || body.personal_email !== undefined) {
     const value = body.personalEmail !== undefined ? body.personalEmail : body.personal_email;
+    if (value != null && String(value).trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim())) return apiError(request, ERR.INVALID_EMAIL, 400);
     sets.push(`personal_email = $${n++}`);
     sqlParams.push(value == null ? null : String(value).trim().slice(0, 240) || null);
   }
@@ -270,7 +276,18 @@ export async function PATCH(request, props) {
 
   if (sets.length === 0) return apiError(request, ERR.NO_FIELDS_TO_UPDATE, 400);
 
-  const up = await query(
+  const up = await withTransaction(async (db) => {
+    const previous = await db.query('SELECT company_id AS "companyId", work_format AS "workFormat" FROM candidates WHERE id = $1 FOR UPDATE', [id]);
+    if (!previous.rowCount) return { rowCount: 0, rows: [] };
+    const oldFormat = previous.rows[0].workFormat || null;
+    const changesFormat = body.workFormat !== undefined || body.work_format !== undefined;
+    const nextFormat = changesFormat ? String(body.workFormat ?? body.work_format ?? '').trim().toLowerCase() || null : oldFormat;
+    const changed = oldFormat !== nextFormat;
+    const effectiveDate = body.workFormatEffectiveDate;
+    if (changed && (!/^\d{4}-\d{2}-\d{2}$/.test(effectiveDate || '') || Number.isNaN(Date.parse(effectiveDate)) || new Date(effectiveDate).toISOString().slice(0, 10) !== effectiveDate)) {
+      return { errorCode: ERR.INVALID_DATA };
+    }
+    const result = await db.query(
     `UPDATE candidates SET ${sets.join(', ')}
      WHERE id = $1
      RETURNING id, full_name AS "fullName", email,
@@ -281,7 +298,15 @@ export async function PATCH(request, props) {
                salary_expectation AS "salaryExpectation", availability, source,
                birth_date AS "birthDate", start_date AS "startDate"`,
     sqlParams
-  );
+    );
+    if (changed) await db.query(
+      `INSERT INTO employee_work_format_history (company_id, candidate_id, previous_format, new_format, effective_date, actor_user_id)
+       VALUES ($1, $2, $3, $4, $5::date, $6)`,
+      [previous.rows[0].companyId, id, oldFormat, nextFormat, effectiveDate, payload.userId || null]
+    );
+    return result;
+  });
+  if (up.errorCode) return apiError(request, up.errorCode, 400);
   if (up.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
 
   await audit({

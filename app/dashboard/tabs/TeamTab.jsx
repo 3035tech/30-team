@@ -63,8 +63,8 @@ function NearbyTypeBadges({ scores, topType, locale }) {
   return extras.map((item) => <TypeBadge key={item.type} type={item.type} locale={locale} compact />);
 }
 
-function IntegratedProfileSynthesis({ synthesis, locale }) {
-  if (!synthesis || synthesis.completeness === 'empty') return null;
+function IntegratedProfileSynthesis({ synthesis, locale, summaryOnly = false }) {
+  if (!synthesis || synthesis.completeness === 'empty') return summaryOnly ? <section><h3 className={S.label}>{t(locale, 'panel.team.synthesisTitle')}</h3><p className={S.muted}>{t(locale, 'panel.team.briefEmpty')}</p></section> : null;
   const actions = Array.isArray(synthesis.conversationActions)
     ? synthesis.conversationActions
     : [];
@@ -77,14 +77,14 @@ function IntegratedProfileSynthesis({ synthesis, locale }) {
 
   return (
     <section className="mb-4 rounded-control border border-ink/12 bg-brand-500/[0.06] p-3.5">
-      <span className={cn(S.label, 'mb-0.5')}>{t(locale, 'panel.team.briefPrepareTitle')}</span>
-      <p className="mb-2 mt-0 font-mono text-2xs leading-snug text-ink-faint">
+      <span className={cn(S.label, 'mb-0.5')}>{t(locale, summaryOnly ? 'panel.team.synthesisTitle' : 'panel.team.briefPrepareTitle')}</span>
+      {!summaryOnly ? <p className="mb-2 mt-0 font-mono text-2xs leading-snug text-ink-faint">
         {t(locale, 'panel.team.briefPrepareHint')}
-      </p>
+      </p> : null}
       <p className="mb-3 mt-0 font-ui text-sm leading-snug text-ink">
         {synthesis.headline}
       </p>
-      {actions.length > 0 ? (
+      {!summaryOnly && actions.length > 0 ? (
         <ol className="mb-3 mt-0 list-decimal space-y-2 pl-5 text-xs leading-snug text-ink">
           {actions.map((a) => (
             <li key={`${a.source}-${a.text}`}>
@@ -102,7 +102,7 @@ function IntegratedProfileSynthesis({ synthesis, locale }) {
         <CollapsibleBlock
           locale={locale}
           title={t(locale, 'panel.team.synthesisTitle')}
-          defaultOpen={false}
+          defaultOpen={summaryOnly}
           count={sections.length}
           bordered={false}
           className="border-t border-ink/10 pt-2"
@@ -127,16 +127,17 @@ function IntegratedProfileSynthesis({ synthesis, locale }) {
 
 const PIPELINE_OPTIONS = PIPELINE_STAGES;
 const PERSON_TOP_SECTIONS = new Set(['people', 'style', 'history', 'profile']);
-const PERSON_MANAGEMENT_SECTIONS = new Set(['oneOnOne', 'feedback', 'journey', 'compensation', 'dp']);
+const PERSON_MANAGEMENT_SECTIONS = new Set(['summary', 'oneOnOne', 'feedback', 'journey', 'compensation', 'dp']);
 
 function personNavigationFromSection(section) {
+  if (section === 'profile') return { personTab: 'people', peopleSubTab: 'dp' };
   if (PERSON_TOP_SECTIONS.has(section)) {
-    return { personTab: section, peopleSubTab: 'oneOnOne' };
+    return { personTab: section, peopleSubTab: 'summary' };
   }
   if (PERSON_MANAGEMENT_SECTIONS.has(section)) {
     return { personTab: 'people', peopleSubTab: section };
   }
-  return { personTab: 'people', peopleSubTab: 'oneOnOne' };
+  return { personTab: 'people', peopleSubTab: 'summary' };
 }
 
 
@@ -256,7 +257,7 @@ export function TeamTab({
 }) {
   const [open, setOpen] = useState(null);
   const [personTab, setPersonTab] = useState('people');
-  const [peopleSubTab, setPeopleSubTab] = useState('oneOnOne');
+  const [peopleSubTab, setPeopleSubTab] = useState('summary');
   const [searchDraft, setSearchDraft] = useState(search || '');
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
@@ -378,9 +379,7 @@ export function TeamTab({
     }
     const cid = String(focusCandidateId);
     const match = (results || []).find((r) => String(r.candidateId) === cid);
-    if (match) {
-      setOpen(String(match.assessmentId));
-    }
+    setOpen(match?.assessmentId != null ? String(match.assessmentId) : `candidate:${cid}`);
     loadDetail(cid);
   }, [focusCandidateId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -394,14 +393,12 @@ export function TeamTab({
     if (!focusCandidateId || !detail?.candidate) return;
     if (String(detail.candidate.id) !== String(focusCandidateId)) return;
     const match = (results || []).find((r) => String(r.candidateId) === String(focusCandidateId));
-    if (match) {
+    if (match?.assessmentId != null) {
       setOpen(String(match.assessmentId));
       return;
     }
     const aid = detail.assessments?.[0]?.id;
-    if (aid) {
-      setOpen(String(aid));
-    }
+    setOpen(aid != null ? String(aid) : `candidate:${detail.candidate.id}`);
   }, [detail, focusCandidateId, results]);
 
   const commitSearch = (next) => {
@@ -786,12 +783,21 @@ export function TeamTab({
     });
   };
 
-  let openRow = (results || []).find((row) => String(row.assessmentId) === String(open)) || null;
+  let openRow = (results || []).find((row) => row.assessmentId != null && String(row.assessmentId) === String(open)) || null;
   if (!openRow && open && detail?.candidate) {
     const a = (detail.assessments || []).find((x) => String(x.id) === String(open))
       || detail.assessments?.[0]
       || null;
-    if (a) {
+    if (String(open) === `candidate:${detail.candidate.id}`) {
+      openRow = {
+        assessmentId: null,
+        candidateId: detail.candidate.id,
+        name: detail.candidate.fullName || detail.candidate.email || '',
+        scores: null,
+        topType: null,
+        pipelineStage: null,
+      };
+    } else if (a) {
       openRow = {
         assessmentId: a.id,
         candidateId: detail.candidate.id,
@@ -816,8 +822,8 @@ export function TeamTab({
       })
     : null;
 
-  const openPersonDetail = (row, section = 'oneOnOne') => {
-    const id = String(row.assessmentId);
+  const openPersonDetail = (row, section = 'summary') => {
+    const id = row.assessmentId != null ? String(row.assessmentId) : `candidate:${row.candidateId}`;
     const nextNavigation = personNavigationFromSection(section);
     if (row.candidateId && typeof navigateDashboard === 'function') {
       // Let the URL switch the drawer into its full-page presentation before
@@ -856,7 +862,7 @@ export function TeamTab({
     setDetail(null);
     setDetailErr('');
     setPersonTab('people');
-    setPeopleSubTab('oneOnOne');
+    setPeopleSubTab('summary');
     if (typeof navigateDashboard === 'function') {
       navigateDashboard({ tab: 'team', candidate: null, section: null, scroll: false, clientOnly: true });
     }
@@ -884,7 +890,7 @@ export function TeamTab({
   const navigateAdjacentPerson = (direction) => {
     const nextRow = personRows[currentPersonIndex + direction];
     if (!nextRow) return;
-    openPersonDetail(nextRow, focusSection || peopleSubTab || 'oneOnOne');
+    openPersonDetail(nextRow, focusSection || peopleSubTab || 'summary');
   };
   const personHeaderMeta = detailMatchesOpen && detail?.candidate ? (
     <>
@@ -1279,24 +1285,27 @@ export function TeamTab({
                 { id: 'people', label: t(locale, 'panel.team.personTabSummary') },
                 { id: 'style', label: t(locale, 'panel.team.personTabStyle') },
                 { id: 'history', label: t(locale, 'panel.team.personTabHistory') },
-                ...(detail?.candidate?.employmentStatus === EMPLOYMENT_STATUS.CANDIDATE
-                  ? [{ id: 'profile', label: t(locale, 'recruiting.candidateProfile') }]
-                  : []),
               ]}
             />
             {personTab === 'style' ? (
               <ContentEnter animKey="style">
-                <EnneagramCross scores={openRow.scores} locale={locale} />
+                {openRow.scores ? (
+                  <EnneagramCross scores={openRow.scores} locale={locale} />
+                ) : (
+                  <p className="mb-4 mt-0 text-xs text-ink-muted">
+                    {t(locale, 'panel.team.peopleMissingEnneagram')}
+                  </p>
+                )}
                 <IntegratedProfileSynthesis synthesis={synthesis} locale={locale} />
 
-                <div className="mb-4">
+                {openRow.scores ? <div className="mb-4">
                   {openCluster.size > 1 ? (
                     <p className="mb-2 mt-0 text-xs leading-snug text-ink-faint">
                       {t(locale, 'panel.team.scoresClusterHint')}
                     </p>
                   ) : null}
                   <TypeScoreChart scores={openRow.scores} locale={locale} highlightTypes={openCluster} />
-                </div>
+                </div> : null}
 
                 {detailLoading ? (
                   <div className="mb-4">
@@ -1342,6 +1351,17 @@ export function TeamTab({
                     {t(locale, 'panel.team.motivatorsStyleEmpty')}
                   </p>
                 ) : null}
+                {!detailLoading && detailMatchesOpen ? (
+                  <PeopleManagementPanel
+                    key={`context-${detail.candidate.id}`}
+                    locale={locale}
+                    candidateId={detail.candidate.id}
+                    people={detail.people}
+                    employmentStatus={detail.candidate.employmentStatus}
+                    onRefresh={() => loadDetail(detail.candidate.id)}
+                    section="context"
+                  />
+                ) : null}
               </ContentEnter>
             ) : null}
             {personTab === 'people' ? (
@@ -1356,15 +1376,16 @@ export function TeamTab({
                       detail.candidate.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ||
                       detail.candidate.employmentStatus === EMPLOYMENT_STATUS.ALUMNI;
                     const allowedSubTabs = new Set([
+                      'summary',
                       'oneOnOne',
                       ...(isInternalPerson ? ['feedback'] : []),
                       'journey',
                       ...(isInternalPerson && canViewCompensation ? ['compensation'] : []),
-                      ...(isInternalPerson ? ['dp'] : []),
+                      'dp',
                     ]);
                     const activePeopleSubTab = allowedSubTabs.has(peopleSubTab)
                       ? peopleSubTab
-                      : 'oneOnOne';
+                      : 'summary';
                     return (
                   <>
                     {isHiringCandidate ? (
@@ -1378,45 +1399,12 @@ export function TeamTab({
                         </button>
                       </div>
                     ) : null}
-                    <CollapsibleBlock
-                      locale={locale}
-                      title={t(locale, 'panel.team.peopleSubTabSummary')}
-                      defaultOpen
-                      className="mb-4"
-                      bordered={false}
-                    >
-                      <div className="space-y-4 pb-1">
-                        <PersonDossierBlock
-                          locale={locale}
-                          candidateId={detail.candidate.id}
-                          companyId={detail.candidate.companyId}
-                          embedded
-                          summaryOnly
-                        />
-                        {isInternalPerson ? (
-                          <CandidateOrgUnit key={`${detail.candidate.companyId}-${detail.candidate.id}`} locale={locale} companyId={detail.candidate.companyId} candidateId={detail.candidate.id} onSaved={() => router.refresh()} />
-                        ) : null}
-                        {isInternalPerson ? (
-                          <OrgManagerBlock
-                            locale={locale}
-                            companyId={detail.candidate.companyId}
-                            candidateId={detail.candidate.id}
-                          />
-                        ) : null}
-                        <HrActionBrief
-                          locale={locale}
-                          brief={detail.people?.decisionBrief}
-                          personName={openRow.name}
-                          omitHypotheses
-                          omitInterview={!isHiringCandidate}
-                        />
-                      </div>
-                    </CollapsibleBlock>
                     <PanelSubNav
                       ariaLabel={t(locale, 'panel.team.peopleSubTabsAria')}
                       active={activePeopleSubTab}
                       onChange={navigatePersonSection}
                       tabs={[
+                        { id: 'summary', label: t(locale, 'panel.team.peopleSubTabSummary') },
                         { id: 'oneOnOne', label: t(locale, 'panel.team.peopleSubTabOneOnOne') },
                         ...(isInternalPerson
                           ? [{ id: 'feedback', label: t(locale, 'panel.team.peopleSubTabFeedback') }]
@@ -1430,12 +1418,26 @@ export function TeamTab({
                               },
                             ]
                           : []),
-                        ...(isInternalPerson
-                          ? [{ id: 'dp', label: t(locale, 'panel.team.peopleSubTabDp') }]
-                          : []),
+                        { id: 'dp', label: t(locale, 'panel.team.peopleSubTabDp') },
                       ]}
                     />
                     <ContentEnter animKey={activePeopleSubTab}>
+                      {activePeopleSubTab === 'summary' ? (
+                        <div className="space-y-4 pb-1">
+                          <IntegratedProfileSynthesis synthesis={detail.people?.decisionBrief?.synthesis} locale={locale} summaryOnly />
+                          {isInternalPerson ? <>
+                            <CandidateOrgUnit key={`${detail.candidate.companyId}-${detail.candidate.id}`} locale={locale} companyId={detail.candidate.companyId} candidateId={detail.candidate.id} onSaved={() => router.refresh()} />
+                            <OrgManagerBlock
+                              locale={locale}
+                              companyId={detail.candidate.companyId}
+                              candidateId={detail.candidate.id}
+                              onCreateManager={companyId ? createEmployeeDirect : undefined}
+                              createManagerBusy={createEmployeeBusy}
+                            />
+                          </> : null}
+                          <PersonDossierBlock locale={locale} candidateId={detail.candidate.id} companyId={detail.candidate.companyId} embedded summaryOnly />
+                        </div>
+                      ) : null}
                       {activePeopleSubTab === 'oneOnOne' ? (
                         <PeopleManagementPanel
                           locale={locale}
@@ -1482,7 +1484,7 @@ export function TeamTab({
                           />
                         </>
                       ) : null}
-                      {activePeopleSubTab === 'dp' ? (
+                      {activePeopleSubTab === 'dp' && isInternalPerson ? (
                         <DpBlock
                           locale={locale}
                           candidateId={detail.candidate.id}
@@ -1604,7 +1606,7 @@ export function TeamTab({
                 </div>
               </ContentEnter>
             ) : null}
-            {personTab === 'profile' ? (
+            {personTab === 'people' && peopleSubTab === 'dp' && detail?.candidate?.employmentStatus === EMPLOYMENT_STATUS.CANDIDATE ? (
               <ContentEnter animKey="profile">
                 {detail?.candidate?.id &&
                 detail.candidate.employmentStatus === EMPLOYMENT_STATUS.CANDIDATE ? (

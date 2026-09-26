@@ -9,6 +9,7 @@ import {
   createFormalReviewCycle,
 } from '../../../../lib/people/formal-competency-reviews.js';
 import { audit } from '../../../../lib/audit.js';
+import { withTransaction } from '../../../../lib/db.js';
 
 const listQuerySchema = z.object({
   companyId: zPositiveInt.optional(),
@@ -23,6 +24,10 @@ const createBodySchema = z.object({
   includeSelf: z.boolean().optional().default(false),
   periodStart: z.string().trim().max(10).optional().nullable(),
   periodEnd: z.string().trim().max(10).optional().nullable(),
+  competencyIds: z.array(zPositiveInt).max(30).optional().default([]),
+  instructions: z.string().trim().max(4000).optional(),
+  responseScale: z.enum(['agreement', 'frequency']).optional(),
+  openQuestions: z.array(z.string().trim().min(1).max(1000)).max(10).optional(),
 });
 
 /** GET /api/admin/formal-review-cycles */
@@ -48,7 +53,7 @@ export const POST = withAdminApi(
     logLabel: 'formal-review-cycles POST',
   },
   async ({ request, payload, companyId, body }) => {
-    const result = await createFormalReviewCycle(null, {
+    const result = await withTransaction(db => createFormalReviewCycle(db, {
       companyId,
       title: body.title,
       description: body.description || '',
@@ -57,7 +62,11 @@ export const POST = withAdminApi(
       periodStart: body.periodStart,
       periodEnd: body.periodEnd,
       createdByUserId: payload.userId,
-    });
+      competencyIds: body.competencyIds,
+      instructions: body.instructions,
+      responseScale: body.responseScale,
+      openQuestions: body.openQuestions,
+    }));
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.CREATE_FAILED });
     }

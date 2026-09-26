@@ -6,6 +6,7 @@ import { z, zPositiveInt } from '../../../../../../lib/validate.js';
 import { openFormalReview } from '../../../../../../lib/people/formal-competency-reviews.js';
 import { audit } from '../../../../../../lib/audit.js';
 import { publicAppUrl } from '../../../../../../lib/ae/require-admin.js';
+import { withTransaction } from '../../../../../../lib/db.js';
 
 const bodySchema = z.object({
   companyId: zPositiveInt.optional(),
@@ -35,11 +36,11 @@ export const POST = withAdminApi(
     if (!Number.isFinite(reviewId) || reviewId <= 0) {
       return apiErrorFromResult(request, { ok: false, errorCode: ERR.INVALID_ID });
     }
-    const result = await openFormalReview(null, {
+    const result = await withTransaction(db => openFormalReview(db, {
       companyId,
       reviewId,
       managerUserId: body.managerUserId || payload.userId,
-    });
+    }));
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.INVALID_DATA });
     }

@@ -8,6 +8,7 @@ import {
   createFormalReview,
 } from '../../../../../../lib/people/formal-competency-reviews.js';
 import { audit } from '../../../../../../lib/audit.js';
+import { withTransaction } from '../../../../../../lib/db.js';
 
 const listQuerySchema = z.object({
   companyId: zPositiveInt.optional(),
@@ -59,7 +60,7 @@ export const POST = withAdminApi(
     if (!Number.isFinite(cycleId) || cycleId <= 0) {
       return apiErrorFromResult(request, { ok: false, errorCode: ERR.INVALID_ID });
     }
-    const result = await createFormalReview(null, {
+    const result = await withTransaction(db => createFormalReview(db, {
       companyId,
       cycleId,
       subjectCandidateId: body.subjectCandidateId,
@@ -68,7 +69,7 @@ export const POST = withAdminApi(
       externalName: body.externalName || '',
       externalEmail: body.externalEmail || '',
       externalTitle: body.externalTitle || '',
-    });
+    }));
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.CREATE_FAILED });
     }

@@ -22,6 +22,7 @@ export default function FormalReviewPublicClient({ token }) {
   const [meta, setMeta] = useState(null);
   const [scores, setScores] = useState({});
   const [notes, setNotes] = useState('');
+  const [openAnswers, setOpenAnswers] = useState({});
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -91,6 +92,7 @@ export default function FormalReviewPublicClient({ token }) {
           score: Number(scores[item.id]),
         })),
         overallNotes: notes,
+        openAnswers: (meta.openQuestions || []).map(question => ({ questionId: question.id, answer: openAnswers[question.id] || '' })),
       };
       const res = await fetch(`/api/public/formal-review/${encodeURIComponent(token)}`, {
         method: 'POST',
@@ -147,15 +149,20 @@ export default function FormalReviewPublicClient({ token }) {
     >
       <div className={S.stack}>
         {roleBanner ? <p className="m-0 text-sm font-medium text-ink">{roleBanner}</p> : null}
-        {meta?.subjectName && meta.role !== FORMAL_RATER_ROLE.UPWARD ? (
+        {meta?.subjectName ? (
           <p className={cn(S.muted, 'm-0')}>
             {t(locale, 'performanceReviews.formal.publicAbout', { name: meta.subjectName })}
           </p>
         ) : null}
         <p className={cn(S.faint, 'm-0 text-xs')}>{t(locale, 'performanceReviews.formal.publicHint')}</p>
+        {meta?.instructions ? <p className="m-0 whitespace-pre-wrap text-sm">{meta.instructions}</p> : null}
+        <p className={S.faint}>{meta?.responseScale === 'frequency'
+          ? (locale.startsWith('en') ? '1 Never · 2 Rarely · 3 Sometimes · 4 Often · 5 Always' : '1 Nunca · 2 Raramente · 3 Às vezes · 4 Frequentemente · 5 Sempre')
+          : (locale.startsWith('en') ? '1 Strongly disagree · 2 Disagree · 3 Neutral · 4 Agree · 5 Strongly agree' : '1 Discordo totalmente · 2 Discordo · 3 Neutro · 4 Concordo · 5 Concordo totalmente')}</p>
         {(meta?.items || []).map((item) => (
           <div key={item.id} className={S.stack}>
             <div className="text-sm font-medium text-ink">{item.label}</div>
+            {(meta.role === FORMAL_RATER_ROLE.SELF ? item.selfDescription : item.description) ? <p className="m-0 text-sm text-ink-muted">{meta.role === FORMAL_RATER_ROLE.SELF ? item.selfDescription : item.description}</p> : null}
             <ScaleRatingButtons
               min={meta.scaleMin || FORMAL_LIKERT_MIN}
               max={meta.scaleMax || FORMAL_LIKERT_MAX}
@@ -165,6 +172,9 @@ export default function FormalReviewPublicClient({ token }) {
             />
           </div>
         ))}
+        {(meta?.openQuestions || []).map(question => <FormField key={question.id} label={question.prompt}>
+          <textarea className={S.input} rows={3} maxLength={4000} value={openAnswers[question.id] || ''} onChange={event => setOpenAnswers(previous => ({ ...previous, [question.id]: event.target.value }))} />
+        </FormField>)}
         <FormField label={t(locale, 'performanceReviews.formal.overallNotes')}>
           <textarea
             className={S.input}

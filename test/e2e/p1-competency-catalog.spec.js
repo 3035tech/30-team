@@ -1,0 +1,51 @@
+import { test, expect } from '@playwright/test';
+import { HR, dismissManagerOnboarding } from './fixtures.js';
+
+test('P1: catalog CRUD preserves questionnaire snapshots and excludes inactive options', async ({ page, baseURL }) => {
+  test.setTimeout(120_000);
+  expect(['localhost', '127.0.0.1']).toContain(new URL(baseURL).hostname);
+  async function json(promise) {
+    const response = await promise;
+    const data = await response.json();
+    expect(response.ok(), JSON.stringify(data)).toBeTruthy();
+    return data;
+  }
+  await json(page.request.post('/api/auth/login', { data: HR }));
+  const { items } = await json(page.request.get('/api/admin/employees/search'));
+  const stamp = Date.now();
+  const name = `Comunicação P1 ${stamp}`;
+  const description = 'Comunica informações com clareza.';
+  const { competency } = await json(page.request.post('/api/admin/formal-competencies', { data: { name, description, selfDescription: 'Comunico informações com clareza.' } }));
+  const { cycle } = await json(page.request.post('/api/admin/formal-review-cycles', { data: { title: `P1 ${stamp}`, model: '90' } }));
+  const { review } = await json(page.request.post(`/api/admin/formal-review-cycles/${cycle.id}/reviews`, { data: { subjectCandidateId: Number(items[0].id) } }));
+  await json(page.request.post(`/api/admin/formal-reviews/${review.id}/items`, { data: { competencyId: Number(competency.id), label: name } }));
+  await page.goto('/dashboard?tab=performance-reviews');
+  await dismissManagerOnboarding(page);
+  await page.getByRole('tab', { name: 'Competências', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Buscar competências' }).fill(name);
+  const row = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name, exact: true }) });
+  await expect(row).toContainText('Usos em avaliações: 1');
+  await row.getByRole('button', { name: 'Editar', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Nome', { exact: true }).fill(`${name} editada`);
+  await dialog.getByRole('textbox', { name: 'Descrição (terceira pessoa)', exact: true }).fill('Descrição revisada.');
+  await dialog.getByRole('button', { name: 'Salvar', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.reload();
+  await page.getByRole('tab', { name: 'Competências', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Buscar competências' }).fill(name);
+  const edited = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: `${name} editada`, exact: true }) });
+  await expect(edited).toContainText('Descrição revisada.');
+  await edited.getByRole('button', { name: 'Inativar', exact: true }).click();
+  await dialog.getByRole('button', { name: /confirmar/i }).click();
+  await expect(edited.getByRole('button', { name: 'Ativar', exact: true })).toBeVisible();
+  const catalog = await json(page.request.get('/api/admin/formal-competencies'));
+  expect(catalog.competencies.some(c => c.id === competency.id)).toBe(false);
+  const detail = await json(page.request.get(`/api/admin/formal-reviews/${review.id}`));
+  const item = detail.review.items.find(i => i.competencyId === competency.id);
+  expect(item.label).toBe(name);
+  expect(item.description).toBe(description);
+  expect(item.selfDescription).toBe('Comunico informações com clareza.');
+  const inactive = await page.request.post(`/api/admin/formal-reviews/${review.id}/items`, { data: { competencyId: Number(competency.id), label: name } });
+  expect(inactive.status()).toBe(404);
+});

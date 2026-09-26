@@ -38,7 +38,7 @@ function formatMeetingDate(value, locale) {
 
 /**
  * Hipóteses de gestão + registro de 1:1 (mesma pessoa = candidate_id).
- * @param {'oneOnOne'|'journey'|'all'} [section='all'] — recorte para sub-nav do drawer Equipe.
+ * @param {'context'|'oneOnOne'|'journey'|'all'} [section='all'] — recorte para sub-nav do drawer Equipe.
  */
 export function PeopleManagementPanel({
   locale,
@@ -94,9 +94,10 @@ export function PeopleManagementPanel({
   }, [candidateId]);
 
   useEffect(() => {
+    if (section === 'oneOnOne') return;
     void loadFollowUps();
     void loadPortalTokens();
-  }, [loadFollowUps, loadPortalTokens]);
+  }, [loadFollowUps, loadPortalTokens, section]);
 
   if (!management && !people && section !== 'journey') {
     return null;
@@ -109,6 +110,8 @@ export function PeopleManagementPanel({
   const topMot = management?.motivators?.top || [];
   const pdiSeedIdeas = management?.synthesis?.pdiIdeas || [];
   const showJourney = section === 'all' || section === 'journey';
+  const showContext = section === 'all' || section === 'context';
+  const showEncounters = section === 'all' || section === 'oneOnOne';
 
   if (section === 'journey') {
     if (employmentStatus !== EMPLOYMENT_STATUS.EMPLOYEE) {
@@ -350,6 +353,7 @@ export function PeopleManagementPanel({
 
   return (
     <div className={cn(section === 'oneOnOne' ? 'mb-2 space-y-4' : 'mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5')}>
+      {showContext ? <>
       <div>
         <span className={cn(S.cardSection, 'mb-1.5 block')}>
           {t(locale, 'panel.team.peopleTitle')}
@@ -450,7 +454,7 @@ export function PeopleManagementPanel({
         </div>
       ) : null}
 
-      {topMot.length > 0 ? (
+      {section !== 'oneOnOne' && topMot.length > 0 ? (
         <CollapsibleBlock
           locale={locale}
           title={t(locale, 'panel.team.peopleTopMotivators')}
@@ -609,7 +613,9 @@ export function PeopleManagementPanel({
         </div>
       ) : null}
 
-      <div className="mt-1 border-t border-ink/12 pt-3">
+      </> : null}
+
+      {showEncounters ? <div className={section === 'oneOnOne' ? '' : 'mt-1 border-t border-ink/12 pt-3'}>
         <span className={cn(S.label, 'mb-2')}>
           {t(locale, 'panel.team.oneOnOneTitle')}
         </span>
@@ -710,6 +716,8 @@ export function PeopleManagementPanel({
           </div>
         )}
       </div>
+
+      : null}
 
       {showJourney && candidateId ? (
         <HireJourneyBlock

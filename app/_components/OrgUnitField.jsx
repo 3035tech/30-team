@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { ORG_UNIT, orgUnitOptions } from '../../lib/org-unit-constants.js';
 import { FormField } from './FormField';
@@ -10,6 +10,7 @@ import { AppLoading } from './AppLoading';
 import { CollapsibleBlock } from './CollapsibleBlock';
 import { useAppFeedback } from './AppFeedback';
 import { S } from '../dashboard/dashboard-shared';
+import { EntitySearchSelect } from './EntitySearchSelect';
 
 export async function orgUnitRequest(companyId, { signal, method = 'GET', body, candidateId } = {}) {
   const params = new URLSearchParams({ companyId: String(companyId) });
@@ -58,7 +59,7 @@ export function OrgUnitFilter({ companyId, locale, value, onChange }) {
 
 export function CandidateOrgUnit({ companyId, candidateId, locale, onSaved }) {
   const { units, loading, error: listError, reload } = useOrgUnits(companyId);
-  const { toast, promptForm } = useAppFeedback();
+  const { toast, promptForm, confirm } = useAppFeedback();
   const [value, setValue] = useState('');
   const [initial, setInitial] = useState('');
   const [busy, setBusy] = useState(false);
@@ -66,6 +67,7 @@ export function CandidateOrgUnit({ companyId, candidateId, locale, onSaved }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
   const [version, setVersion] = useState(0);
+  const options = useMemo(() => orgUnitOptions(units), [units]);
   useEffect(() => {
     const controller = new AbortController();
     setReading(true); setLoaded(false); setError('');
@@ -76,13 +78,14 @@ export function CandidateOrgUnit({ companyId, candidateId, locale, onSaved }) {
     return () => controller.abort();
   }, [companyId, candidateId, version]);
   async function save() {
-    if (busy || !loaded || listError) return;
+    if (busy || !loaded || listError || value === initial) return;
     setBusy(true); setError('');
     try {
+      if (!await confirm({ title: t(locale, 'panel.orgUnits.unit'), message: t(locale, 'panel.orgUnits.confirmChange', { name: units.find((unit) => String(unit.id) === value)?.name || t(locale, 'panel.orgUnits.none') }), confirmLabel: t(locale, 'panel.orgUnits.save') })) return;
       await orgUnitRequest(companyId, { method: 'PUT', body: { candidateId: Number(candidateId), orgUnitId: value ? Number(value) : null } });
       setInitial(value); toast(t(locale, 'panel.orgUnits.saved'), 'ok'); onSaved?.();
     } catch (e) { setError(e.message); }
-    finally { setBusy(false); }
+    finally { setBusy(false); setVersion((n) => n + 1); }
   }
   async function createAndAssign() {
     if (busy || !companyId) return;
@@ -105,15 +108,10 @@ export function CandidateOrgUnit({ companyId, candidateId, locale, onSaved }) {
         method: 'POST',
         body: { name: String(values.name).trim(), parentId: null },
       });
-      const next = String(created.id);
-      await orgUnitRequest(companyId, {
-        method: 'PUT',
-        body: { candidateId: Number(candidateId), orgUnitId: Number(created.id) },
-      });
-      setValue(next); setInitial(next);
-      reload(); setVersion((v) => v + 1);
-      toast(t(locale, 'panel.orgUnits.saved'), 'ok');
-      onSaved?.();
+      // Creating an option does not change the person's organizational link.
+      setValue(String(created.id));
+      reload();
+      toast(t(locale, 'panel.orgUnits.created'), 'ok');
     } catch (e) {
       setError(e.message);
     } finally { setBusy(false); }
@@ -124,13 +122,15 @@ export function CandidateOrgUnit({ companyId, candidateId, locale, onSaved }) {
       {error || listError ? <InlineCallout tone="danger"><span role="alert">{error || listError}</span><button type="button" className={S.btnGhost} disabled={busy} onClick={() => { reload(); setVersion((v) => v + 1); }}>{t(locale, 'panel.orgUnits.retry')}</button></InlineCallout> : null}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="min-w-0 flex-1">
-          <OrgUnitSelect units={units} locale={locale} value={value} onChange={(event) => setValue(event.target.value)} disabled={busy || !loaded || Boolean(listError)} />
+          <FormField label={t(locale, 'panel.orgUnits.unit')} hint={t(locale, 'panel.orgChart.currentManager', { name: units.find((unit) => String(unit.id) === initial)?.name || t(locale, 'panel.orgUnits.none') })}>
+            <EntitySearchSelect key={version} locale={locale} options={options} minChars={0} value={value} onChange={(id) => setValue(id)} placeholder={t(locale, 'panel.orgUnits.search')} aria-label={t(locale, 'panel.orgUnits.unit')} disabled={busy || !loaded || Boolean(listError)} />
+          </FormField>
         </div>
         <button type="button" className={S.btnGhost} disabled={busy || !loaded || Boolean(listError)} onClick={() => void createAndAssign()}>
           {t(locale, 'panel.orgUnits.create')}
         </button>
       </div>
-      <p className={S.muted}>{t(locale, 'panel.orgUnits.assignmentHint')}</p>
+      {value !== initial ? <p className={S.muted}>{t(locale, 'panel.orgUnits.pending', { name: units.find((unit) => String(unit.id) === value)?.name || t(locale, 'panel.orgUnits.none') })}</p> : null}
       <button type="button" className={S.btnPrimary} disabled={busy || !loaded || Boolean(listError) || value === initial} onClick={save}>{t(locale, busy ? 'panel.orgUnits.saving' : 'panel.orgUnits.save')}</button>
     </div>}
   </CollapsibleBlock>;

@@ -76,7 +76,16 @@ export async function GET(request, props) {
     ]);
     if (!profile.ok) return apiErrorFromResult(request, profile);
     if (!docs.ok) return apiErrorFromResult(request, docs);
+    const history = await query(
+      `SELECT h.id, h.previous_format AS "previousFormat", h.new_format AS "newFormat",
+              h.effective_date AS "effectiveDate", h.changed_at AS "changedAt", h.actor_user_id AS "actorUserId",
+              COALESCE(u.display_name, u.email) AS "actorName"
+       FROM employee_work_format_history h LEFT JOIN users u ON u.id = h.actor_user_id
+       WHERE h.company_id = $1 AND h.candidate_id = $2 ORDER BY h.changed_at DESC, h.id DESC LIMIT 200`,
+      [companyId, candidateId]
+    );
     return NextResponse.json({
+      workFormatHistory: history.rows,
       profile: profile.profile,
       documents: docs.items,
       leaves: leaves.items,

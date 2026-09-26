@@ -9,6 +9,7 @@ import {
 } from '../../../../../../lib/domain-status.js';
 import { submitManagerRatings } from '../../../../../../lib/people/formal-competency-reviews.js';
 import { audit } from '../../../../../../lib/audit.js';
+import { withTransaction } from '../../../../../../lib/db.js';
 
 const scoreRow = z.object({
   itemId: zPositiveInt,
@@ -35,13 +36,13 @@ export const POST = withAdminApi(
     if (!Number.isFinite(reviewId) || reviewId <= 0) {
       return apiErrorFromResult(request, { ok: false, errorCode: ERR.INVALID_ID });
     }
-    const result = await submitManagerRatings(null, {
+    const result = await withTransaction(db => submitManagerRatings(db, {
       companyId,
       reviewId,
       managerUserId: payload.userId,
       scores: body.scores,
       overallNotes: body.overallNotes || '',
-    });
+    }));
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.INVALID_DATA });
     }

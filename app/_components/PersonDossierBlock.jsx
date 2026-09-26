@@ -127,9 +127,9 @@ export function PersonDossierBlock({
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="m-0 font-mono text-2xs text-ink-faint">
+          {!summaryOnly ? <p className="m-0 font-mono text-2xs text-ink-faint">
             {t(locale, 'panel.dossier.signalCount', { n: d.meta?.signalCount ?? 0 })}
-          </p>
+          </p> : null}
           <button
             type="button"
             disabled={aiLoading}
