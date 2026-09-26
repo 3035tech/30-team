@@ -23,6 +23,10 @@ for (const locale of ['pt-BR', 'pt-PT', 'en', 'es-419']) {
     const copy = getProductLandingCopy(locale);
     const values = publicPricingTextValues(locale);
     const price = formatPublicPrice(locale, locale === 'pt-BR' ? 9.9 : 5.9);
+    const currency = locale === 'pt-BR' ? 'BRL' : 'USD';
+    assert.ok(t(locale, `pricing.currency${currency}`).includes(currency));
+    assert.match(t(locale, 'pricing.annualBillingNote'), /20%/);
+    assert.match(t(locale, 'pricing.annualBillingNote'), /12/);
     for (const text of [copy.pricingSnapshotBody, copy.earlyBody,
       t(locale, 'pricing.faq1A', values), t(locale, 'signup.intro', values)]) {
       assert.ok(text.includes(price), text);

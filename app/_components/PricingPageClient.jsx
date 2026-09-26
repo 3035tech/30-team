@@ -77,7 +77,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
         <section className="border-y border-ink/8 bg-white/50 py-14" aria-labelledby="plan-title">
           <div className="mx-auto max-w-5xl px-5 sm:px-8">
             <SectionLabel>{t(locale, 'pricing.planLabel')}</SectionLabel>
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),minmax(320px,390px)] lg:items-start">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr),minmax(320px,390px)] lg:items-start">
               <div>
                 <h2 id="plan-title" className="mb-2 mt-0 text-2xl font-normal text-ink sm:text-[1.75rem]">
                   {t(locale, 'pricing.planName')}
@@ -95,16 +95,20 @@ export default function PricingPageClient({ locale: initialLocale }) {
                 </ul>
               </div>
 
-              <article className="rounded-card border-2 border-brand-200 bg-canvas/90 p-5 shadow-sm sm:p-6">
+              <article className="min-w-0 rounded-card border-2 border-brand-200 bg-canvas/90 p-5 shadow-sm sm:p-6">
                 <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="mb-1 font-mono text-2xs uppercase tracking-[0.12em] text-brand-500/80">
                       {t(locale, 'pricing.priceLabel')}
                     </p>
-                    <p className="mb-1 mt-0 text-3xl font-normal text-ink">
-                      {money(pricing.monthlyRate)}
-                      <span className="ml-1 text-sm text-ink-muted">{t(locale, 'pricing.perEmployeeMonth')}</span>
+                    <p className="mb-1 mt-0 flex flex-wrap items-baseline gap-x-1 gap-y-1 text-3xl font-normal text-ink">
+                      <span className="whitespace-nowrap tabular-nums">{money(pricing.monthlyRate)}</span>
+                      <span className="text-sm text-ink-muted">{t(locale, 'pricing.perEmployeeMonth')}</span>
                     </p>
+                    <p className="m-0 text-xs leading-relaxed text-ink-muted">{t(locale, `pricing.currency${pricing.currency}`)}</p>
+                    {billingCycle === 'annual' && (
+                      <p className="mb-0 mt-1 text-xs leading-relaxed text-ink-muted">{t(locale, 'pricing.annualBillingNote')}</p>
+                    )}
                   </div>
                   <span className="rounded-control border border-success/25 bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
                     {t(locale, 'pricing.earlyAdopterDaysBadge', { n: EARLY_ADOPTER_FREE_DAYS })}
@@ -157,11 +161,11 @@ export default function PricingPageClient({ locale: initialLocale }) {
                   </div>
                 </div>
                 <div className="mb-4 rounded-card border border-brand-100 bg-brand-50/70 p-3.5">
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1" aria-live="polite" aria-atomic="true">
                     <span className="text-sm text-ink-muted">
                       {billingCycle === 'annual' ? t(locale, 'pricing.annualTotalLabel') : t(locale, 'pricing.monthlyTotalLabel')}
                     </span>
-                    <strong className="text-2xl font-semibold text-ink">
+                    <strong className="whitespace-nowrap text-2xl font-semibold tabular-nums text-ink">
                       {billingCycle === 'annual' ? money(pricing.annualTotal) : money(pricing.monthlyTotal)}
                     </strong>
                   </div>
