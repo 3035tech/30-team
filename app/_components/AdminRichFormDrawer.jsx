@@ -64,7 +64,7 @@ export function AdminRichFormDrawer({
     <div
       className={cn(
         withinShell ? 'w-full bg-canvas' : 'app-dialog-overlay',
-        !withinShell && (fullPage ? 'bg-canvas' : dialogOverlayClass)
+        !withinShell && (fullPage ? 'fixed inset-0 z-[10050] flex bg-canvas' : dialogOverlayClass)
       )}
       role="presentation"
       onClick={(e) => {

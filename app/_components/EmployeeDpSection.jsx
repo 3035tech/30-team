@@ -1,6 +1,7 @@
 'use client';
 
 import { DP_ADDRESS_NUMBER_MAX_LENGTH } from '../../lib/dp-profile-constants';
+import { dpUploadValidationKey, dpUploadResponseKey } from '../../lib/dp-upload-validation';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
@@ -283,6 +284,12 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
       setUploadKey(null);
       return;
     }
+    const validationKey = dpUploadValidationKey(file);
+    if (validationKey) {
+      toast(t(locale, `panel.dp.${validationKey}`), 'error');
+      setUploadKey(null);
+      return;
+    }
     setBusy(true);
     try {
       const fd = new FormData();
@@ -292,7 +299,10 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
         { method: 'POST', body: fd }
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'upload');
+      if (!res.ok) {
+        const key = dpUploadResponseKey(res.status, data?.errorCode);
+        throw new Error(key ? t(locale, `panel.dp.${key}`) : data?.error || t(locale, 'panel.dp.uploadError'));
+      }
       toast(t(locale, 'panel.dp.uploadOk'), 'ok');
       await load();
     } catch (e) {
@@ -670,7 +680,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                         </StatusToneChip>
                       ) : null}
                       {doc.hasFile ? (
-                        <PrivateAttachment href={`/api/employee/dp/documents/${encodeURIComponent(doc.docKey)}/file`} fileName={doc.fileName} locale={locale} />
+                        <PrivateAttachment href={`/api/employee/dp/documents/${encodeURIComponent(doc.docKey)}/file`} fileName={doc.fileName} updatedAt={doc.updatedAt} locale={locale} />
                       ) : doc.status !== DP_DOCUMENT_STATUS.RECEIVED ? (
                         <span className="font-mono text-2xs text-ink-muted">{t(locale, 'panel.dp.docNoFile')}</span>
                       ) : null}
@@ -746,7 +756,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                         </p>
                         {doc.hasFile ? (
                           <div className="mb-3">
-                            <PrivateAttachment href={`/api/employee/dp/documents/${encodeURIComponent(doc.docKey)}/file`} fileName={doc.fileName} locale={locale} />
+                            <PrivateAttachment href={`/api/employee/dp/documents/${encodeURIComponent(doc.docKey)}/file`} fileName={doc.fileName} updatedAt={doc.updatedAt} locale={locale} />
                           </div>
                         ) : null}
                         <FormField label={t(locale, 'panel.dp.sigStrokeLabel')}>

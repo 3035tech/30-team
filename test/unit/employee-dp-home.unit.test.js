@@ -7,10 +7,11 @@ import * as status from '../../lib/domain-status.js';
 import * as magic from '../../lib/file-magic.js';
 import { ERR } from '../../lib/api-error-codes.js';
 import { DP_ADDRESS_NUMBER_MAX_LENGTH } from '../../lib/dp-profile-constants.js';
+import * as dpUpload from '../../lib/dp-upload-validation.js';
 
 // Exercise the real aggregator AND listLeaveRequests; only external dependencies/SQL are mocked.
 const dependencies = {
-  ...status, ...magic, ERR, DP_ADDRESS_NUMBER_MAX_LENGTH, default: crypto, asDb: (db) => db,
+  ...status, ...magic, ...dpUpload, ERR, DP_ADDRESS_NUMBER_MAX_LENGTH, default: crypto, asDb: (db) => db,
   companyScopedObjectKey: () => '', getObjectBytes: async () => {}, putObject: async () => {},
   deleteObjectBestEffort: async () => {}, isObjectStorageConfigured: () => false,
   leaveInclusiveDays: () => 1, expandLeaveCalendarByDay: () => [],

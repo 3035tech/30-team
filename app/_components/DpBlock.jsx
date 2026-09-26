@@ -1,6 +1,7 @@
 'use client';
 
 import { DP_ADDRESS_NUMBER_MAX_LENGTH } from '../../lib/dp-profile-constants';
+import { dpUploadValidationKey, dpUploadResponseKey } from '../../lib/dp-upload-validation';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
@@ -488,6 +489,12 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       setUploadKey(null);
       return;
     }
+    const validationKey = dpUploadValidationKey(file);
+    if (validationKey) {
+      toast(t(locale, `panel.dp.${validationKey}`), 'error');
+      setUploadKey(null);
+      return;
+    }
     setBusy(true);
     try {
       const fd = new FormData();
@@ -497,7 +504,10 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
         { method: 'POST', body: fd }
       );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'upload');
+      if (!res.ok) {
+        const key = dpUploadResponseKey(res.status, data?.errorCode);
+        throw new Error(key ? t(locale, `panel.dp.${key}`) : data?.error || t(locale, 'panel.dp.uploadError'));
+      }
       setDocuments((prev) =>
         prev.map((d) => (d.docKey === docKey ? data.item || d : d))
       );
@@ -1048,7 +1058,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                       </StatusToneChip>
                     ) : null}
                       {doc.hasFile ? (
-                        <PrivateAttachment href={`/api/admin/candidates/${encodeURIComponent(candidateId)}/dp/documents/${encodeURIComponent(doc.docKey)}/file`} fileName={doc.fileName} locale={locale} />
+                        <PrivateAttachment href={`/api/admin/candidates/${encodeURIComponent(candidateId)}/dp/documents/${encodeURIComponent(doc.docKey)}/file`} fileName={doc.fileName} updatedAt={doc.updatedAt} locale={locale} />
                       ) : (
                         <span className="font-mono text-2xs text-ink-muted">{t(locale, 'panel.dp.docNoFile')}</span>
                       )}

@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import * as status from '../../lib/domain-status.js';
 import * as permissions from '../../lib/permissions.js';
 import * as magic from '../../lib/file-magic.js';
+import * as dpUpload from '../../lib/dp-upload-validation.js';
 import { ERR, httpStatusForError } from '../../lib/api-error-codes.js';
 import { privateAttachmentResponse } from '../../lib/private-attachment-response.js';
 
@@ -56,7 +57,7 @@ async function fixture(options = {}) {
   const apiErrorFromResult = (request, value) => apiError(request, value.errorCode, httpStatusForError(value.errorCode, 400));
   const common = {
     ...status, ...magic, ...permissions, ERR, httpStatusForError, apiError, apiErrorFromResult,
-    default: crypto, asDb: db => db, DP_ADDRESS_NUMBER_MAX_LENGTH: 20,
+    ...dpUpload, default: crypto, asDb: db => db, DP_ADDRESS_NUMBER_MAX_LENGTH: 20,
     companyScopedObjectKey: (id, suffix) => `companies/${id}/${suffix}`,
     getObjectBytes: async key => {
       state.storage.push(key);

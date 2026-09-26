@@ -634,6 +634,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
   const editVacancy = (v) => {
     if (!v?.id) return;
+    setError('');
     setShowCreate(false);
     if (v.companyId) loadJobRoles(v.companyId);
     const next = vacancyEditDraft(v);
@@ -681,7 +682,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   };
 
   const saveVacancyEdit = async () => {
-    if (!editingVacancy) return;
+    if (!editingVacancy || loading) return;
     const {
       id,
       title,
@@ -710,6 +711,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(id)}`, {
         method: 'PATCH',
+        signal: AbortSignal.timeout(30000),
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title.trim(),
@@ -732,7 +734,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           jobRoleId: editJobRoleId ? parseInt(editJobRoleId, 10) : null,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.updateVacancyFailed'));
       setEditingVacancy(null);
       setEditingVacancyBaseline('');
@@ -1087,13 +1089,15 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               disabled={loading || !editingVacancy}
               className={cn(dialogBtnPrimaryClass, (loading || !editingVacancy) && 'opacity-60')}
             >
+              {loading ? <span className="spinner" aria-hidden="true" /> : null}
               {t(locale, 'panel.admin.save')}
             </button>
           </>
         )}
       >
         {editingVacancy ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3" aria-busy={loading}>
+            {error ? <p role="alert" className="m-0 text-sm text-danger">{error}</p> : null}
             <VacancyFormSection locale={locale} titleKey="recruiting.formSectionEssentials" defaultOpen>
               {jobRoles.length > 0 ? (
                 <div className="flex flex-col gap-1.5">
