@@ -4,6 +4,7 @@ import { query } from '../../../../../../../lib/db.js';
 import { getEmployeeSessionPayload } from '../../../../../../../lib/employee-session.js';
 import {
   clearLeaveAttachment,
+  downloadLeaveAttachment,
   getEmployeeDisplayName,
   uploadLeaveAttachment,
 } from '../../../../../../../lib/people/employee-dp.js';
@@ -11,8 +12,26 @@ import { notifyCompanyManagers } from '../../../../../../../lib/manager-notifica
 import { NOTIF } from '../../../../../../../lib/manager-notification-catalog.js';
 import { checkRateLimit } from '../../../../../../../lib/rate-limit.js';
 import { zPositiveInt } from '../../../../../../../lib/validate.js';
+import { dpDownloadResponse } from '../../../../../../../lib/people/dp-download-response.js';
 
 export const dynamic = 'force-dynamic';
+
+export async function GET(request, { params }) {
+  try {
+    const session = await getEmployeeSessionPayload();
+    if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
+    const resolved = await params;
+    const parsed = zPositiveInt.safeParse(resolved?.id);
+    if (!parsed.success) return apiError(request, ERR.INVALID_ID, 400);
+    return dpDownloadResponse(request, `employee:${session.candidateId}`, () =>
+      downloadLeaveAttachment({ query }, {
+        id: parsed.data, companyId: session.companyId, candidateId: session.candidateId,
+      })
+    );
+  } catch {
+    return apiError(request, ERR.INTERNAL, 500);
+  }
+}
 
 /** POST multipart atestado on own sick leave */
 export async function POST(request, { params }) {
@@ -20,7 +39,8 @@ export async function POST(request, { params }) {
     const session = await getEmployeeSessionPayload();
     if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
 
-    const idParsed = zPositiveInt.safeParse(params?.id);
+    const resolved = await params;
+    const idParsed = zPositiveInt.safeParse(resolved?.id);
     if (!idParsed.success) return apiError(request, ERR.INVALID_ID, 400);
 
     const rl = await checkRateLimit(
@@ -91,7 +111,8 @@ export async function DELETE(request, { params }) {
     const session = await getEmployeeSessionPayload();
     if (!session) return apiError(request, ERR.UNAUTHORIZED, 401);
 
-    const idParsed = zPositiveInt.safeParse(params?.id);
+    const resolved = await params;
+    const idParsed = zPositiveInt.safeParse(resolved?.id);
     if (!idParsed.success) return apiError(request, ERR.INVALID_ID, 400);
 
     const result = await clearLeaveAttachment(

@@ -13,6 +13,7 @@ ARG NEXT_PUBLIC_APP_URL=https://app.30grow.com
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NODE_OPTIONS=--max-old-space-size=6144
 RUN mkdir -p public
+RUN npm run test:security
 RUN npm run build
 
 # ── Stage 3: runner ──────────────────────────────────────────────────────────

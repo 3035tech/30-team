@@ -278,7 +278,7 @@ describe('module hardening', () => {
   it('keeps Academy creation capability-based and distinguishes review from OKR cycles', () => {
     const academy = source('app/dashboard/tabs/LearningResourcesAdminTab.jsx');
     const reviews = source('app/dashboard/tabs/PerformanceReviewsAdminTab.jsx');
-    const messages = source('lib/i18n.js');
+    const messages = source('lib/i18n/catalogs/pt-BR.js') + source('lib/i18n/catalogs/en-US.js');
     assert.match(academy, /actions=\{<AdminCreateButton label=\{t\('create'\)\}/);
     assert.match(academy, /actionLabel=\{hasActiveFilters \? undefined : t\('create'\)\}/);
     assert.doesNotMatch(academy, /\bisAdmin\b/);

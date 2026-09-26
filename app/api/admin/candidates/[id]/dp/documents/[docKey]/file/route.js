@@ -8,23 +8,55 @@ import {
   requireAnyCapability,
 } from '../../../../../../../../../lib/ae/require-admin.js';
 import { checkRateLimit } from '../../../../../../../../../lib/rate-limit.js';
+import { auditFromRequest } from '../../../../../../../../../lib/audit.js';
+import { DP_DOCUMENT_KEYS } from '../../../../../../../../../lib/domain-status.js';
+import { zPositiveInt } from '../../../../../../../../../lib/validate.js';
+import { dpDownloadResponse } from '../../../../../../../../../lib/people/dp-download-response.js';
 import {
   clearDpDocumentFile,
+  downloadDpDocumentFile,
   uploadDpDocumentFile,
 } from '../../../../../../../../../lib/people/employee-dp.js';
 
 const DP_OR_TEAM = Object.freeze([CAP.DP_VIEW, CAP.TEAM_VIEW]);
 
 async function loadCandidateScope(candidateId, scope) {
+  const values = [candidateId];
+  const unrestricted = scope.isAdmin && scope.companyId == null;
+  const tenantFilter = unrestricted ? '' : 'AND company_id = $2';
+  if (!unrestricted) values.push(scope.companyId);
   const c = await query(
-    `SELECT id, company_id AS "companyId" FROM candidates WHERE id = $1 LIMIT 1`,
-    [candidateId]
+    `SELECT id, company_id AS "companyId" FROM candidates WHERE id = $1 ${tenantFilter} LIMIT 1`,
+    values
   );
   if (c.rowCount === 0) return { error: ERR.NOT_FOUND };
-  if (!scope.isAdmin && String(c.rows[0].companyId) !== String(scope.companyId)) {
-    return { error: ERR.UNAUTHORIZED };
-  }
   return { candidate: c.rows[0] };
+}
+
+/** Private bytes; dpDownloadResponse applies Cache-Control: private, no-store. */
+export async function GET(request, { params }) {
+  try {
+    const payload = await getSessionPayload();
+    if (!payload) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!requireAnyCapability(payload, DP_OR_TEAM)) return apiError(request, ERR.FORBIDDEN, 403);
+    const scope = getManagerScope(payload);
+    if (!scope.authorized) return apiError(request, ERR.FORBIDDEN, 403);
+    const resolved = await params;
+    const candidate = zPositiveInt.safeParse(resolved?.id);
+    const docKey = resolved?.docKey;
+    if (!candidate.success || !DP_DOCUMENT_KEYS.includes(docKey)) {
+      return apiError(request, ERR.INVALID_ID, 400);
+    }
+    const loaded = await loadCandidateScope(candidate.data, scope);
+    if (loaded.error) return apiError(request, loaded.error, 404);
+    return dpDownloadResponse(request, `manager:${payload.userId}`, () =>
+      downloadDpDocumentFile({ query }, {
+        companyId: loaded.candidate.companyId, candidateId: candidate.data, docKey,
+      })
+    );
+  } catch {
+    return apiError(request, ERR.INTERNAL, 500);
+  }
 }
 
 /** POST multipart file upload for a DP document. */
@@ -37,9 +69,11 @@ export async function POST(request, { params }) {
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
-    const candidateId = params?.id;
-    const docKey = params?.docKey;
-    if (!candidateId || !docKey) return apiError(request, ERR.INVALID_ID, 400);
+    const resolved = await params;
+    const parsed = zPositiveInt.safeParse(resolved?.id);
+    const candidateId = parsed.data;
+    const docKey = resolved?.docKey;
+    if (!parsed.success || !DP_DOCUMENT_KEYS.includes(docKey)) return apiError(request, ERR.INVALID_ID, 400);
     const loaded = await loadCandidateScope(candidateId, scope);
     if (loaded.error) {
       return apiError(request, loaded.error, loaded.error === ERR.NOT_FOUND ? 404 : 401);
@@ -67,6 +101,11 @@ export async function POST(request, { params }) {
       },
     });
     if (!result.ok) return apiErrorFromResult(request, result);
+    await auditFromRequest(request, {
+      actorUserId: payload.userId, companyId: loaded.candidate.companyId,
+      action: 'dp.document.file_uploaded', targetType: 'candidate', targetId: candidateId,
+      metadata: { docKey },
+    });
     return NextResponse.json({ ok: true, item: result.item });
   } catch (err) {
     console.error('POST dp document file', err);
@@ -88,9 +127,11 @@ export async function DELETE(request, { params }) {
     const scope = getManagerScope(payload);
     if (!scope.authorized) return apiError(request, ERR.UNAUTHORIZED, 401);
 
-    const candidateId = params?.id;
-    const docKey = params?.docKey;
-    if (!candidateId || !docKey) return apiError(request, ERR.INVALID_ID, 400);
+    const resolved = await params;
+    const parsed = zPositiveInt.safeParse(resolved?.id);
+    const candidateId = parsed.data;
+    const docKey = resolved?.docKey;
+    if (!parsed.success || !DP_DOCUMENT_KEYS.includes(docKey)) return apiError(request, ERR.INVALID_ID, 400);
     const loaded = await loadCandidateScope(candidateId, scope);
     if (loaded.error) {
       return apiError(request, loaded.error, loaded.error === ERR.NOT_FOUND ? 404 : 401);
@@ -103,6 +144,11 @@ export async function DELETE(request, { params }) {
       userId: payload.userId,
     });
     if (!result.ok) return apiErrorFromResult(request, result);
+    await auditFromRequest(request, {
+      actorUserId: payload.userId, companyId: loaded.candidate.companyId,
+      action: 'dp.document.file_removed', targetType: 'candidate', targetId: candidateId,
+      metadata: { docKey },
+    });
     return NextResponse.json({ ok: true, item: result.item });
   } catch (err) {
     console.error('DELETE dp document file', err);
