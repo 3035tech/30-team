@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
+import { formatDisplayDate } from '../../lib/format-display-date';
+import { InlineCallout } from './InlineCallout';
 
 export function FormalReviewResultsBlock({ candidateId, locale = 'pt-BR', onPdiChanged }) {
   const en = locale.startsWith('en');
@@ -10,6 +12,7 @@ export function FormalReviewResultsBlock({ candidateId, locale = 'pt-BR', onPdiC
   const [results, setResults] = useState([]);
   const [state, setState] = useState('loading');
   const [busy, setBusy] = useState(false);
+  const [reload, setReload] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
     setState('loading');
@@ -20,7 +23,7 @@ export function FormalReviewResultsBlock({ candidateId, locale = 'pt-BR', onPdiC
       setResults(data.results || []); setState('ready');
     }).catch(error => { if (error.name !== 'AbortError') setState('error'); });
     return () => controller.abort();
-  }, [candidateId]);
+  }, [candidateId, reload]);
 
   async function useResult(result, item) {
     const values = await promptForm({
@@ -47,16 +50,30 @@ export function FormalReviewResultsBlock({ candidateId, locale = 'pt-BR', onPdiC
   }
   if (state === 'forbidden') return null;
   return <section className={`${S.card} ${S.stack}`} aria-label={en ? 'Review results' : 'Resultados de avaliações'}>
-    <h3 className={S.cardSection}>{en ? 'Review results' : 'Resultados de avaliações'}</h3>
-    {state === 'loading' ? <p>{en ? 'Loading…' : 'Carregando…'}</p> : null}
-    {state === 'error' ? <p role="alert">{en ? 'Could not load review results.' : 'Não foi possível carregar os resultados.'}</p> : null}
-    {state === 'ready' && !results.length ? <p>{en ? 'No completed reviews.' : 'Nenhuma avaliação concluída.'}</p> : null}
-    {results.map(result => <details key={result.id} className="rounded-control border border-ink/10 p-3">
-      <summary className="cursor-pointer font-medium">{result.cycleTitle} · {result.periodStart?.slice(0, 10) || '—'} — {result.periodEnd?.slice(0, 10) || '—'}</summary>
-      <ul className="m-0 list-none space-y-3 p-0 pt-3">{result.items.map(item => <li key={item.id}>
-        <p className="m-0">{item.label} · {item.average == null ? '—' : item.average.toLocaleString(locale, { maximumFractionDigits: 2 })}/5</p>
-        <p className={S.faint}>{item.description}</p>
-        <button type="button" className={S.btnGhost} disabled={busy} onClick={() => useResult(result, item)}>{en ? 'Use in PDI' : 'Usar no PDI'}</button>
+    <div>
+      <h3 className={S.cardSection}>{en ? 'Review results' : 'Resultados de avaliações'}</h3>
+      <p className={`m-0 ${S.muted}`}>{en ? 'Review completed cycles and choose what to develop in PDI.' : 'Consulte os ciclos concluídos e escolha o que desenvolver no PDI.'}</p>
+    </div>
+    {state === 'loading' ? <p role="status" className={`m-0 ${S.muted}`}>{en ? 'Loading results…' : 'Carregando resultados…'}</p> : null}
+    {state === 'error' ? <InlineCallout tone="danger" role="alert">
+      <p className="m-0 mb-2">{en ? 'Could not load review results.' : 'Não foi possível carregar os resultados.'}</p>
+      <button type="button" className={S.btnGhost} onClick={() => setReload(value => value + 1)}>{en ? 'Try again' : 'Tentar novamente'}</button>
+    </InlineCallout> : null}
+    {state === 'ready' && !results.length ? <p className={`m-0 ${S.muted}`}>{en ? 'No completed reviews yet. Results will appear here when available.' : 'Nenhuma avaliação concluída ainda. Os resultados aparecerão aqui quando disponíveis.'}</p> : null}
+    {state === 'ready' && results.map(result => <details key={result.id} className="min-w-0 rounded-control border border-ink/10 p-3 sm:p-4">
+      <summary className="cursor-pointer break-words rounded-control font-ui font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">
+        {result.cycleTitle}
+        <span className={`mt-1 block font-normal ${S.cardMuted}`}>{formatDisplayDate(result.periodStart, locale)} — {formatDisplayDate(result.periodEnd, locale)}</span>
+      </summary>
+      <ul className="m-0 list-none divide-y divide-ink/10 p-0 pt-2">{result.items.map(item => <li key={item.id} className="flex min-w-0 flex-col gap-3 py-4 last:pb-0 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <h4 className={`m-0 break-words ${S.cardTitle}`}>{item.label}</h4>
+          {item.description ? <p className={`mb-0 mt-1 whitespace-pre-wrap break-words ${S.muted}`}>{item.description}</p> : null}
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 sm:flex-col sm:items-end">
+          <p className={`m-0 ${S.cardMuted}`}>{en ? 'Average' : 'Média'} <span className={`${S.cardMetric} text-ink`}>{item.average == null ? '—' : `${item.average.toLocaleString(locale, { maximumFractionDigits: 2 })}/5`}</span></p>
+          <button type="button" className={S.btnGhost} disabled={busy} onClick={() => useResult(result, item)}>{en ? 'Use in PDI' : 'Usar no PDI'}</button>
+        </div>
       </li>)}</ul>
     </details>)}
   </section>;

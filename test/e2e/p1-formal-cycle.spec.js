@@ -82,6 +82,16 @@ test('P1: shared questionnaires, 90/180/360 roles, relational answers, completed
     const section = page.getByRole('region', { name: 'Resultados de avaliações', exact: true });
     await expect(section, browserErrors.join('\n')).toBeVisible({ timeout: 20000 });
     await section.locator('summary').first().click();
+    await expect(section).toContainText('Média 4/5');
+    await expect(section.locator('summary').first()).toContainText(today.split('-').reverse().join('/'));
+    await section.screenshot({ path: '/private/tmp/p1-results-polish-desktop.png' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.keyboard.press('Escape');
+    const bounds = await section.boundingBox();
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
+    expect(await section.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    await section.screenshot({ path: '/private/tmp/p1-results-polish-mobile.png' });
+    await page.setViewportSize({ width: 1280, height: 900 });
     await section.getByRole('button', { name: 'Usar no PDI', exact: true }).first().click();
     await page.getByRole('dialog').getByRole('button', { name: 'Salvar', exact: true }).click();
     await page.getByRole('dialog').getByRole('button', { name: /cancelar/i }).last().click();
@@ -93,6 +103,24 @@ test('P1: shared questionnaires, 90/180/360 roles, relational answers, completed
     await json(created);
     expect((await json(page.request.get(`/api/admin/candidates/${subject.id}/development-plans`))).items.length).toBe(plansBefore.items.length + 1);
     expect((await json(page.request.get(`/api/admin/formal-reviews/${lastReview.id}`))).review.scores).toEqual(historical.review.scores);
+    await page.route(`**/api/admin/candidates/${subject.id}/formal-review-results`, route => route.fulfill({ status: 500, json: { error: 'Test failure' } }));
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(section.getByRole('alert')).toContainText('Não foi possível carregar os resultados.');
+    await expect(section.locator('details')).toHaveCount(0);
+    await page.unroute(`**/api/admin/candidates/${subject.id}/formal-review-results`);
+    await section.getByRole('button', { name: 'Tentar novamente' }).click();
+    await expect(section.locator('details')).toHaveCount(3);
+    await page.goto('/dashboard?tab=performance-reviews');
+    await page.getByRole('row').filter({ has: page.getByRole('cell', { name: `P1 360 ${stamp}`, exact: true }) }).getByRole('button').click();
+    const configuration = page.getByRole('region', { name: 'Configuração do ciclo', exact: true });
+    await expect(configuration).toContainText(today.split('-').reverse().join('/'));
+    await expect(configuration).toContainText('Competências (1)');
+    await expect(configuration).toContainText('Qual foi sua contribuição?');
+    await configuration.screenshot({ path: '/private/tmp/p1-cycle-polish-desktop.png' });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.keyboard.press('Escape');
+    expect(await configuration.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    await configuration.screenshot({ path: '/private/tmp/p1-cycle-polish-mobile.png' });
   } finally {
     // Only exact synthetic IDs created by this test.
     await db.query('DELETE FROM formal_review_open_answers WHERE rater_id IN (SELECT rr.id FROM formal_review_raters rr JOIN formal_reviews r ON r.id = rr.review_id WHERE r.cycle_id = ANY($1::bigint[]))', [createdCycles]);

@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { errorMessage, t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { formatDisplayDate } from '../../lib/format-display-date';
 import { suggestSelfAssessment } from '../../lib/people/self-assessment-suggestion';
 import {
   FORMAL_LIKERT_MAX,
@@ -332,7 +333,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(apiToastError(locale, json, 'saveError'));
-      toast(tf(locale, 'cycleCreated'), 'ok');
+      toast(draft ? (locale.startsWith('en') ? 'Draft updated.' : 'Rascunho atualizado.') : tf(locale, 'cycleCreated'), 'ok');
       await loadCatalogAndCycles();
       if (draft) { setSelectedCycle(json.cycle); await loadReviews(draft.id); }
     } catch (err) {
@@ -762,12 +763,30 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
           {selectedCycle.includeSelf ? (
             <InlineCallout tone="info">{tf(locale, 'includeSelfHint')}</InlineCallout>
           ) : null}
-          <section className={S.stack}>
-            <p>{selectedCycle.periodStart?.slice(0, 10) || '—'} — {selectedCycle.periodEnd?.slice(0, 10) || '—'}</p>
-            <p className="whitespace-pre-wrap">{selectedCycle.instructions}</p>
-            <p>{locale.startsWith('en') ? 'Scale' : 'Escala'}: {selectedCycle.responseScale === 'frequency' ? (locale.startsWith('en') ? '1 Never — 5 Always' : '1 Nunca — 5 Sempre') : (locale.startsWith('en') ? '1 Strongly disagree — 5 Strongly agree' : '1 Discordo totalmente — 5 Concordo totalmente')}</p>
-            <ul>{(selectedCycle.questionnaire || []).map(item => <li key={item.competencyId}>{item.label}</li>)}</ul>
-            {(selectedCycle.openQuestions || []).map(question => <p key={question.id}>{question.prompt}</p>)}
+          <section className={`${S.card} ${S.stack}`} aria-label={locale.startsWith('en') ? 'Cycle configuration' : 'Configuração do ciclo'}>
+            <h3 className={`m-0 ${S.cardTitle}`}>{locale.startsWith('en') ? 'Cycle configuration' : 'Configuração do ciclo'}</h3>
+            <dl className="m-0 grid gap-4 sm:grid-cols-2">
+              <div>
+                <dt className={S.cardMuted}>{locale.startsWith('en') ? 'Review period' : 'Período de avaliação'}</dt>
+                <dd className={`m-0 mt-1 ${S.cardBody}`}>{formatDisplayDate(selectedCycle.periodStart, locale)} — {formatDisplayDate(selectedCycle.periodEnd, locale)}</dd>
+              </div>
+              <div>
+                <dt className={S.cardMuted}>{locale.startsWith('en') ? 'Response scale' : 'Escala de resposta'}</dt>
+                <dd className={`m-0 mt-1 ${S.cardBody}`}>{selectedCycle.responseScale === 'frequency' ? (locale.startsWith('en') ? '1 Never — 5 Always' : '1 Nunca — 5 Sempre') : (locale.startsWith('en') ? '1 Strongly disagree — 5 Strongly agree' : '1 Discordo totalmente — 5 Concordo totalmente')}</dd>
+              </div>
+            </dl>
+            {selectedCycle.instructions ? <div>
+              <h4 className={`m-0 ${S.cardTitle}`}>{locale.startsWith('en') ? 'Instructions' : 'Instruções'}</h4>
+              <p className={`mb-0 mt-1 whitespace-pre-wrap break-words ${S.muted}`}>{selectedCycle.instructions}</p>
+            </div> : null}
+            <div>
+              <h4 className={`m-0 ${S.cardTitle}`}>{locale.startsWith('en') ? 'Competencies' : 'Competências'} ({selectedCycle.questionnaire?.length || 0})</h4>
+              {selectedCycle.questionnaire?.length ? <ul className={`mb-0 mt-2 list-disc space-y-1 pl-5 ${S.cardBody}`}>{selectedCycle.questionnaire.map(item => <li className="break-words" key={item.competencyId}>{item.label}</li>)}</ul> : <p className={`mb-0 mt-1 ${S.muted}`}>{locale.startsWith('en') ? 'No competencies selected.' : 'Nenhuma competência selecionada.'}</p>}
+            </div>
+            {selectedCycle.openQuestions?.length ? <div>
+              <h4 className={`m-0 ${S.cardTitle}`}>{locale.startsWith('en') ? 'Open-ended questions' : 'Perguntas abertas'}</h4>
+              <ol className={`mb-0 mt-2 list-decimal space-y-2 pl-5 ${S.cardBody}`}>{selectedCycle.openQuestions.map(question => <li className="whitespace-pre-wrap break-words" key={question.id}>{question.prompt}</li>)}</ol>
+            </div> : null}
           </section>
           {reviews.length === 0 ? (
             <EmptyState message={tf(locale, 'reviewsEmpty')} />
