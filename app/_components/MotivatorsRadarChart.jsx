@@ -15,6 +15,7 @@ import { LOGO } from '../../lib/brand';
 import { C } from '../../lib/theme';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
+import { motivatorWorkMeaning } from '../../lib/ae/motivators-dimensions';
 import {
   buildMotivatorsRadarPoints,
   pickMotivatorsRadarPeaks,
@@ -26,7 +27,7 @@ function RadarTooltip({ active, payload, locale }) {
   if (!row) return null;
   return (
     <div className="rounded-control border border-ink/12 bg-surface px-2.5 py-1.5 shadow-sm">
-      <div className="font-mono text-2xs text-ink-faint">{row.label}</div>
+      <div className="font-ui text-prose text-ink/75">{row.label}</div>
       <div className="mt-0.5 text-prose font-medium text-ink">
         {Math.round(Number(row.score) || 0)}
         <span className="ml-1 font-normal text-ink-muted">
@@ -139,7 +140,7 @@ export function MotivatorsRadarChart({
   }, [dimensionScores, dimensions, locale]);
 
   const peaks = useMemo(
-    () => pickMotivatorsRadarPeaks(data, 3),
+    () => pickMotivatorsRadarPeaks(data, 5),
     [data]
   );
   const peakKeys = useMemo(() => new Set(peaks.map((p) => p.key)), [peaks]);
@@ -158,8 +159,8 @@ export function MotivatorsRadarChart({
     <div className={cn('w-full', className)}>
       {!hideHeader ? (
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-          <span className={S.label}>{heading}</span>
-          <span className="font-mono text-2xs text-ink-faint">{sub}</span>
+          <h3 className={`m-0 ${S.cardTitle}`}>{heading}</h3>
+          <span className={S.cardMuted}>{sub}</span>
         </div>
       ) : null}
 
@@ -227,26 +228,24 @@ export function MotivatorsRadarChart({
       </div>
 
       {showPeaks && peaks.length > 0 ? (
-        <div className="mt-2.5">
-          <span className={cn(S.label, 'mb-1.5')}>
-            {t(locale, 'panel.team.motivatorsRadarPeaks')}
-          </span>
-          <div className="flex flex-wrap gap-1.5">
+        <section className="mt-4" aria-label={locale.startsWith('en') ? 'Main motivators' : 'Principais motivadores'}>
+          <h4 className={`m-0 mb-2 ${S.cardTitle}`}>{locale.startsWith('en') ? 'Main motivators' : 'Principais motivadores'}</h4>
+          <ol className="m-0 list-none divide-y divide-ink/10 p-0">
             {peaks.map((d) => (
-              <span
-                key={d.key}
-                className={cn(
-                  'inline-flex min-h-8 items-center gap-1.5 rounded-control border bg-surface px-2.5 text-xs text-ink',
-                  !d.color && 'border-ink/12'
-                )}
-                style={d.color ? { borderColor: d.color } : undefined}
-              >
-                <span className="max-w-[12rem] truncate">{d.label}</span>
-                <span className="font-mono text-2xs text-ink-faint">{Math.round(d.score)}</span>
-              </span>
+              <li key={d.key} className="py-3 first:pt-0">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="font-ui text-sm font-semibold text-ink">{d.label}</span>
+                  <span className="shrink-0 text-sm tabular-nums text-ink-muted">{Math.round(d.score)}/100</span>
+                </div>
+                <p className="mb-0 mt-1 text-sm leading-relaxed text-ink-muted">{motivatorWorkMeaning(d.key, locale)}</p>
+              </li>
             ))}
-          </div>
-        </div>
+          </ol>
+          <details className="text-prose text-ink-muted">
+            <summary className="min-h-touch cursor-pointer rounded-control py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">{locale.startsWith('en') ? 'About this ranking' : 'Sobre esta ordem'}</summary>
+            <p className="mt-0">{locale.startsWith('en') ? 'Up to five positive scores, highest first. Ties follow alphabetical order of the motivator identifiers in Portuguese. These are prompts for conversation, not fixed labels.' : 'Até cinco pontuações positivas, da maior para a menor. Empates seguem a ordem alfabética dos identificadores dos motivadores em português. Use como ponto de partida para uma conversa, não como rótulo fixo.'}</p>
+          </details>
+        </section>
       ) : null}
     </div>
   );

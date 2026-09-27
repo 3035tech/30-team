@@ -936,7 +936,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
                   {t(locale, 'panel.lms.statusInactive')}
                 </StatusToneChip>
               )}
-              <span className={cn(S.muted, 'text-xs')}>
+              <span className={cn(S.muted, 'text-prose')}>
                 {t(locale, 'panel.lms.completionRule', { pct: course.completionPct })}
               </span>
             </div>
@@ -951,8 +951,8 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
             {ops ? (
               <p
                 className={cn(
-                  'm-0 font-mono text-xs',
-                  ops.overdue > 0 ? 'text-danger' : 'text-ink-muted'
+                  'm-0 font-mono text-prose',
+                  ops.overdue > 0 ? 'text-red-800 dark:text-danger' : 'text-ink-muted'
                 )}
               >
                 {t(locale, 'panel.lms.opsSummary', {
@@ -986,7 +986,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h3 className="m-0 font-ui text-base font-semibold text-ink">
                   {t(locale, 'panel.lms.lessonsTitle')}
-                  <span className="ml-2 font-mono text-2xs font-normal text-ink-faint">
+                  <span className="ml-2 font-ui text-prose font-normal text-ink/75">
                     {(detail.lessons || []).length}
                   </span>
                 </h3>
@@ -1013,7 +1013,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
                     >
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2 text-sm text-ink">
-                          <span className="font-mono text-2xs text-ink-faint">{index + 1}.</span>
+                          <span className="font-ui text-prose text-ink/75">{index + 1}.</span>
                           <span className="font-medium">{l.title}</span>
                           {!l.active ? (
                             <StatusToneChip tone="neutral" bordered={false}>
@@ -1024,7 +1024,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
                         {l.description ? (
                           <RichTextView
                             html={l.description}
-                            className="mb-0 mt-1.5 max-w-3xl text-xs leading-relaxed text-ink-muted"
+                            className="mb-0 mt-1.5 max-w-3xl text-prose leading-relaxed text-ink-muted"
                           />
                         ) : null}
                         <div className="mt-1.5">
@@ -1120,7 +1120,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
                             </StatusToneChip>
                           ) : null}
                         </div>
-                        <span className="font-mono text-2xs text-ink-muted">
+                        <span className="font-ui text-prose text-ink-muted">
                           {row.completionPct}% · {row.completed}/{row.enrolled}
                         </span>
                       </div>
@@ -1257,13 +1257,13 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
                         <tr key={row.id} className="border-b border-ink/8">
                           <td className="px-4 py-3">
                             <div className="text-sm text-ink">{row.fullName}</div>
-                            <div className="font-mono text-2xs text-ink-faint">{row.email}</div>
+                            <div className="font-ui text-prose text-ink/75">{row.email}</div>
                             {row.cohortName ? (
-                              <div className="mt-1 text-xs text-ink-muted">
+                              <div className="mt-1 text-prose text-ink-muted">
                                 {lmsText(locale, 'cohortLabel', 'Turma')}: {row.cohortName}
                               </div>
                             ) : null}
-                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-prose text-ink-muted">
                               {row.dueDate ? (
                                 <span>
                                   {lmsText(locale, 'enrollmentDue', 'Prazo')}: {row.dueDate}
@@ -1281,7 +1281,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
                               ) : null}
                             </div>
                           </td>
-                          <td className="px-4 py-3 font-mono text-xs text-ink-muted">
+                          <td className="px-4 py-3 font-mono text-prose text-ink-muted">
                             {row.progressPct}%
                             {row.isComplete ? (
                               <span className="ml-2 text-success">
@@ -1428,8 +1428,8 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
                     {pageRows.map((c) => (
                       <tr key={c.id} className="hover:bg-canvas-alt/50">
                         <td className="px-4 py-3 text-sm text-ink">{c.title}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-ink-muted">{c.lessonCount}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-ink-muted">
+                        <td className="px-4 py-3 font-mono text-prose text-ink-muted">{c.lessonCount}</td>
+                        <td className="px-4 py-3 font-mono text-prose text-ink-muted">
                           {c.completedCount}/{c.enrollmentCount}
                         </td>
                         <td className="px-4 py-3">

@@ -80,6 +80,7 @@ export function AppFeedbackProvider({ children, locale = 'pt-BR' }) {
         fields,
         confirmLabel: opts.confirmLabel,
         cancelLabel: opts.cancelLabel,
+        submit: opts.submit,
         resolve,
       });
     });
@@ -148,7 +149,9 @@ export function AppFeedbackProvider({ children, locale = 'pt-BR' }) {
             promptState.resolve(null);
             setPromptState(null);
           }}
-          onSubmit={(values) => {
+          onSubmit={async (values) => {
+            // Optional persistence hook: rejection leaves the form and its values open.
+            if (promptState.submit) await promptState.submit(values);
             promptState.resolve(values);
             setPromptState(null);
           }}

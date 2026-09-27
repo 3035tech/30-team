@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { UI_TYPE } from '../../lib/ui-typography';
 import { cn } from '../../lib/cn';
 
 const actionClass =
@@ -35,20 +36,20 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        'rounded-control border border-dashed border-ink/12 bg-ink/[0.02] px-4 py-5 text-center',
+        'rounded-control border border-ink/12 bg-ink/[0.02] px-4 py-4 text-left',
         className
       )}
     >
       {title ? (
-        <p className="mb-1.5 mt-0 font-ui text-base font-semibold text-ink">{title}</p>
+        <p className={cn("mb-1 mt-0", UI_TYPE.card)}>{title}</p>
       ) : null}
       {message ? (
-        <p className="mx-auto my-0 max-w-[42ch] text-prose leading-[1.55] text-ink-muted">
+        <p className={cn("my-0 max-w-[60ch]", UI_TYPE.supporting)}>
           {message}
         </p>
       ) : null}
       {showActions ? (
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           {showLink ? (
             <Link href={actionHref} className={actionClass}>
               {actionLabel}

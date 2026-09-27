@@ -28,7 +28,7 @@ import {
   parseTeamSort,
 } from '../../lib/assessment-filters';
 
-import { DashboardBreadcrumb, getDashboardTabNav, S } from './dashboard-shared';
+import { DashboardBreadcrumb, DashboardPageTitleContext, getDashboardTabNav, S } from './dashboard-shared';
 import { useDashboardNavigation } from './hooks/useDashboardNavigation';
 import { PipelineExtrasProvider } from './PipelineExtrasContext';
 import { AppFeedbackProvider, useAppFeedbackOptional } from '../_components/AppFeedback';
@@ -889,7 +889,7 @@ function DashboardClientContent({
       <button
         type="button"
         className={cn(
-          'group mb-0.5 flex min-h-touch w-full cursor-pointer items-center justify-between gap-2 rounded-control border-0 bg-transparent px-2.5 text-left font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-ink-faint hover:bg-ink/[0.025] hover:text-ink-muted'
+          'group mb-0.5 flex min-h-touch w-full cursor-pointer items-center justify-between gap-2 rounded-control border-0 bg-transparent px-2.5 text-left font-ui text-prose font-semibold normal-case tracking-normal text-ink/75 hover:bg-ink/[0.025] hover:text-ink'
         )}
         onClick={() => {
           toggleNavSection(sectionKey);
@@ -1056,7 +1056,7 @@ function DashboardClientContent({
                 {sectionBody(DASHBOARD_NAV_SECTION.DEVELOPMENT, (
                   <>
                     {showPdi ? (
-                      <NavLink id="pdi" icon="clipboard" label="PDI" />
+                      <NavLink id="pdi" icon="clipboard" label={t(locale, 'dashboard.pdi')} />
                     ) : null}
                     {showPerformance ? (
                       <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} />
@@ -1159,6 +1159,7 @@ function DashboardClientContent({
         </aside>
 
         <main className="db-main relative max-w-[1600px] min-w-0 flex-1 px-6 pb-[60px] pt-7">
+          <DashboardPageTitleContext.Provider value={isPersonFocus || isVacancyDetail ? null : t(locale, getDashboardTabNav(tab).labelKey)}>
           <NavLoadBar active={panelLoading} />
 
           <div className="db-top-row mb-4 flex flex-wrap items-start gap-3">
@@ -1233,9 +1234,9 @@ function DashboardClientContent({
                   onHome={() => navigateToTab('overview')}
                 />
               </div>
-              {!isVacancyDetail ? <h2 className="db-page-title mb-1 font-ui text-3xl font-semibold tracking-tight text-ink">
+              {!isVacancyDetail ? <h1 className={cn("db-page-title mb-1", S.pageTitle)}>
                 {t(locale, getDashboardTabNav(tab).labelKey)}
-              </h2> : null}
+              </h1> : null}
               {!isVacancyDetail ? <span className="text-prose text-ink-muted">
                 {panelLoading ? (
                   t(locale, 'dashboard.loadingPanel')
@@ -1398,7 +1399,7 @@ function DashboardClientContent({
             </SelectField>
             ) : null}
             <div className="inline-flex h-[38px] items-center gap-1.5 rounded-control border border-ink/12 bg-ink/[0.05] px-3">
-              <span className="whitespace-nowrap font-mono text-2xs text-ink-faint">{t(locale, 'dashboard.dateFromLabel')}</span>
+              <span className="whitespace-nowrap font-ui text-prose text-ink/75">{t(locale, 'dashboard.dateFromLabel')}</span>
               <DateField
                 bare
                 value={dateFrom}
@@ -1406,7 +1407,7 @@ function DashboardClientContent({
                 aria-label={t(locale, 'dashboard.dateFromLabel')}
                 className="min-w-[120px]"
               />
-              <span className="whitespace-nowrap font-mono text-2xs text-ink-faint">{t(locale, 'dashboard.dateToLabel')}</span>
+              <span className="whitespace-nowrap font-ui text-prose text-ink/75">{t(locale, 'dashboard.dateToLabel')}</span>
               <DateField
                 bare
                 value={dateTo}
@@ -1437,7 +1438,7 @@ function DashboardClientContent({
               <button
                 type="button"
                 onClick={clearAllFilters}
-                className="cursor-pointer rounded-full border border-ink/12 bg-transparent px-2.5 py-1 font-mono text-2xs text-ink-muted"
+                className="cursor-pointer rounded-full border border-ink/12 bg-transparent px-2.5 py-1 font-ui text-prose text-ink/75"
               >
                 {t(locale, 'common.clearAll')}
               </button>
@@ -1747,6 +1748,7 @@ function DashboardClientContent({
           </>
           </ContentEnter>
           )}
+          </DashboardPageTitleContext.Provider>
         </main>
       </div>
     </div>

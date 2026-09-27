@@ -807,7 +807,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
                       <StatusToneChip tone={reviewStatusTone(r.status)}>
                         {reviewStatusLabel(locale, r.status)}
                       </StatusToneChip>
-                      <p className="m-0 mt-1 text-xs text-ink-muted">{r.submittedCount || 0}/{r.responseCount || 0} {locale.startsWith('en') ? 'responses completed' : 'respostas concluídas'}</p>
+                      <p className="m-0 mt-1 text-prose text-ink-muted">{r.submittedCount || 0}/{r.responseCount || 0} {locale.startsWith('en') ? 'responses completed' : 'respostas concluídas'}</p>
                     </td>
                     <td className="px-3 py-2">
                       <AdminActionsCell>
@@ -861,12 +861,12 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
                       {modelShort(locale, c.model)}
                     </StatusToneChip>
                     {c.includeSelf ? (
-                      <span className="ml-1 font-mono text-2xs text-ink-faint">
+                      <span className="ml-1 font-ui text-prose text-ink/75">
                         · {tf(locale, 'roleSelf')}
                       </span>
                     ) : null}
                   </td>
-                  <td className="px-3 py-2 font-mono text-prose text-ink-muted">
+                  <td className="px-3 py-2 font-ui text-prose text-ink-muted">
                     {c.reviewCount != null ? c.reviewCount : '—'}
                   </td>
                   <td className="px-3 py-2">

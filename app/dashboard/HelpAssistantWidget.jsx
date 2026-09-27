@@ -292,7 +292,7 @@ export function HelpAssistantWidget({
       <button
         type="button"
         className={cn(
-          'pointer-events-auto inline-flex min-h-touch min-w-touch items-center gap-2 rounded-full border border-brand-500/35 bg-brand-500 px-4 py-2.5 font-ui text-prose font-semibold text-white shadow-toast',
+          'pointer-events-auto inline-flex min-h-touch min-w-touch items-center gap-2 rounded-full border border-brand-500/35 bg-brand-500 px-4 py-2.5 font-ui text-prose font-semibold text-white dark:text-canvas shadow-toast',
           open && 'bg-brand-600'
         )}
         onClick={() => setOpen((v) => !v)}
@@ -300,9 +300,9 @@ export function HelpAssistantWidget({
         aria-label={t(locale, 'panel.helpAssist.open')}
         title={t(locale, 'panel.helpAssist.open')}
       >
-        <Icon name="sparkles" className="h-[18px] w-[18px] shrink-0 text-white" />
+        <Icon name="sparkles" className="h-[18px] w-[18px] shrink-0" />
         <span className="hidden sm:inline">{t(locale, 'panel.helpAssist.fab')}</span>
-        <span className="inline-flex items-center rounded-full bg-white/20 px-1.5 py-0.5 font-mono text-2xs font-semibold uppercase tracking-wide text-white sm:hidden">
+        <span className="inline-flex items-center rounded-full bg-white/20 dark:bg-canvas/10 px-1.5 py-0.5 font-ui text-prose font-semibold sm:hidden">
           {t(locale, 'panel.helpAssist.badge')}
         </span>
       </button>

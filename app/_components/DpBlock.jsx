@@ -220,9 +220,40 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
   }
 
   const editProfile = async () => {
-    const values = await promptForm({
+    await promptForm({
       title: t(locale, 'panel.dp.editProfile'),
       confirmLabel: t(locale, 'panel.dp.save'),
+      submit: async (values) => {
+        if ([values.phone, values.emergencyPhone].some(value => value && (String(value).replace(/\D/g, '').length < 10 || String(value).replace(/\D/g, '').length > 15))) {
+          throw new Error(locale.startsWith('en') ? 'Enter a phone number with area code (10–15 digits), or leave it blank.' : 'Informe o telefone com DDD (10 a 15 dígitos), ou deixe em branco.');
+        }
+        if (values.cpf && String(values.cpf).replace(/\D/g, '').length !== 11) {
+          throw new Error(locale.startsWith('en') ? 'Enter an 11-digit CPF, or leave it blank.' : 'Informe um CPF com 11 dígitos, ou deixe em branco.');
+        }
+        const res = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fullName: values.fullName,
+            personalEmail: values.personalEmail,
+            phone: values.phone,
+            maritalStatus: values.maritalStatus,
+            employeeNumber: values.employeeNumber,
+            workFormat: values.workFormat,
+            workFormatEffectiveDate: values.workFormatEffectiveDate,
+            workHistory: values.workHistory,
+            birthDate: values.birthDate,
+            dpProfile: values,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || t(locale, 'panel.dp.saveError'));
+        const { dpProfile, ...savedCandidate } = data;
+        setProfile(dpProfile);
+        setCandidate((prev) => ({ ...prev, ...savedCandidate }));
+        toast(t(locale, 'panel.dp.saved'), 'ok');
+        await load();
+      },
       fields: [
         {
           key: 'fullName',
@@ -279,6 +310,13 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             { value: 'cooperative', label: t(locale, 'panel.dp.workFormatCooperative') },
             { value: 'pj', label: t(locale, 'panel.dp.workFormatPj') },
           ],
+        },
+        {
+          key: 'workFormatEffectiveDate',
+          type: 'date',
+          required: true,
+          label: t(locale, 'panel.dp.workFormatEffectiveDate'),
+          showWhen: values => (values.workFormat || '') !== (candidate?.workFormat || ''),
         },
         {
           key: 'workHistory',
@@ -372,59 +410,6 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
         },
       ],
     });
-    if (!values) return;
-    if ([values.phone, values.emergencyPhone].some(value => value && (String(value).replace(/\D/g, '').length < 10 || String(value).replace(/\D/g, '').length > 15))) {
-      toast(locale.startsWith('en') ? 'Enter a phone number with area code (10–15 digits), or leave it blank.' : 'Informe o telefone com DDD (10 a 15 dígitos), ou deixe em branco.', 'error');
-      return;
-    }
-    if (values.cpf && String(values.cpf).replace(/\D/g, '').length !== 11) {
-      toast(locale.startsWith('en') ? 'Enter an 11-digit CPF, or leave it blank.' : 'Informe um CPF com 11 dígitos, ou deixe em branco.', 'error');
-      return;
-    }
-    if ((values.workFormat || '') !== (candidate?.workFormat || '')) {
-      const change = await promptForm({
-        title: t(locale, 'panel.dp.workFormatHistory'),
-        confirmLabel: t(locale, 'panel.dp.save'),
-        fields: [{ key: 'effectiveDate', type: 'date', required: true, label: t(locale, 'panel.dp.workFormatEffectiveDate') }],
-      });
-      if (!change) return;
-      values.workFormatEffectiveDate = change.effectiveDate;
-    }
-    setBusy(true);
-    try {
-      const candidateRes = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullName: values.fullName,
-          personalEmail: values.personalEmail,
-          phone: values.phone,
-          maritalStatus: values.maritalStatus,
-          employeeNumber: values.employeeNumber,
-          workFormat: values.workFormat,
-          workFormatEffectiveDate: values.workFormatEffectiveDate,
-          workHistory: values.workHistory,
-          birthDate: values.birthDate,
-        }),
-      });
-      const candidateData = await candidateRes.json().catch(() => ({}));
-      if (!candidateRes.ok) throw new Error(candidateData?.error || 'save');
-      const res = await fetch(baseUrl, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'save');
-      setProfile(data.profile || values);
-      setCandidate((prev) => ({ ...prev, ...candidateData }));
-      toast(t(locale, 'panel.dp.saved'), 'ok');
-      await load();
-    } catch (e) {
-      toast(e?.message || t(locale, 'panel.dp.saveError'), 'error');
-    } finally {
-      setBusy(false);
-    }
   };
 
   const editDocument = async (doc) => {
@@ -502,7 +487,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       fd.append('file', file);
       const res = await fetch(
         `${baseUrl}/documents/${encodeURIComponent(docKey)}/file`,
-        { method: 'POST', body: fd }
+        { method: 'POST', body: fd, signal: AbortSignal.timeout(30000) }
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -514,7 +499,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       );
       toast(t(locale, 'panel.dp.uploadOk'), 'ok');
     } catch (e) {
-      toast(e?.message || t(locale, 'panel.dp.uploadError'), 'error');
+      toast(e?.name === 'TimeoutError' ? t(locale, 'panel.dp.uploadTimeout') : e?.message || t(locale, 'panel.dp.uploadError'), 'error');
     } finally {
       setBusy(false);
       setUploadKey(null);
@@ -1112,7 +1097,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                 key={doc.docKey}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-control border border-ink/10 bg-surface px-3 py-2.5"
               >
-                <div className="min-w-0">
+                <div className="min-w-0 max-w-full">
                   <div className="font-ui text-sm text-ink">{docKeyLabel(locale, doc.docKey)}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
                     <StatusToneChip tone={docStatusTone(doc.status)}>
@@ -1155,7 +1140,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                   ) : null}
                 </div>
                 {!readOnly ? (
-                  <div className="flex shrink-0 flex-wrap gap-1">
+                  <div className="flex w-full min-w-0 flex-wrap gap-1 sm:w-auto">
                     <AdminEditButton
                       label={t(locale, 'panel.dp.docEdit')}
                       onClick={() => void editDocument(doc)}

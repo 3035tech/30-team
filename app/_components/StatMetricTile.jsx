@@ -4,7 +4,7 @@ import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 
 /**
- * KPI / metric tile (big number + mono label). Overview, Leadership, Analytics.
+ * Metric tile: numeric value plus a readable supporting label.
  */
 export function StatMetricTile({
   value,
@@ -32,11 +32,11 @@ export function StatMetricTile({
       >
         {value}
       </div>
-      <div className="mt-1 font-mono text-2xs uppercase tracking-wide text-ink-muted">
+      <div className={cn(S.cardMuted, 'mt-1')}>
         {label}
       </div>
       {hint ? (
-        <div className="mt-1.5 font-ui text-2xs leading-snug text-ink-muted">{hint}</div>
+        <div className={cn(S.cardMuted, 'mt-1.5')}>{hint}</div>
       ) : null}
     </Tag>
   );

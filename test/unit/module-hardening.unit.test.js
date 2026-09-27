@@ -152,7 +152,7 @@ describe('module hardening', () => {
     assert.match(dashboard, /<NavLink id="help" icon="help"/);
     assert.match(dashboard, /DASHBOARD_NAV_SECTION\.DEVELOPMENT/);
     assert.match(dashboard, /DASHBOARD_NAV_SECTION\.CULTURE_HR/);
-    assert.match(dashboard, /text-left font-mono text-\[0\.6875rem\].*uppercase tracking-\[0\.12em\]/);
+    assert.match(dashboard, /text-left font-ui text-prose font-semibold normal-case tracking-normal/);
     assert.match(dashboard, /mx-2 my-1 h-px bg-ink\/\[0\.07\]/);
   });
 

@@ -30,17 +30,17 @@ export default function LanguageSelect({ locale, onChange, persistUser = false, 
     <label
       className={cn(
         'inline-flex items-center gap-2 text-ink-muted',
-        compact ? 'text-2xs' : 'text-xs'
+        'font-ui text-prose'
       )}
     >
-      <span className="font-mono uppercase tracking-wide">{t(current, 'common.language')}</span>
+      <span className="font-medium normal-case tracking-normal">{t(current, 'common.language')}</span>
       <SelectField
         aria-label={t(current, 'common.language')}
         value={current}
         onChange={(e) => changeLocale(e.target.value)}
         className={cn(
           fieldSelectClass,
-          'border-brand-500/16 font-display text-xs',
+          'border-brand-500/16',
           compact ? 'min-h-touch' : ''
         )}
       >

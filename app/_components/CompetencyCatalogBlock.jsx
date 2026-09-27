@@ -28,22 +28,23 @@ export function CompetencyCatalogBlock({ companyId, locale = 'pt-BR' }) {
   }, [companyId]);
   useEffect(() => { void load(); }, [load]);
 
-  async function save(values, method) {
+  async function save(values, method, keepFormOpen = false) {
     setBusy(true);
     try {
       const response = await fetch('/api/admin/formal-competencies', {
         method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...values, companyId }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || String(response.status));
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || (en ? 'Could not save. Try again.' : 'Não foi possível salvar. Tente novamente.'));
       toast(method === 'PUT' ? (en ? 'Examples added. Existing competencies were preserved.' : 'Exemplos adicionados. Competências existentes preservadas.') : (en ? 'Competency saved.' : 'Competência salva.'), 'ok');
       await load();
-    } catch (e) { toast(e.message, 'error'); }
+    } catch (e) { if (keepFormOpen) throw e; toast(e.message, 'error'); }
     finally { setBusy(false); }
   }
   async function edit(item) {
-    const values = await promptForm({
+    await promptForm({
       title: en ? (item ? 'Edit competency' : 'New competency') : (item ? 'Editar competência' : 'Nova competência'),
+      submit: values => save({ ...values, categoryId: values.categoryId ? Number(values.categoryId) : null, ...(item ? { id: item.id } : {}) }, item ? 'PATCH' : 'POST', true),
       fields: [
         { key: 'name', label: en ? 'Name' : 'Nome', required: true, maxLength: 200, defaultValue: item?.name || '' },
         { key: 'description', label: en ? 'Description (third person)' : 'Descrição (terceira pessoa)', type: 'textarea', maxLength: 2000, defaultValue: item?.description || '' },
@@ -53,7 +54,6 @@ export function CompetencyCatalogBlock({ companyId, locale = 'pt-BR' }) {
           placeholder: en ? 'Search categories' : 'Buscar categorias', help: item?.categoryName ? `${en ? 'Current' : 'Atual'}: ${item.categoryName}` : (en ? 'Optional. Manage categories from the catalog.' : 'Opcional. Cadastre categorias pelo catálogo.') },
       ],
     });
-    if (values) await save({ ...values, categoryId: values.categoryId ? Number(values.categoryId) : null, ...(item ? { id: item.id } : {}) }, item ? 'PATCH' : 'POST');
   }
   async function toggle(item) {
     if (!await confirm({ title: item.name, message: en ? 'Change availability for new reviews? Existing responses remain unchanged.' : 'Alterar a disponibilidade para novas avaliações? As respostas existentes serão preservadas.' })) return;
@@ -67,7 +67,7 @@ export function CompetencyCatalogBlock({ companyId, locale = 'pt-BR' }) {
     <button type="button" className={`${S.btnGhost} self-start`} disabled={busy} onClick={async () => { if (await confirm({ title: en ? 'Add 17 example competencies?' : 'Adicionar 17 competências de exemplo?', message: en ? 'You can edit these examples. Existing items are not replaced.' : 'Você poderá editar os exemplos. Os itens existentes não serão substituídos.' })) await save({}, 'PUT'); }}>{en ? 'Add example competencies' : 'Adicionar competências de exemplo'}</button>
     <input className={S.input} aria-label={en ? 'Search competencies' : 'Buscar competências'} placeholder={en ? 'Search competencies' : 'Buscar competências'} value={search} onChange={e => setSearch(e.target.value)} />
     {error ? <p role="alert">{error} <button className={S.btnGhost} onClick={load}>{en ? 'Retry' : 'Tentar novamente'}</button></p> : null}
-    {loading ? <AppLoading variant="panel" /> : <ul className="m-0 list-none space-y-4 p-0">
+    {loading ? <AppLoading locale={locale} variant="panel" /> : <ul className="m-0 list-none space-y-4 p-0">
       {items.filter(item => `${item.name} ${item.description} ${item.categoryName || ''}`.toLocaleLowerCase(locale).includes(search.toLocaleLowerCase(locale))).map(item => <li key={item.id} className="border-b border-ink/10 pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="m-0 text-base font-medium">{item.name}</h3>

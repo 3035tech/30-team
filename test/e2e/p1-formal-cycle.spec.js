@@ -5,6 +5,7 @@ import { HR } from './fixtures.js';
 
 test('P1: shared questionnaires, 90/180/360 roles, relational answers, completed results and explicit PDI', async ({ page, baseURL }) => {
   test.setTimeout(180000);
+  page.setDefaultTimeout(15_000);
   expect(['localhost','127.0.0.1']).toContain(new URL(baseURL).hostname);
   const db = new pg.Client({ host: '127.0.0.1', port: 55432, database: 'enneagram_dtov', user: 'dtov', password: 'dtov_local_only', ssl: false });
   const createdCycles = [], createdPeople = [];
@@ -86,7 +87,8 @@ test('P1: shared questionnaires, 90/180/360 roles, relational answers, completed
     await expect(section.locator('summary').first()).toContainText(today.split('-').reverse().join('/'));
     await section.screenshot({ path: '/private/tmp/p1-results-polish-desktop.png' });
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.keyboard.press('Escape');
+    // Escape closes the person detail itself; assert the mobile menu is closed instead.
+    await expect(page.locator('.db-sidebar')).not.toBeInViewport();
     const bounds = await section.boundingBox();
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(390);
     expect(await section.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);

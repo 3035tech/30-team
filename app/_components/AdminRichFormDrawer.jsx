@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { UI_TYPE } from '../../lib/ui-typography';
 import {
   dialogBtnGhostClass,
   dialogOverlayClass,
@@ -29,26 +30,59 @@ export function AdminRichFormDrawer({
   closeLabel: closeLabelOverride = null,
   eyebrow = null,
 }) {
+  const TitleTag = fullPage ? 'h1' : 'h2';
   const [mounted, setMounted] = useState(false);
   const contentRef = useRef(null);
+  const panelRef = useRef(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (e) => {
-      if (e.key === 'Escape') onClose?.();
+    if (!open || !mounted) return undefined;
+    const panel = panelRef.current;
+    const previousFocus = document.activeElement;
+    const stackingLevel = element => {
+      let level = 0;
+      for (let node = element; node; node = node.parentElement) level = Math.max(level, Number.parseInt(getComputedStyle(node).zIndex, 10) || 0);
+      return level;
     };
+    const isTop = () => ![...document.querySelectorAll('[role="dialog"]')].some(other =>
+      other !== panel && other.getClientRects().length &&
+      (stackingLevel(other) > stackingLevel(panel) ||
+        (stackingLevel(other) === stackingLevel(panel) && (panel.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_FOLLOWING)))
+    );
+    const focusable = () => [...panel.querySelectorAll('button, a[href], input, select, textarea, [tabindex]')]
+      .filter(element => element.tabIndex >= 0 && !element.disabled && element.getClientRects().length);
+    const focusFirst = () => (focusable()[0] || panel).focus();
+    const frame = !withinShell ? requestAnimationFrame(focusFirst) : null;
+    const onKey = (e) => {
+      if (!isTop()) return;
+      if (e.key === 'Escape') closeRef.current?.();
+      if (withinShell || e.key !== 'Tab' || e.defaultPrevented) return;
+      const items = focusable(), first = items[0], last = items.at(-1);
+      if (!items.length || !panel.contains(document.activeElement) ||
+        (e.shiftKey && document.activeElement === first) || (!e.shiftKey && document.activeElement === last)) {
+        e.preventDefault();
+        (e.shiftKey ? last || panel : first || panel).focus();
+      }
+    };
+    const onFocus = event => { if (!withinShell && isTop() && !panel.contains(event.target)) focusFirst(); };
     const prevOverflow = document.body.style.overflow;
     if (!withinShell) document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKey);
+    document.addEventListener('focusin', onFocus);
     return () => {
+      if (frame !== null) cancelAnimationFrame(frame);
       if (!withinShell) document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', onKey);
+      document.removeEventListener('focusin', onFocus);
+      if (!withinShell && previousFocus?.isConnected) previousFocus.focus();
     };
-  }, [fullPage, open, onClose, withinShell]);
+  }, [mounted, open, withinShell]);
 
   useEffect(() => {
     if (!open || !fullPage) return;
@@ -73,8 +107,10 @@ export function AdminRichFormDrawer({
       }}
     >
       <div
-        role={withinShell ? 'region' : fullPage ? 'main' : 'dialog'}
-        {...(!fullPage && !withinShell ? { 'aria-modal': 'true' } : {})}
+        ref={panelRef}
+        tabIndex={-1}
+        role={withinShell ? 'region' : 'dialog'}
+        {...(!withinShell ? { 'aria-modal': 'true' } : {})}
         aria-labelledby="rich-form-drawer-title"
         className={cn(
           'admin-rich-drawer-panel flex flex-col overflow-hidden border border-ink/12 bg-white',
@@ -99,30 +135,27 @@ export function AdminRichFormDrawer({
                 type="button"
                 onClick={onClose}
                 aria-label={backLabel}
-                className="mb-3 inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-1.5 font-ui text-xs text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
+                className="mb-3 inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-1.5 font-ui text-prose text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
               >
                 ← {backLabel}
               </button>
             ) : null}
-            <span className="font-mono text-2xs uppercase tracking-[2px] text-brand-500">
+            <span className={UI_TYPE.label}>
               {eyebrow || (fullPage
-                ? (locale === 'en' ? 'PEOPLE / TEAM' : 'PESSOAS / EQUIPE')
+                ? (locale.startsWith('en') ? 'People / Team' : 'Pessoas / Equipe')
                 : '30Grow')}
             </span>
-            <h2
+            <TitleTag
               id="rich-form-drawer-title"
               className={cn(
-                'mb-0 mt-1.5 leading-tight text-ink',
-                fullPage && withinShell
-                  ? 'font-ui text-3xl font-semibold tracking-tight sm:text-4xl'
-                  : 'font-display font-normal',
-                fullPage && !withinShell ? 'text-3xl sm:text-4xl' : !fullPage ? 'text-2xl' : null
+                'mb-0 mt-1.5 break-words',
+                fullPage ? UI_TYPE.page : UI_TYPE.section
               )}
             >
               {title}
-            </h2>
+            </TitleTag>
             {headerMeta ? (
-              <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-ink-muted">
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 font-ui text-prose text-ink/75">
                 {headerMeta}
               </div>
             ) : null}

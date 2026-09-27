@@ -7,15 +7,20 @@ import { apiError, apiErrorFromResult, ERR } from '../../../../../lib/api-error.
 import { getEmployeeSessionPayload } from '../../../../../lib/employee-session.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../lib/rate-limit.js';
 import { createOkrActivityCheckin } from '../../../../../lib/okr-cycles.js';
+import { recordKeyResultCheckin } from '../../../../../lib/okr-hierarchy.js';
 import { z, zPositiveInt } from '../../../../../lib/validate.js';
 
 export const dynamic = 'force-dynamic';
 
-const bodySchema = z.object({
+const bodySchema = z.union([z.object({
+  keyResultId: zPositiveInt,
+  currentValue: z.number().finite(),
+  note: z.string().trim().max(500).optional(),
+}), z.object({
   activityId: zPositiveInt,
   progressPct: z.coerce.number().int().min(0).max(100),
   note: z.string().trim().max(500).optional().nullable(),
-});
+})]);
 
 export async function POST(request) {
   try {
@@ -36,7 +41,9 @@ export async function POST(request) {
       return apiError(request, ERR.INVALID_DATA, 400);
     }
 
-    const result = await createOkrActivityCheckin(null, {
+    const result = parsed.data.keyResultId ? await recordKeyResultCheckin(null, {
+      ...parsed.data, companyId:session.companyId, candidateId:session.candidateId,
+    }) : await createOkrActivityCheckin(null, {
       companyId: session.companyId,
       activityId: parsed.data.activityId,
       progressPct: parsed.data.progressPct,

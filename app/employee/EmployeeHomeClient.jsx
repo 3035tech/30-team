@@ -117,7 +117,7 @@ function CollapsibleSection({ id, title, count, open, onToggle, children, locale
         }}
         variant="card"
         bordered={false}
-        titleClassName="font-ui text-base font-semibold normal-case tracking-normal text-ink"
+        titleClassName={S.sectionTitle}
       >
         <div className="px-3 sm:px-4">
           {children}
@@ -141,6 +141,8 @@ function EmpEmpty({ children }) {
 export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const router = useRouter();
   const { toast, promptForm } = useAppFeedback();
+  const [okrNotice, setOkrNotice] = useState('');
+  const okrNumber = value => new Intl.NumberFormat(locale, {maximumFractionDigits:2}).format(value);
   const { setNavMeta, setActiveSection, sectionFocus } = useEmployeeNav();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
@@ -301,11 +303,15 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   );
 
   const submitOkrCheckin = async (act) => {
-    const values = await promptForm({
+    await promptForm({
       title: t(locale, 'employeeHome.okrCheckinTitle'),
       confirmLabel: t(locale, 'employeeHome.okrCheckinConfirm'),
       fields: [
-        {
+        act.keyResultId ? {
+          key: 'currentValue', type: 'number', required: true, step: 0.01,
+          label: `${locale === 'pt-BR' ? 'Valor atual' : 'Current value'} (${act.unit})`,
+          defaultValue: String(act.currentValue),
+        } : {
           key: 'progressPct',
           type: 'range',
           label: t(locale, 'panel.okr.progressPctLabel'),
@@ -327,29 +333,29 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           rows: 3,
         },
       ],
+      submit: async values => {
+        setBusy(true);
+        try {
+          const res = await fetch('/api/employee/okr/checkins', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...(act.keyResultId ? {keyResultId:act.keyResultId,currentValue:Number(values.currentValue)} : {activityId:act.id,progressPct:Number(values.progressPct) || 0}),
+              note: values.note || '',
+            }),
+          });
+          if (redirectEmployeeIfUnauthorized(router, res.status)) return;
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data?.error || t(locale, 'employeeHome.loadError'));
+          setOkrNotice(t(locale, 'employeeHome.okrCheckinSaved'));
+          await load({ silent: true });
+        } catch (e) {
+          throw new Error(e instanceof TypeError ? t(locale, 'employeeHome.loadError') : e?.message || t(locale, 'employeeHome.loadError'));
+        } finally {
+          setBusy(false);
+        }
+      },
     });
-    if (!values) return;
-    setBusy(true);
-    try {
-      const res = await fetch('/api/employee/okr/checkins', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          activityId: act.id,
-          progressPct: Number(values.progressPct) || 0,
-          note: values.note || '',
-        }),
-      });
-      if (redirectEmployeeIfUnauthorized(router, res.status)) return;
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || 'checkin');
-      toast(t(locale, 'employeeHome.okrCheckinSaved'), 'ok');
-      await load({ silent: true });
-    } catch (e) {
-      toast(e?.message || t(locale, 'employeeHome.loadError'), 'error');
-    } finally {
-      setBusy(false);
-    }
   };
 
   const onSurveyMeta = useCallback((meta) => {
@@ -537,16 +543,16 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           <p className={cn(S.muted, 'm-0 mt-2 max-w-[58ch]')}>{t(locale, 'employeeHome.hint')}</p>
           <section className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-3" aria-label={t(locale, 'employeeHome.todaySummary')}>
             <div className="rounded-control border border-ink/12 bg-surface px-3 py-3">
-              <div className="font-display text-2xl text-ink">{tasks.length}</div>
-              <div className="mt-1 text-xs font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummaryTasks')}</div>
+              <div className="font-ui text-2xl font-semibold tabular-nums text-ink">{tasks.length}</div>
+              <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummaryTasks')}</div>
             </div>
             <div className="rounded-control border border-ink/12 bg-surface px-3 py-3">
-              <div className="font-display text-2xl text-ink">{surveyMeta.openCount || 0}</div>
-              <div className="mt-1 text-xs font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummarySurveys')}</div>
+              <div className="font-ui text-2xl font-semibold tabular-nums text-ink">{surveyMeta.openCount || 0}</div>
+              <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummarySurveys')}</div>
             </div>
             <div className={cn('rounded-control border px-3 py-3', attentionCount > 0 ? 'border-warning/25 bg-warning/[0.045]' : 'border-success/20 bg-success/[0.04]')}>
-              <div className="font-display text-2xl text-ink">{attentionCount}</div>
-              <div className="mt-1 text-xs font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummaryAttention')}</div>
+              <div className="font-ui text-2xl font-semibold tabular-nums text-ink">{attentionCount}</div>
+              <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummaryAttention')}</div>
             </div>
           </section>
           <nav className="mt-3 flex flex-wrap gap-2" aria-label={t(locale, 'employeeHome.sectionNavAria')}>
@@ -608,8 +614,8 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   {task.dueDate ? (
                     <div
                       className={cn(
-                        'mt-1 text-xs',
-                        task.kind === 'lms_overdue' ? 'text-danger' : 'text-ink-faint'
+                        'mt-1 text-prose',
+                        task.kind === 'lms_overdue' ? 'text-red-800 dark:text-danger' : 'text-ink/75'
                       )}
                     >
                       {t(locale, 'employeeHome.dueBy', {
@@ -779,6 +785,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             </EmpEmpty>
           ) : (
             <div className="flex flex-col gap-4">
+              {okrNotice ? <p role="status" className="m-0 text-sm text-ink">{okrNotice}</p> : null}
               <p className={cn(S.muted, 'm-0 text-prose')}>{t(locale, 'employeeHome.okrHint')}</p>
               {groupOkrByCycle(okrActivities).map((group) => (
                 <div key={group.cycleId || 'x'} className="flex flex-col gap-2">
@@ -815,6 +822,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                             </div>
                             <p className={cn(S.faint, 'mb-0 mt-1 break-words')}>
                               {act.areaTitle || t(locale, 'panel.common.notApplicable')}
+                              {act.objectiveTitle ? ` → ${act.objectiveTitle}` : ''}
                               {act.deadline
                                 ? ` · ${t(locale, 'employeeHome.okrDeadline')}: ${formatDisplayDate(act.deadline, locale)}`
                                 : ''}
@@ -825,6 +833,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                                 n: act.weight ?? OKR_WEIGHT_DEFAULT,
                               })}`}
                             </p>
+                            {act.keyResultId ? <p className="text-sm text-ink-muted">{locale === 'pt-BR' ? 'Inicial' : 'Baseline'}: {okrNumber(act.startValue)} → {locale === 'pt-BR' ? 'Meta' : 'Target'}: {okrNumber(act.targetValue)} {act.unit} · {locale === 'pt-BR' ? 'Atual' : 'Current'}: {okrNumber(act.currentValue)} {act.unit}</p> : null}
                           </div>
                           {group.cycleStatus !== OKR_CYCLE_STATUS.CLOSED ? (
                             <button
@@ -913,7 +922,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                       >
                         <div className="flex flex-wrap items-baseline justify-between gap-2">
                           <span className={S.cardBody}>{course.title}</span>
-                          <span className="text-xs font-medium text-ink-muted">
+                          <span className="text-prose font-medium text-ink-muted">
                             {course.progressPct}%
                           </span>
                         </div>
@@ -932,8 +941,8 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                         {due ? (
                           <p
                             className={cn(
-                              'mb-0 mt-1 text-xs',
-                              course.overdue ? 'text-danger' : 'text-ink-faint'
+                              'mb-0 mt-1 text-prose',
+                              course.overdue ? 'text-red-800 dark:text-danger' : 'text-ink/75'
                             )}
                           >
                             {due}
@@ -967,7 +976,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               {agreements.map((a) => (
                 <li key={a.id} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
                   {a.meetingDate ? (
-                    <div className="mb-1 text-xs text-ink-muted">
+                    <div className="mb-1 text-prose text-ink-muted">
                       {formatDisplayDate(a.meetingDate, locale)}
                     </div>
                   ) : null}
@@ -1021,14 +1030,14 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   : t(locale, 'panel.employeePortal.prepConfirm')}
               </button>
               {data?.oneOnOnePrep?.preparedAt ? (
-                <span className="text-xs text-success">
+                <span className="text-prose text-success">
                   {t(locale, 'panel.employeePortal.prepUpdatedAt', {
                     when: formatDisplayDateTime(data.oneOnOnePrep.preparedAt, locale),
                   })}
                 </span>
               ) : null}
             </div>
-            <p className={cn(S.faint, 'mb-0 mt-2 text-xs')}>
+            <p className={cn(S.faint, 'mb-0 mt-2 text-prose')}>
               {t(locale, 'panel.employeePortal.prepManagerSees')}
             </p>
           </div>
@@ -1141,7 +1150,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           ) : (
             <>
               {company.aboutHtml ? (
-                <div className="mb-3 rounded-control border border-ink/12 bg-canvas/50 px-3 py-2 text-xs text-ink">
+                <div className="mb-3 rounded-control border border-ink/12 bg-canvas/50 px-3 py-2 text-prose text-ink">
                   <RichTextView html={company.aboutHtml} />
                 </div>
               ) : null}
@@ -1150,7 +1159,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   href={company.website}
                   target="_blank"
                   rel="noreferrer"
-                  className="mb-3 inline-flex font-mono text-xs text-brand-600"
+                  className="mb-3 inline-flex font-mono text-prose text-brand-600"
                 >
                   {company.website}
                 </a>

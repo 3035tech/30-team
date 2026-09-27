@@ -83,10 +83,10 @@ export function PersonDossierBlock({
   };
 
   if (loading) {
-    return <p className="m-0 text-xs text-ink-muted">…</p>;
+    return <p className="m-0 text-prose text-ink-muted">…</p>;
   }
   if (err) {
-    return <p className="m-0 text-xs text-danger">{err}</p>;
+    return <p className="m-0 text-prose text-red-800 dark:text-danger">{err}</p>;
   }
   if (!dossier?.ok && !dossier?.candidate) {
     return (
@@ -96,8 +96,8 @@ export function PersonDossierBlock({
 
   const d = dossier;
   const sev = (risk) => {
-    if (risk === 'high') return 'text-danger';
-    if (risk === 'medium') return 'text-warning';
+    if (risk === 'high') return 'text-red-800 dark:text-danger';
+    if (risk === 'medium') return 'text-amber-800 dark:text-warning';
     return 'text-ink-muted';
   };
 
@@ -111,7 +111,7 @@ export function PersonDossierBlock({
               <p className="mt-1 mb-0 text-prose leading-snug text-ink-muted">
                 {t(locale, 'panel.dossier.intro')}
               </p>
-              <p className="mt-1 mb-0 font-mono text-2xs text-ink-faint">
+              <p className="mt-1 mb-0 font-ui text-prose text-ink/75">
                 {t(locale, 'panel.dossier.signalCount', { n: d.meta?.signalCount ?? 0 })}
               </p>
             </div>
@@ -127,7 +127,7 @@ export function PersonDossierBlock({
         </div>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          {!summaryOnly ? <p className="m-0 font-mono text-2xs text-ink-faint">
+          {!summaryOnly ? <p className="m-0 font-ui text-prose text-ink/75">
             {t(locale, 'panel.dossier.signalCount', { n: d.meta?.signalCount ?? 0 })}
           </p> : null}
           <button
@@ -153,13 +153,13 @@ export function PersonDossierBlock({
             </ul>
           ) : null}
           {Array.isArray(ai.cautions) && ai.cautions.length > 0 ? (
-            <ul className="mt-2 mb-0 list-disc pl-4 text-xs text-ink-muted">
+            <ul className="mt-2 mb-0 list-disc pl-4 text-prose text-ink-muted">
               {ai.cautions.map((c) => (
                 <li key={c}>{c}</li>
               ))}
             </ul>
           ) : null}
-          <p className="mt-2 mb-0 text-2xs text-ink-faint">{t(locale, 'panel.dossier.aiDisclaimer')}</p>
+          <p className="mt-2 mb-0 text-prose text-ink/75">{t(locale, 'panel.dossier.aiDisclaimer')}</p>
         </div>
       ) : null}
 
@@ -175,12 +175,12 @@ export function PersonDossierBlock({
           <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.profileTitle')}</span>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {d.profile?.topType ? <TypeBadge type={d.profile.topType} locale={locale} compact /> : null}
-            <span className="text-xs text-ink-muted">
+            <span className="text-prose text-ink-muted">
               {d.profile?.hasEnneagram
                 ? t(locale, 'panel.dossier.hasEnneagram')
                 : t(locale, 'panel.dossier.noEnneagram')}
             </span>
-            <span className="text-xs text-ink-muted">
+            <span className="text-prose text-ink-muted">
               {d.profile?.hasMotivators
                 ? t(locale, 'panel.dossier.hasMotivators')
                 : t(locale, 'panel.dossier.noMotivators')}
@@ -190,7 +190,7 @@ export function PersonDossierBlock({
 
         <section className="border-b border-ink/8 pb-2 sm:border-b-0 sm:pb-0">
           <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.hrTitle')}</span>
-          <p className="mt-1 mb-0 text-2xs leading-snug text-ink-faint">
+          <p className="mt-1 mb-0 text-prose leading-snug text-ink/75">
             {t(locale, 'panel.dossier.hrPurpose')}
           </p>
           {d.hrScore ? (
@@ -215,7 +215,7 @@ export function PersonDossierBlock({
               ) : null}
             </p>
           ) : (
-            <p className="mt-2 mb-0 text-prose text-ink-faint">{t(locale, 'panel.dossier.hrEmpty')}</p>
+            <p className="mt-2 mb-0 text-prose text-ink/75">{t(locale, 'panel.dossier.hrEmpty')}</p>
           )}
         </section>
 
@@ -229,12 +229,12 @@ export function PersonDossierBlock({
                 : ''}
             </p>
           ) : (
-            <p className="mt-2 mb-0 text-prose text-ink-faint">{t(locale, 'panel.dossier.pdiEmpty')}</p>
+            <p className="mt-2 mb-0 text-prose text-ink/75">{t(locale, 'panel.dossier.pdiEmpty')}</p>
           )}
           {typeof onGoSubTab === 'function' ? (
             <button
               type="button"
-              className="mt-2 inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-mono text-2xs text-brand-500"
+              className="mt-2 inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-ui text-prose text-brand-500"
               onClick={() => onGoSubTab('journey')}
             >
               {t(locale, 'panel.dossier.openJourney')}
@@ -265,14 +265,14 @@ export function PersonDossierBlock({
                 <div className="mt-2 flex flex-wrap gap-3">
                   <button
                     type="button"
-                    className="inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-mono text-2xs text-brand-500"
+                    className="inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-ui text-prose text-brand-500"
                     onClick={() => onGoSubTab('oneOnOne')}
                   >
                     {t(locale, 'panel.dossier.openOneOnOneFromReview')}
                   </button>
                   <button
                     type="button"
-                    className="inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-mono text-2xs text-brand-500"
+                    className="inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-ui text-prose text-brand-500"
                     onClick={() => onGoSubTab('journey')}
                   >
                     {t(locale, 'panel.dossier.openJourney')}
@@ -292,12 +292,12 @@ export function PersonDossierBlock({
             </>
           ) : (
             <>
-              <p className="mt-2 mb-0 text-prose text-ink-faint">
+              <p className="mt-2 mb-0 text-prose text-ink/75">
                 {t(locale, 'panel.dossier.performanceEmpty')}
               </p>
               <a
                 href="/dashboard?tab=performance-reviews"
-                className="mt-2 inline-flex min-h-touch items-center font-mono text-2xs text-brand-500 hover:underline"
+                className="mt-2 inline-flex min-h-touch items-center font-ui text-prose text-brand-500 hover:underline"
               >
                 {t(locale, 'panel.dossier.openPerformance')}
               </a>
@@ -313,7 +313,7 @@ export function PersonDossierBlock({
           {typeof onGoSubTab === 'function' ? (
             <button
               type="button"
-              className="mt-2 inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-mono text-2xs text-brand-500"
+              className="mt-2 inline-flex min-h-touch cursor-pointer items-center border-none bg-transparent p-0 font-ui text-prose text-brand-500"
               onClick={() => onGoSubTab('oneOnOne')}
             >
               {t(locale, 'panel.dossier.openOneOnOne')}
@@ -323,7 +323,7 @@ export function PersonDossierBlock({
 
         <section>
           <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dossier.climateTitle')}</span>
-          <p className="mt-1 mb-0 text-2xs text-ink-faint">{t(locale, 'panel.dossier.climateHint')}</p>
+          <p className="mt-1 mb-0 text-prose text-ink/75">{t(locale, 'panel.dossier.climateHint')}</p>
           {d.climateCompany?.latestMean != null ? (
             <p className="mt-2 mb-0 text-prose text-ink">
               {t(locale, 'panel.dossier.climateMean', {
@@ -331,7 +331,7 @@ export function PersonDossierBlock({
               })}
             </p>
           ) : (
-            <p className="mt-2 mb-0 text-prose text-ink-faint">{t(locale, 'panel.dossier.climateEmpty')}</p>
+            <p className="mt-2 mb-0 text-prose text-ink/75">{t(locale, 'panel.dossier.climateEmpty')}</p>
           )}
         </section>
       </div>

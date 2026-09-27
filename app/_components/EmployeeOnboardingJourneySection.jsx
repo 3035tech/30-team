@@ -173,15 +173,15 @@ export function EmployeeOnboardingJourneySection({ locale, journey, onChanged })
                               : isNext || awaiting
                                 ? 'border-brand-500 bg-brand-500/15 text-brand-600'
                                 : item.overdue
-                                  ? 'border-warning bg-warning/25 text-warning'
-                                  : 'border-ink/25 bg-canvas text-ink-faint'
+                                  ? 'border-warning bg-warning/25 text-amber-800 dark:text-warning'
+                                  : 'border-ink/25 bg-canvas text-ink/75'
                           )}
                           aria-hidden
                         >
                           {fullyDone ? (
                             <Icon name="check" className="h-3 w-3" />
                           ) : (
-                            <span className="font-mono text-2xs leading-none">{stepNum}</span>
+                            <span className="font-ui text-prose leading-none">{stepNum}</span>
                           )}
                         </span>
                         {!lastInPhase ? (
@@ -228,7 +228,7 @@ export function EmployeeOnboardingJourneySection({ locale, journey, onChanged })
                             </div>
                             <div className="mt-1 flex flex-wrap items-center gap-1.5">
                               {item.dueDate ? (
-                                <span className="font-mono text-2xs text-ink-muted">
+                                <span className={S.cardMuted}>
                                   {t(locale, 'employeeHome.dueBy', {
                                     date: formatDisplayDate(item.dueDate, locale),
                                   })}

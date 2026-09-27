@@ -64,16 +64,16 @@ import { VacancyDescriptionHtml } from '../vacancies/VacancyDescriptionHtml';
 import { Icon } from '../../_components/Icon';
 
 
-const FIELD = `${fieldInputClass} w-full font-mono text-xs`;
-const FIELD_SELECT = `${fieldSelectClass} w-full font-mono text-xs`;
+const FIELD = `${fieldInputClass} w-full font-mono text-prose`;
+const FIELD_SELECT = `${fieldSelectClass} w-full font-mono text-prose`;
 const BTN_GHOST =
   'inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-transparent px-3 py-2 font-ui text-sm text-ink-muted transition-colors hover:border-ink/20 hover:bg-ink/[0.035] hover:text-ink disabled:cursor-default disabled:opacity-60';
 const BTN_BRAND =
   'inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-2 font-ui text-sm font-medium text-brand-500 transition-colors hover:bg-brand-500/[0.14] disabled:cursor-default disabled:opacity-60';
 const BTN_BRAND_SOFT =
   'inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border border-brand-500/25 bg-brand-500/[0.07] px-3 py-2 font-ui text-sm font-medium text-brand-500 transition-colors hover:bg-brand-500/[0.12] disabled:cursor-default disabled:opacity-60';
-const META = 'font-mono text-2xs text-ink-muted';
-const META_FAINT = 'font-mono text-2xs text-ink-faint';
+const META = S.cardMuted;
+const META_FAINT = S.faint;
 const GRID_AUTO = 'grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5';
 const GRID_AUTO_LG = 'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5';
 const VACANCY_DETAIL_SECTIONS = Object.freeze([
@@ -87,8 +87,8 @@ const VACANCY_DETAIL_SECTIONS = Object.freeze([
 function VacancyMetaItem({ label, value, warning = false }) {
   return (
     <div className="min-w-0 rounded-control border border-ink/8 bg-surface/55 px-3 py-2">
-      <span className="block font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint">{label}</span>
-      <span className={cn('mt-1 block truncate text-xs text-ink', warning && 'text-warning')}>{value}</span>
+      <span className="block font-ui text-prose normal-case tracking-normal text-ink/75">{label}</span>
+      <span data-vacancy-meta-value className={cn('mt-1 block break-words text-prose text-ink', warning && 'text-amber-800 dark:text-warning')}>{value}</span>
     </div>
   );
 }
@@ -850,7 +850,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   if (!jobRoleId || Object.keys(rubric).length === 0) return null;
                   return (
                     <div className="max-w-[420px]">
-                      <p className="m-0 mb-1 font-mono text-2xs text-ink-faint">
+                      <p className="m-0 mb-1 font-ui text-prose text-ink/75">
                         {t(locale, 'jobRoles.rubricPreview')}
                       </p>
                       <RubricEditor value={rubric} locale={locale} compact />
@@ -899,8 +899,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               return (
                 <div className="-mt-1 flex max-w-[760px] flex-wrap gap-1.5" aria-label={t(locale, 'panel.pipelineTemplates.previewLabel')}>
                   {selectedTemplate.stages.map((stage, index) => (
-                    <span key={stage.id || stage.stageKey} className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-canvas px-2 py-1 font-ui text-xs text-ink-muted">
-                      <span className="font-mono text-2xs text-ink-faint">{index + 1}</span>
+                    <span key={stage.id || stage.stageKey} className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-canvas px-2 py-1 font-ui text-prose text-ink-muted">
+                      <span className="font-ui text-prose text-ink/75">{index + 1}</span>
                       {locale === 'en' ? (stage.labelEn || stage.labelPt) : (stage.labelPt || stage.labelEn)}
                     </span>
                   ))}
@@ -1097,7 +1097,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       >
         {editingVacancy ? (
           <div className="flex flex-col gap-3" aria-busy={loading}>
-            {error ? <p role="alert" className="m-0 text-sm text-danger">{error}</p> : null}
+            {error ? <p role="alert" className="m-0 text-sm text-red-800 dark:text-danger">{error}</p> : null}
             <VacancyFormSection locale={locale} titleKey="recruiting.formSectionEssentials" defaultOpen>
               {jobRoles.length > 0 ? (
                 <div className="flex flex-col gap-1.5">
@@ -1127,7 +1127,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     if (!editingVacancy.jobRoleId || Object.keys(rubric).length === 0) return null;
                     return (
                       <div className="max-w-[420px]">
-                        <p className="m-0 mb-1 font-mono text-2xs text-ink-faint">
+                        <p className="m-0 mb-1 font-ui text-prose text-ink/75">
                           {t(locale, 'jobRoles.rubricPreview')}
                         </p>
                         <RubricEditor value={rubric} locale={locale} compact />
@@ -1175,7 +1175,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     value={editingVacancy.positionsCount}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, positionsCount: e.target.value }))}
                     aria-label={t(locale, 'recruiting.positionsLabel')}
-                    className="w-[70px] rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-prose text-ink"
+                    className="w-[70px] rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-ui text-prose text-ink"
                   />
                 </FormField>
                 <FormField as="div" label={t(locale, 'recruiting.targetDateLabel')}>
@@ -1183,7 +1183,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     value={editingVacancy.targetDate}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
                     aria-label={t(locale, 'recruiting.targetDateLabel')}
-                    className="rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-mono text-prose text-ink"
+                    className="rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-ui text-prose text-ink"
                   />
                 </FormField>
               </div>
@@ -1317,12 +1317,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         {!v || error || msg ? (
         <div className={cn(S.card, 'px-7 py-[22px]')}>
           {error ? (
-            <p className="mb-0 mt-2.5 font-mono text-xs text-danger">
+            <p className="mb-0 mt-2.5 font-mono text-prose text-red-800 dark:text-danger">
               {error}
             </p>
           ) : null}
           {msg ? (
-            <p className="mb-0 mt-2.5 font-mono text-xs text-success">
+            <p className="mb-0 mt-2.5 font-mono text-prose text-success">
               {msg}
             </p>
           ) : null}
@@ -1352,13 +1352,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-2.5">
                     <h2 className="m-0 text-xl font-bold text-ink">{v.title}</h2>
-                    <span className="font-mono text-2xs text-ink-faint">{locale === 'en' ? 'Vacancy' : 'Vaga'}:</span>
+                    <span className="font-ui text-prose text-ink/75">{locale === 'en' ? 'Vacancy' : 'Vaga'}:</span>
                     <span
                       className={cn(
-                        'rounded-full border px-2 py-0.5 font-mono text-2xs',
+                        'rounded-full border px-2 py-0.5 font-ui text-prose',
                         v.status === VACANCY_STATUS.OPEN
                           ? 'border-success/35 text-success'
-                          : 'border-ink/12 text-ink-faint'
+                          : 'border-ink/12 text-ink/75'
                       )}
                     >
                       {v.status === VACANCY_STATUS.OPEN
@@ -1366,7 +1366,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         : t(locale, 'recruiting.closedStatus')}
                     </span>
                     {isAdmin ? (
-                      <span className="font-mono text-xs text-ink-faint">· {v.companyName}</span>
+                      <span className="font-mono text-prose text-ink/75">· {v.companyName}</span>
                     ) : null}
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
@@ -1472,7 +1472,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         type="button"
                         onClick={() => archiveVacancy(v.id, v.title)}
                         disabled={loading}
-                        className="min-h-touch w-full cursor-pointer rounded-control border border-transparent bg-transparent px-3 py-2 text-left font-ui text-sm text-danger hover:bg-danger/[0.08] disabled:cursor-default disabled:opacity-60"
+                        className="min-h-touch w-full cursor-pointer rounded-control border border-transparent bg-transparent px-3 py-2 text-left font-ui text-sm text-red-800 dark:text-danger hover:bg-danger/[0.08] disabled:cursor-default disabled:opacity-60"
                       >
                         {t(locale, 'recruiting.archiveVacancy')}
                       </button>
@@ -1515,9 +1515,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         <>
                           <div className="flex flex-wrap items-center gap-2">
                             <span className={cn(
-                              'rounded-full border px-2 py-1 font-mono text-2xs',
+                              'rounded-full border px-2 py-1 font-ui text-prose',
                               linkState.expired
-                                ? 'border-warning/35 bg-warning/[0.10] text-warning'
+                                ? 'border-warning/35 bg-warning/[0.10] text-amber-800 dark:text-warning'
                                 : 'border-success/30 bg-success/[0.08] text-success'
                             )}>
                               {linkState.label}
@@ -1561,7 +1561,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         </button>
                       </div>
                       {exp ? (
-                        <span className={cn(META_FAINT, 'mt-2 block', linkState.expired && 'text-warning')}>
+                        <span className={cn(META_FAINT, 'mt-2 block', linkState.expired && 'text-amber-800 dark:text-warning')}>
                           {linkState.expired
                             ? (locale === 'en' ? `Expired on ${exp.toLocaleString('en-US')}` : `Expirou em ${exp.toLocaleString('pt-BR')}`)
                             : t(locale, 'recruiting.expiresAt', {
@@ -1569,7 +1569,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                               })}
                         </span>
                       ) : null}
-                      <p className="m-0 mt-2 font-mono text-2xs text-ink-faint">
+                      <p className="m-0 mt-2 font-ui text-prose text-ink/75">
                         {locale === 'en'
                           ? 'Vacancy status describes recruiting; this link has its own expiry.'
                           : 'A situação da vaga descreve o recrutamento; este link tem validade própria.'}
@@ -1578,7 +1578,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   ) : (
                     <div>
                       <span className={META_FAINT}>{t(locale, 'recruiting.noActiveLink')}</span>
-                      <p className="m-0 mt-2 font-mono text-2xs text-ink-faint">
+                      <p className="m-0 mt-2 font-ui text-prose text-ink/75">
                         {locale === 'en'
                           ? 'Vacancy status describes recruiting; this link has its own expiry.'
                           : 'A situação da vaga descreve o recrutamento; este link tem validade própria.'}
@@ -1685,7 +1685,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     <h3 className="m-0 font-ui text-sm font-semibold text-ink">
                       {locale === 'en' ? 'Candidate intake' : 'Entrada de candidatos'}
                     </h3>
-                    <p className="mb-0 mt-1 text-xs leading-[1.5] text-ink-muted">
+                    <p className="mb-0 mt-1 text-prose leading-[1.5] text-ink-muted">
                       {locale === 'en'
                         ? 'Register interview details first, then send assessments and follow invitations below.'
                         : 'Cadastre os dados da entrevista primeiro. Depois envie avaliações e acompanhe os convites abaixo.'}
@@ -1719,7 +1719,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         {locale === 'en' ? 'Next step' : 'Próximo passo'}
                       </h3>
                       <div className="flex-1 rounded-control border border-ink/10 bg-ink/[0.02] p-4">
-                        <p className="m-0 text-xs leading-[1.55] text-ink-muted">
+                        <p className="m-0 text-prose leading-[1.55] text-ink-muted">
                           {locale === 'en'
                             ? 'Use the pipeline tab to move candidates through the hiring stages and compare fit when results arrive.'
                             : 'Use a aba Pipeline para mover candidatos pelas etapas e comparar aderência quando os resultados chegarem.'}
@@ -1754,7 +1754,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       <h3 className="m-0 font-ui text-base font-semibold text-ink">
                         {t(locale, 'recruiting.vacancyDescriptionLabel')}
                       </h3>
-                      <p className="mb-0 mt-1 max-w-[68ch] font-ui text-xs text-ink-muted">
+                      <p className="mb-0 mt-1 max-w-[68ch] font-ui text-prose text-ink-muted">
                         {t(locale, 'recruiting.detailInformationHint')}
                       </p>
                     </div>
@@ -1809,7 +1809,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       <h3 className="m-0 font-ui text-base font-semibold text-ink">
                         {t(locale, 'panel.pipelineEditor.title')}
                       </h3>
-                      <p className="mb-0 mt-1 max-w-[68ch] font-ui text-xs leading-[1.55] text-ink-muted">
+                      <p className="mb-0 mt-1 max-w-[68ch] font-ui text-prose leading-[1.55] text-ink-muted">
                         {t(locale, 'panel.pipelineEditor.subtitle')}
                       </p>
                     </div>
@@ -1867,7 +1867,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     <div className="flex flex-col gap-4">
       <div className={S.card}>
         <AdminPageHeader
-          title={t(locale, 'recruiting.registeredVacancies')}
+          title={t(locale, 'recruiting.vacanciesTitle')}
           description={t(locale, 'recruiting.vacanciesIntro')}
           actions={(
             <>
@@ -1894,17 +1894,17 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             </>
           )}
         />
-        {error ? <p className="mb-0 mt-2 font-ui text-sm text-danger">{error}</p> : null}
+        {error ? <p className="mb-0 mt-2 font-ui text-sm text-red-800 dark:text-danger">{error}</p> : null}
         {msg ? <p className="mb-0 mt-2 font-ui text-sm text-success">{msg}</p> : null}
 
         {vacFilterFromUrl !== 'all' ? (
           <div className="mt-2.5 rounded-control border border-ink/12 bg-ink/[0.03] px-3.5 py-2.5">
-            <p className="m-0 text-xs leading-[1.55] text-ink-muted">
+            <p className="m-0 text-prose leading-[1.55] text-ink-muted">
               {t(locale, 'recruiting.filterLimited')}{' '}
               <button
                 type="button"
                 onClick={() => navigateDashboard({ vacancy: 'all', vacanciesPage: 1, tab: 'vacancies' })}
-                className="cursor-pointer border-none bg-transparent p-0 font-mono text-xs text-brand-600 underline"
+                className="cursor-pointer border-none bg-transparent p-0 font-mono text-prose text-brand-600 underline"
               >
                 {t(locale, 'recruiting.showAllVacancies')}
               </button>
@@ -1939,7 +1939,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               aria-label={t(locale, 'recruiting.sortVacanciesAria')}
               className="mt-3 flex flex-wrap items-center gap-2.5 rounded-xl border border-ink/12 bg-ink/[0.03] p-3"
             >
-              <span className="font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint">
+              <span className="font-ui text-prose normal-case tracking-normal text-ink/75">
                 {t(locale, 'recruiting.sortBy')}
               </span>
               {[
@@ -1957,7 +1957,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     onClick={() => pushVacanciesSort(k)}
                     aria-pressed={active}
                     className={cn(
-                      'cursor-pointer rounded-lg border px-3 py-1.5 font-mono text-2xs',
+                      'cursor-pointer rounded-lg border px-3 py-1.5 font-ui text-prose',
                       active
                         ? 'border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
                         : 'border-ink/12 bg-transparent text-ink-muted'
@@ -1985,12 +1985,12 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-ink">
-                      <span className="font-mono text-xs text-ink-faint">#{v.id}</span>
+                      <span className="font-mono text-prose text-ink/75">#{v.id}</span>
                       <strong className="font-medium">{v.title}</strong>
-                      <span className="font-mono text-2xs text-ink-faint">{locale === 'en' ? 'Vacancy:' : 'Vaga:'}</span>
+                      <span className="font-ui text-prose text-ink/75">{locale === 'en' ? 'Vacancy:' : 'Vaga:'}</span>
                       <span
                         className={cn(
-                          'rounded-lg border px-2 py-0.5 font-mono text-2xs',
+                          'rounded-lg border px-2 py-0.5 font-ui text-prose',
                           v.status === VACANCY_STATUS.OPEN
                             ? 'border-success/30 bg-success/[0.12] text-success'
                             : 'border-ink/12 bg-ink/[0.08] text-ink-muted'
@@ -2001,7 +2001,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           : t(locale, 'recruiting.closedStatus')}
                       </span>
                       {isAdmin ? (
-                        <span className="font-mono text-xs text-ink-faint">· {v.companyName}</span>
+                        <span className="font-mono text-prose text-ink/75">· {v.companyName}</span>
                       ) : null}
                     </div>
 
@@ -2035,13 +2035,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
                     {token ? (
                       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-3">
-                        <span className="font-ui text-xs text-ink-muted">
+                        <span className="font-ui text-prose text-ink-muted">
                           {locale === 'en' ? 'Candidate link · availability:' : 'Link para candidatos · disponibilidade:'}
                         </span>
                         <span className={cn(
-                          'rounded-full border px-2 py-0.5 font-mono text-2xs',
+                          'rounded-full border px-2 py-0.5 font-ui text-prose',
                           linkState.expired
-                            ? 'border-warning/35 bg-warning/[0.10] text-warning'
+                            ? 'border-warning/35 bg-warning/[0.10] text-amber-800 dark:text-warning'
                             : 'border-success/30 bg-success/[0.08] text-success'
                         )}>
                           {linkState.label}
@@ -2055,7 +2055,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           disabled={loading}
                         />
                         {exp ? (
-                          <span className={cn('font-mono text-2xs text-ink-faint', linkState.expired && 'text-warning')}>
+                          <span className={cn('font-ui text-prose text-ink/75', linkState.expired && 'text-amber-800 dark:text-warning')}>
                             {linkState.expired
                               ? (locale === 'en' ? `Expired on ${exp.toLocaleString('en-US')}` : `Expirou em ${exp.toLocaleString('pt-BR')}`)
                               : t(locale, 'recruiting.expiresAt', {
@@ -2074,20 +2074,20 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           </button>
                         ) : null}
                         {linkState.expired && v.status === VACANCY_STATUS.OPEN ? (
-                          <p className="basis-full m-0 rounded-control border border-warning/25 bg-warning/[0.06] px-3 py-2 text-xs text-warning" role="status">
+                          <p className="basis-full m-0 rounded-control border border-warning/25 bg-warning/[0.06] px-3 py-2 text-prose text-amber-800 dark:text-warning" role="status">
                             {locale === 'en'
                               ? 'This vacancy is open, but its candidate link has expired. Renew the link to receive applications through it again.'
                               : 'Esta vaga está aberta, mas o link para candidatos expirou. Renove-o para voltar a receber candidaturas por este link.'}
                           </p>
                         ) : null}
-                        <span className="basis-full font-mono text-2xs text-ink-faint">
+                        <span className="basis-full font-ui text-prose text-ink/75">
                           {locale === 'en'
                             ? 'Open/closed describes recruiting; active/expired describes this link’s validity.'
                             : 'Aberta/fechada descreve o recrutamento; ativo/expirado indica a validade deste link.'}
                         </span>
                       </div>
                     ) : (
-                      <div className="mt-3 border-t border-ink/8 pt-3 font-mono text-2xs text-ink-faint">
+                      <div className="mt-3 border-t border-ink/8 pt-3 font-ui text-prose text-ink/75">
                         {t(locale, 'recruiting.noActiveLink')}
                         <span className="ml-1">
                           {locale === 'en'
@@ -2154,7 +2154,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                             type="button"
                             onClick={() => archiveVacancy(v.id, v.title)}
                             disabled={loading}
-                            className="min-h-touch w-full cursor-pointer rounded-control border border-transparent bg-transparent px-3 py-2 text-left font-ui text-sm text-danger hover:bg-danger/[0.08] disabled:cursor-default disabled:opacity-60"
+                            className="min-h-touch w-full cursor-pointer rounded-control border border-transparent bg-transparent px-3 py-2 text-left font-ui text-sm text-red-800 dark:text-danger hover:bg-danger/[0.08] disabled:cursor-default disabled:opacity-60"
                           >
                             {t(locale, 'recruiting.archiveVacancy')}
                           </button>
@@ -2189,9 +2189,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   disabled={loading || vacPage <= 1}
                   onClick={() => navigateDashboard({ vacanciesPage: Math.max(1, vacPage - 1), tab: 'vacancies' })}
                   className={cn(
-                    'rounded-control border px-3 py-1.5 font-mono text-2xs',
+                    'rounded-control border px-3 py-1.5 font-ui text-prose',
                     vacPage <= 1
-                      ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+                      ? 'cursor-default border-ink/12 bg-transparent text-ink/75'
                       : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
                   )}
                 >
@@ -2202,9 +2202,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   disabled={loading || vacPage >= vacTotalPages}
                   onClick={() => navigateDashboard({ vacanciesPage: Math.min(vacTotalPages, vacPage + 1), tab: 'vacancies' })}
                   className={cn(
-                    'rounded-control border px-3 py-1.5 font-mono text-2xs',
+                    'rounded-control border px-3 py-1.5 font-ui text-prose',
                     vacPage >= vacTotalPages
-                      ? 'cursor-default border-ink/12 bg-transparent text-ink-faint'
+                      ? 'cursor-default border-ink/12 bg-transparent text-ink/75'
                       : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
                   )}
                 >

@@ -116,7 +116,7 @@ export function PeopleManagementPanel({
   if (section === 'journey') {
     if (employmentStatus !== EMPLOYMENT_STATUS.EMPLOYEE) {
       return (
-        <p className="m-0 rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3 text-xs leading-normal text-ink-muted">
+        <p className="m-0 rounded-control border border-ink/12 bg-ink/[0.02] px-3.5 py-3 text-prose leading-normal text-ink-muted">
           {t(locale, 'panel.team.journeyNotEmployee')}
         </p>
       );
@@ -358,16 +358,16 @@ export function PeopleManagementPanel({
         <span className={cn(S.cardSection, 'mb-1.5 block')}>
           {t(locale, 'panel.team.peopleTitle')}
         </span>
-        <p className="mb-0 mt-0 text-xs leading-normal text-ink-faint">
+        <p className="mb-0 mt-0 text-prose leading-normal text-ink/75">
           {t(locale, 'panel.team.peopleHint')}
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-2xs text-ink-muted">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-ui text-prose text-ink-muted">
         <span
           className={cn(
             'inline-flex min-h-8 items-center',
-            completeness.enneagram ? 'text-success' : 'text-ink-faint'
+            completeness.enneagram ? 'text-success' : 'text-ink/75'
           )}
         >
           {completeness.enneagram
@@ -380,7 +380,7 @@ export function PeopleManagementPanel({
         <span
           className={cn(
             'inline-flex min-h-8 items-center',
-            completeness.motivators ? 'text-success' : 'text-ink-faint'
+            completeness.motivators ? 'text-success' : 'text-ink/75'
           )}
         >
           {completeness.motivators
@@ -411,7 +411,7 @@ export function PeopleManagementPanel({
 
       {portalUrl ? (
         <div className="rounded-control border border-brand-500/25 bg-brand-500/[0.04] px-3 py-2">
-          <p className={cn(S.muted, 'm-0 mb-1 text-xs')}>{t(locale, 'panel.employeePortal.linkHint')}</p>
+          <p className={cn(S.muted, 'm-0 mb-1 text-prose')}>{t(locale, 'panel.employeePortal.linkHint')}</p>
           <CopyableLink url={portalUrl} locale={locale} />
         </div>
       ) : null}
@@ -422,12 +422,12 @@ export function PeopleManagementPanel({
         <div className="mb-3 rounded-control border border-success/25 bg-success/[0.05] px-3 py-2">
           <span className={cn(S.cardSection, 'mb-1 block')}>{t(locale, 'panel.employeePortal.managerFeedbackTitle')}</span>
           {sessionPrep?.preparedAt || (sessionPrep?.noteToManager && String(sessionPrep.noteToManager).trim()) ? (
-            <div className="mt-1 text-xs text-ink-muted">
-              <span className="font-mono text-2xs uppercase text-brand-600">
+            <div className="mt-1 text-prose text-ink-muted">
+              <span className="font-ui text-prose normal-case text-brand-600">
                 {t(locale, 'panel.employeePortal.sessionPrepSource')}
               </span>
               {sessionPrep.preparedAt ? (
-                <span className="ml-2 font-mono text-2xs text-success">
+                <span className="ml-2 font-ui text-prose text-success">
                   {t(locale, 'panel.employeePortal.managerPreparedAt', {
                     when: formatDisplayDateTime(sessionPrep.preparedAt, locale),
                   })}
@@ -440,9 +440,9 @@ export function PeopleManagementPanel({
             .filter((x) => x.preparedAt || (x.noteToManager && String(x.noteToManager).trim()))
             .slice(0, 2)
             .map((tok) => (
-              <div key={tok.id} className="mt-1 text-xs text-ink-muted">
+              <div key={tok.id} className="mt-1 text-prose text-ink-muted">
                 {tok.preparedAt ? (
-                  <span className="font-mono text-2xs text-success">
+                  <span className="font-ui text-prose text-success">
                     {t(locale, 'panel.employeePortal.managerPreparedAt', {
                       when: formatDisplayDateTime(tok.preparedAt, locale),
                     })}
@@ -467,7 +467,7 @@ export function PeopleManagementPanel({
               <span
                 key={d.key}
                 className={cn(
-                  'inline-flex min-h-8 items-center rounded-control border bg-surface px-2.5 text-xs text-ink',
+                  'inline-flex min-h-8 items-center rounded-control border bg-surface px-2.5 text-prose text-ink',
                   !d.color && 'border-ink/12'
                 )}
                 style={d.color ? { borderColor: d.color } : undefined}
@@ -476,7 +476,7 @@ export function PeopleManagementPanel({
               </span>
             ))}
           </div>
-          <p className="mb-0 mt-2 font-mono text-2xs text-ink-faint">
+          <p className="mb-0 mt-2 font-ui text-prose text-ink/75">
             {t(locale, 'panel.team.motivatorsRadarSeeStyle')}
           </p>
         </CollapsibleBlock>
@@ -492,7 +492,7 @@ export function PeopleManagementPanel({
               <li key={s.key} className="mb-1.5 text-prose leading-[1.55] text-ink-muted">
                 <div>{s.text}</div>
                 {s.suggestedQuestion ? (
-                  <div className="mt-0.5 text-xs italic text-ink">
+                  <div className="mt-0.5 text-prose italic text-ink">
                     {t(locale, 'panel.team.retentionAsk')}: {s.suggestedQuestion}
                   </div>
                 ) : null}
@@ -521,8 +521,8 @@ export function PeopleManagementPanel({
               return (
                 <li key={fu.id} className="rounded-md border border-ink/10 px-2.5 py-2">
                   <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1 text-xs text-ink-muted">
-                      <div className="font-mono text-2xs text-ink-faint">
+                    <div className="min-w-0 flex-1 text-prose text-ink-muted">
+                      <div className="font-ui text-prose text-ink/75">
                         {fu.reviewDue
                           ? t(locale, 'panel.team.retentionDue', {
                               d: String(fu.reviewDue).slice(0, 10),
@@ -536,14 +536,14 @@ export function PeopleManagementPanel({
                         <p className="mb-0 mt-1 italic text-ink">{fu.suggestedQuestion}</p>
                       ) : null}
                       {fu.reviewNotes ? (
-                        <p className="mb-0 mt-1 text-2xs">{fu.reviewNotes}</p>
+                        <p className="mb-0 mt-1 text-prose">{fu.reviewNotes}</p>
                       ) : null}
                     </div>
                     {open ? (
                       <button
                         type="button"
                         disabled={busy}
-                        className={cn(S.btnGhost, 'min-h-touch text-2xs')}
+                        className={cn(S.btnGhost, 'min-h-touch text-prose')}
                         onClick={() => markFollowUpReviewed(fu.id)}
                       >
                         {t(locale, 'panel.team.retentionMarkReviewed')}
@@ -575,25 +575,25 @@ export function PeopleManagementPanel({
                       : 'border border-ink/12 bg-white/45'
                   )}
                 >
-                  <div className="mb-1 font-mono text-2xs uppercase tracking-wide text-ink-faint">
+                  <div className="mb-1 font-ui text-prose normal-case tracking-normal text-ink/75">
                     {t(locale, `panel.team.evidenceSource.${h.source || 'other'}`)}
                   </div>
                   {h.source === 'cross' ? (
-                    <div className="mb-1 font-mono text-2xs uppercase tracking-wide text-brand-500">
+                    <div className="mb-1 font-ui text-prose normal-case tracking-normal text-brand-500">
                       {t(locale, 'panel.team.peopleCrossBadge')}
                     </div>
                   ) : null}
-                  <div className="mb-1 text-xs font-semibold text-ink">{h.title}</div>
+                  <div className="mb-1 text-prose font-semibold text-ink">{h.title}</div>
                   <div className="text-prose leading-[1.55] text-ink-muted">{h.body}</div>
                 </div>
               ))}
           </div>
-          <p className={cn(S.faint, 'mb-0 mt-2 text-2xs')}>
+          <p className={cn(S.faint, 'mb-0 mt-2 text-prose')}>
             {t(locale, 'panel.team.evidenceLimits')}
           </p>
         </div>
       ) : (
-        <p className="mb-3 mt-0 text-xs italic text-ink-faint">
+        <p className="mb-3 mt-0 text-prose italic text-ink/75">
           {t(locale, 'panel.team.peopleHypothesesEmpty')}
         </p>
       )}
@@ -660,13 +660,13 @@ export function PeopleManagementPanel({
               {busy ? t(locale, 'panel.admin.save') : t(locale, 'panel.team.oneOnOneSave')}
             </button>
             {msg ? (
-              <span className={cn('text-xs', msgError ? 'text-danger' : 'text-success')}>{msg}</span>
+              <span className={cn('text-prose', msgError ? 'text-red-800 dark:text-danger' : 'text-success')}>{msg}</span>
             ) : null}
           </div>
         </div>
 
         {oneOnOnes.length === 0 ? (
-          <p className="m-0 text-xs italic text-ink-faint">
+          <p className="m-0 text-prose italic text-ink/75">
             {t(locale, 'panel.team.oneOnOneEmpty')}
           </p>
         ) : (
@@ -677,7 +677,7 @@ export function PeopleManagementPanel({
                 className="rounded-lg border border-ink/12 bg-white/40 px-3 py-2.5"
               >
                 <div className="mb-1.5 flex flex-wrap justify-between gap-2">
-                  <span className="font-mono text-xs text-ink-muted">
+                  <span className="font-mono text-prose text-ink-muted">
                     {formatMeetingDate(item.meetingDate, locale)}
                     {item.createdByName ? ` · ${item.createdByName}` : ''}
                   </span>
@@ -687,7 +687,7 @@ export function PeopleManagementPanel({
                         type="button"
                         disabled={busy}
                         onClick={() => convertToPdi(item.id)}
-                        className="cursor-pointer border-none bg-transparent font-mono text-2xs text-brand-600"
+                        className="cursor-pointer border-none bg-transparent font-ui text-prose text-brand-600"
                       >
                         {t(locale, 'panel.team.convertToPdi')}
                       </button>
@@ -696,7 +696,7 @@ export function PeopleManagementPanel({
                       type="button"
                       disabled={busy}
                       onClick={() => remove(item.id)}
-                      className="cursor-pointer border-none bg-transparent font-mono text-2xs text-danger"
+                      className="cursor-pointer border-none bg-transparent font-ui text-prose text-red-800 dark:text-danger"
                     >
                       {t(locale, 'panel.team.oneOnOneDelete')}
                     </button>
@@ -705,10 +705,10 @@ export function PeopleManagementPanel({
                 <RichTextView html={item.notes} />
                 {!isRichTextEmpty(item.nextSteps) ? (
                   <div className="mt-1.5">
-                    <div className="mb-0.5 text-xs font-semibold text-ink">
+                    <div className="mb-0.5 text-prose font-semibold text-ink">
                       {t(locale, 'panel.team.oneOnOneNextSteps')}
                     </div>
-                    <RichTextView html={item.nextSteps} className="text-xs text-ink-muted" />
+                    <RichTextView html={item.nextSteps} className="text-prose text-ink-muted" />
                   </div>
                 ) : null}
               </div>

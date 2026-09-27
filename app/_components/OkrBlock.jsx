@@ -11,7 +11,6 @@ import {
   AdminDeleteButton,
   AdminEditButton,
   AdminIconButton,
-  AdminPageHeader,
 } from '../dashboard/dashboard-shared';
 import { EmptyState } from './EmptyState';
 import { AppLoading, ContentEnter } from './AppLoading';
@@ -27,6 +26,7 @@ import {
 } from '../../lib/domain-status.js';
 import { formatDisplayDate } from '../../lib/format-display-date';
 import { Icon } from './Icon';
+import { InlineCallout } from './InlineCallout';
 
 function pctTone(pct) {
   const n = pct == null ? 0 : Number(pct);
@@ -141,6 +141,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
   const [cycles, setCycles] = useState([]);
   const [activeCycleId, setActiveCycleId] = useState(null);
   const [loading, setLoading] = useState(() => Boolean(companyId));
+  const [loadError, setLoadError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [historyForId, setHistoryForId] = useState(null);
   const [historyItems, setHistoryItems] = useState([]);
@@ -157,6 +158,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
       return;
     }
     setLoading(true);
+    setLoadError(false);
     try {
       const res = await fetch(`/api/admin/okr/cycles${companyQs}`);
       const data = await res.json().catch(() => ({}));
@@ -169,7 +171,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
         return active?.id || list[0]?.id || null;
       });
     } catch (e) {
-      toast(e?.message || t(locale, 'panel.okr.loadError'), 'error');
+      setLoadError(true);
       setCycles([]);
     } finally {
       setLoading(false);
@@ -558,11 +560,6 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
   if (!companyId) {
     return (
       <div className="space-y-4">
-        <AdminPageHeader
-          title={t(locale, 'panel.okr.title')}
-          subtitle={t(locale, 'panel.okr.hint')}
-          className="mb-0"
-        />
         <EmptyState
           title={t(locale, 'panel.okr.needCompany')}
           message={t(locale, 'panel.okr.needCompanyHint')}
@@ -573,22 +570,22 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
 
   return (
     <div className="space-y-4">
-      <AdminPageHeader
-        title={t(locale, 'panel.okr.title')}
-        subtitle={t(locale, 'panel.okr.hint')}
-        className="mb-0"
-        actions={
+      <div className="flex flex-wrap justify-end gap-2">
           <AdminCreateButton
             locale={locale}
             label={t(locale, 'panel.okr.createCycleBtn')}
             onClick={() => void createCycle()}
             disabled={busy}
           />
-        }
-      />
+      </div>
 
       {loading ? (
         <AppLoading variant="panel" />
+      ) : loadError ? (
+        <InlineCallout tone="danger" role="alert">
+          <p className="m-0 mb-2">{t(locale, 'panel.okr.loadError')}</p>
+          <button type="button" className={S.btnGhost} onClick={() => void load()}>{locale.startsWith('en') ? 'Try again' : 'Tentar novamente'}</button>
+        </InlineCallout>
       ) : (
         <ContentEnter animKey={`okr|${cycles.length}|${activeCycleId || 0}`}>
           {!cycle ? (
@@ -613,6 +610,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                       {cycles.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.title}
+                          {` (${formatDisplayDate(c.startsOn, locale)} — ${formatDisplayDate(c.endsOn, locale)})`}
                           {c.progressPct != null ? ` · ${c.progressPct}%` : ''}
                         </option>
                       ))}
@@ -642,7 +640,8 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                     />
                   </div>
                 </div>
-                <p className={cn(S.faint, 'mb-0 mt-2 font-mono text-2xs')}>
+                <p className="mb-0 mt-2 text-sm text-ink-muted">
+                  {locale.startsWith('en') ? 'Period: ' : 'Período: '}
                   {formatDisplayDate(cycle.startsOn, locale)}
                   {'–'}
                   {formatDisplayDate(cycle.endsOn, locale)}
@@ -686,7 +685,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                     <li key={area.id} className={cn(S.cardTight, 'bg-canvas/40 p-3 sm:p-4')}>
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <h4 className={cn(S.cardBody, 'm-0')}>{area.title}</h4>
+                          <h3 className={cn(S.cardTitle, 'm-0 break-words')}>{area.title}</h3>
                           <div className="mt-2">
                             <div className="mb-1 flex items-baseline justify-between gap-2">
                               <span className="font-mono text-2xs text-ink-faint">
@@ -728,7 +727,9 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                           {t(locale, 'panel.okr.activitiesEmpty')}
                         </p>
                       ) : (
-                        <ul className="mt-3 m-0 flex list-none flex-col gap-2 p-0">
+                        <details open className="mt-3">
+                        <summary className="min-h-touch cursor-pointer rounded-control py-2 text-sm font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">{locale.startsWith('en') ? 'Activities' : 'Atividades'} ({area.activities.length})</summary>
+                        <ul className="m-0 flex list-none flex-col gap-2 p-0">
                           {(area.activities || []).map((act) => (
                             <li
                               key={act.id}
@@ -744,7 +745,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                               <div className="flex flex-wrap items-start justify-between gap-2">
                                 <div className="min-w-0 flex-1">
                                   <div className="flex flex-wrap items-center gap-2">
-                                    <span className={S.cardMuted}>{act.title}</span>
+                                    <h4 className="m-0 break-words text-sm font-semibold text-ink">{act.title}</h4>
                                     {act.urgency && act.urgency !== 'none' ? (
                                       <StatusToneChip tone={urgencyTone(act.urgency)}>
                                         {t(locale, `panel.okr.urgency.${act.urgency}`)}
@@ -802,6 +803,8 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                       toneClass={meterToneForActivity(act)}
                                     />
                                   </div>
+                                  <p className="mb-1 mt-3 text-sm font-medium text-ink">{locale.startsWith('en') ? 'Responsible people' : 'Responsáveis'}</p>
+                                  {!(act.assignees || []).length ? <p className="m-0 text-sm text-ink-muted">{locale.startsWith('en') ? 'Not assigned yet.' : 'Nenhum responsável definido.'}</p> : null}
                                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                     {(act.assignees || []).map((person) => (
                                       <span
@@ -915,6 +918,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                             </li>
                           ))}
                         </ul>
+                        </details>
                       )}
                     </li>
                   ))}

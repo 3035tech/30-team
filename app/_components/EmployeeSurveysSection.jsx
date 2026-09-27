@@ -107,12 +107,12 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
     <div className="space-y-4">
       {open.length > 0 ? (
         <div>
-          <p className={cn(S.muted, 'm-0 mb-2 text-xs')}>{t(locale, 'employeeHome.surveysOpenHint')}</p>
+          <p className={cn(S.muted, 'm-0 mb-2 text-prose')}>{t(locale, 'employeeHome.surveysOpenHint')}</p>
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {open.map((item) => (
               <li key={item.key} className="rounded-control border border-ink/12 bg-canvas/50 px-3 py-2.5">
                 <div className="text-sm text-ink">{item.title}</div>
-                <div className="mt-1 text-xs text-ink-muted">
+                <div className="mt-1 text-prose text-ink-muted">
                   {item.kind === 'climate'
                     ? t(locale, 'employeeHome.surveyKindClimate')
                     : t(locale, 'employeeHome.surveyKindPulse')}
@@ -135,9 +135,9 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
           <div className="mb-2 flex items-start justify-between gap-2">
             <div>
               <div className="font-ui text-sm text-ink">{active.title}</div>
-              <p className={cn(S.muted, 'm-0 mt-1 text-xs')}>{t(locale, 'employeeHome.surveysAnonymousHint')}</p>
+              <p className={cn(S.muted, 'm-0 mt-1 text-prose')}>{t(locale, 'employeeHome.surveysAnonymousHint')}</p>
               {activeProgress.total > 0 ? (
-                <p className="m-0 mt-1 text-xs text-ink-muted">
+                <p className="m-0 mt-1 text-prose text-ink-muted">
                   {t(locale, 'employeeHome.surveysProgress', {
                     answered: activeProgress.answered,
                     total: activeProgress.total,
@@ -158,7 +158,7 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
               <FormField key={q.id} label={q.prompt}>
                 {q.questionKind === CLIMATE_QUESTION_KIND.TEXT ? (
                   <textarea
-                    className={cn(S.input, 'min-h-[72px] w-full text-xs')}
+                    className={cn(S.input, 'min-h-[72px] w-full text-prose')}
                     maxLength={1500}
                     value={answers[active.key]?.[q.id] || ''}
                     onChange={(e) =>
@@ -202,12 +202,12 @@ export function EmployeeSurveysSection({ locale = 'pt-BR', onMeta }) {
           <h3 className={cn(S.cardSection, 'mb-2 mt-0 text-sm')}>
             {t(locale, 'employeeHome.surveysHistory')}
           </h3>
-          <ul className="m-0 list-none space-y-1.5 p-0 text-xs text-ink-muted">
+          <ul className={cn(S.cardMuted, 'm-0 list-none space-y-1.5 p-0')}>
             {history.slice(0, 8).map((h, i) => (
               <li key={`${h.kind}-${h.title}-${i}`}>
                 ✓ {h.title}
                 {h.submittedAt ? (
-                  <span className="ml-1 font-mono text-2xs text-ink-faint">
+                  <span className={cn(S.faint, 'ml-1')}>
                     {formatDisplayDate(h.submittedAt, locale)}
                   </span>
                 ) : null}

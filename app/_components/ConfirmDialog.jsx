@@ -75,7 +75,7 @@ export function ConfirmDialog({
         </span>
         <h2
           id="confirm-dialog-title"
-          className="mb-0 mt-2 font-display text-xl font-normal leading-tight text-ink"
+          className="mb-0 mt-2 font-ui text-xl font-semibold leading-snug text-ink"
         >
           {heading}
         </h2>

@@ -296,7 +296,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
       fd.append('file', file);
       const res = await fetch(
         `/api/employee/dp/documents/${encodeURIComponent(docKey)}/file`,
-        { method: 'POST', body: fd }
+        { method: 'POST', body: fd, signal: AbortSignal.timeout(30000) }
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -306,7 +306,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
       toast(t(locale, 'panel.dp.uploadOk'), 'ok');
       await load();
     } catch (e) {
-      toast(e?.message || t(locale, 'panel.dp.uploadError'), 'error');
+      toast(e?.name === 'TimeoutError' ? t(locale, 'panel.dp.uploadTimeout') : e?.message || t(locale, 'panel.dp.uploadError'), 'error');
     } finally {
       setBusy(false);
       setUploadKey(null);

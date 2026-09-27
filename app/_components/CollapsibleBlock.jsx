@@ -3,6 +3,7 @@
 import { useId, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { t } from '../../lib/i18n';
+import { UI_TYPE } from '../../lib/ui-typography';
 import { Icon } from './Icon';
 
 /**
@@ -28,7 +29,7 @@ export function DisclosureToggle({
     <span
       className={cn('inline-flex shrink-0 items-center gap-1.5 text-ink-muted', className)}
     >
-      <span className={cn('font-mono text-2xs font-medium tracking-wide', labelClassName)}>
+      <span className={cn(UI_TYPE.label, labelClassName)}>
         {disclosureActionLabel(locale, open)}
       </span>
       <Icon
@@ -87,12 +88,12 @@ export function CollapsibleBlock({
     <button
       type="button"
       className={cn(
-        'flex min-h-touch w-full cursor-pointer items-center justify-between gap-3 border-none bg-transparent text-left',
-        variant === 'plain' && 'px-0 py-2.5 hover:bg-ink/[0.03]',
+        'flex min-h-touch w-full cursor-pointer items-center justify-between gap-3 bg-transparent text-left',
+        variant === 'plain' && 'border-0 px-0 py-2.5 hover:bg-ink/[0.03]',
         variant === 'card' &&
           'rounded-control border border-ink/12 bg-canvas/60 px-3 py-2.5 hover:bg-ink/[0.03]',
         variant === 'panel' &&
-          'rounded-none bg-ink/[0.02] px-3 py-2.5'
+          'border-0 rounded-none bg-ink/[0.02] px-3 py-2.5'
       )}
       aria-expanded={open}
       aria-controls={panelId}
@@ -102,7 +103,8 @@ export function CollapsibleBlock({
       <span className="flex min-w-0 items-center gap-2">
         <span
           className={cn(
-            'min-w-0 font-mono text-2xs uppercase tracking-wider text-ink-muted',
+            'min-w-0 break-words',
+            titleClassName ? '' : UI_TYPE.card,
             titleClassName
           )}
         >
@@ -147,7 +149,7 @@ export function CollapsibleBlock({
       <div className={cn(className)}>
         {headerBtn}
         {!open && collapsedHint ? (
-          <p className="m-0 mt-2 font-mono text-2xs text-ink-faint">{collapsedHint}</p>
+          <p className={cn("m-0 mt-2", UI_TYPE.supporting)}>{collapsedHint}</p>
         ) : null}
         {open ? (
           <div id={panelId} className="mt-3">
@@ -163,7 +165,7 @@ export function CollapsibleBlock({
     <div className={cn(bordered && 'border-t border-ink/10', className)}>
       {headerBtn}
       {!open && collapsedHint ? (
-        <p className="m-0 mb-2 font-mono text-2xs text-ink-faint">{collapsedHint}</p>
+        <p className={cn("m-0 mb-2", UI_TYPE.supporting)}>{collapsedHint}</p>
       ) : null}
       {open ? (
         <div id={panelId} className="pb-3">

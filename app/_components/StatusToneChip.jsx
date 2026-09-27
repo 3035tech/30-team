@@ -1,5 +1,6 @@
 'use client';
 
+import { UI_TYPE } from '../../lib/ui-typography';
 import { cn } from '../../lib/cn';
 
 /** Semantic tones for pills / chips (not brand CTA, not pipeline stage colors). */
@@ -22,20 +23,20 @@ export function statusToneClass(tone, opts = {}) {
   switch (tone) {
     case 'success':
       return bordered
-        ? 'border-success/25 bg-success/10 text-success'
-        : 'bg-success/10 text-success';
+        ? 'border-success/25 bg-success/10 text-green-800 dark:text-success'
+        : 'bg-success/10 text-green-800 dark:text-success';
     case 'warning':
       return bordered
-        ? 'border-warning/25 bg-warning/10 text-warning'
-        : 'bg-warning/10 text-warning';
+        ? 'border-warning/25 bg-warning/10 text-amber-800 dark:text-warning'
+        : 'bg-warning/10 text-amber-800 dark:text-warning';
     case 'danger':
       return bordered
-        ? 'border-danger/25 bg-danger/10 text-danger'
-        : 'bg-danger/10 text-danger';
+        ? 'border-danger/25 bg-danger/10 text-red-800 dark:text-danger'
+        : 'bg-danger/10 text-red-800 dark:text-danger';
     case 'info':
       return bordered
-        ? 'border-info/25 bg-info/10 text-info'
-        : 'bg-info/10 text-info';
+        ? 'border-info/25 bg-info/10 text-sky-800 dark:text-info'
+        : 'bg-info/10 text-sky-800 dark:text-info';
     case 'brand':
       return bordered
         ? 'border-brand-500/25 bg-brand-500/10 text-brand-500'
@@ -62,7 +63,8 @@ export function StatusToneChip({
     <span
       title={title}
       className={cn(
-        'inline-flex max-w-full items-center gap-1 truncate rounded-full border px-2 py-0.5 font-mono text-2xs',
+        'inline-flex max-w-full items-center gap-1 break-words rounded-full border px-2 py-0.5',
+        UI_TYPE.status,
         statusToneClass(tone, { bordered }),
         className
       )}

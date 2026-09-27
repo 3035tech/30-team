@@ -445,14 +445,14 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                 {dueLabel(locale, activeCourse) ? (
                   <span
                     className={cn(
-                      'text-xs',
-                      activeCourse.overdue ? 'text-danger' : 'text-ink-faint'
+                      'text-prose',
+                      activeCourse.overdue ? 'text-red-800 dark:text-danger' : 'text-ink/75'
                     )}
                   >
                     {dueLabel(locale, activeCourse)}
                   </span>
                 ) : null}
-                <span className="text-xs font-medium text-ink-muted">
+                <span className="text-prose font-medium text-ink-muted">
                   {activeCourse.progressPct}%
                 </span>
               </div>
@@ -533,7 +533,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                   <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
                     <h2 className={cn(S.cardSection, 'm-0')}>{t(locale, 'employeeHome.lmsQuizTitle')}</h2>
                     {quiz.title ? (
-                      <span className="font-mono text-2xs text-ink-faint">{quiz.title}</span>
+                      <span className="font-ui text-prose text-ink/75">{quiz.title}</span>
                     ) : null}
                   </div>
                   <div className="flex flex-col gap-4">
@@ -650,7 +650,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
             <aside className="rounded-card border border-ink/12 bg-surface p-3 lg:sticky lg:top-14">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <span className="text-sm font-semibold text-ink">{t(locale, 'employeeHome.lmsLessonsNav')}</span>
-                <span className="text-xs font-medium text-ink-muted">{activeCourse.progressPct}%</span>
+                <span className="text-prose font-medium text-ink-muted">{activeCourse.progressPct}%</span>
               </div>
               <MeterBar
                 percent={activeCourse.progressPct}
@@ -702,7 +702,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                             </StatusToneChip>
                           ) : null}
                           {resume ? (
-                            <span className="font-mono text-2xs text-ink-faint">{resume}</span>
+                            <span className="font-ui text-prose text-ink/75">{resume}</span>
                           ) : null}
                         </span>
                         {pct > 0 && !lesson.completed ? (
@@ -768,15 +768,15 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                       {due ? (
                         <p
                           className={cn(
-                            'mb-0 mt-1 text-xs',
-                            course.overdue ? 'text-danger' : 'text-ink-faint'
+                            'mb-0 mt-1 text-prose',
+                            course.overdue ? 'text-red-800 dark:text-danger' : 'text-ink/75'
                           )}
                         >
                           {due}
                         </p>
                       ) : null}
                     </div>
-                    <span className="text-xs font-medium text-ink-muted">{course.progressPct}%</span>
+                    <span className="text-prose font-medium text-ink-muted">{course.progressPct}%</span>
                   </div>
                   <MeterBar
                     percent={course.progressPct}
@@ -793,7 +793,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className={cn(S.btnPrimary, 'min-h-touch text-sm')}
+                      className={cn(S.btnBrandSoft, 'min-h-touch text-sm')}
                       onClick={() => {
                         const next =
                           (course.lessons || []).find((l) => Number(l.id) === course.continueLessonId) ||

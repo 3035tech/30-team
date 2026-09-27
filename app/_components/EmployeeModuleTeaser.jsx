@@ -40,7 +40,7 @@ export function EmployeeModuleTeaser({
           {chipLabel ? <StatusToneChip tone={chipTone}>{chipLabel}</StatusToneChip> : null}
         </div>
         {children ? <div className="mt-3">{children}</div> : null}
-        <Link href={href} className={cn(S.btnPrimary, 'mt-3 inline-flex min-h-touch no-underline')}>
+        <Link href={href} className={cn(S.btnBrandSoft, 'mt-3 inline-flex min-h-touch no-underline')}>
           {ctaLabel}
         </Link>
       </div>

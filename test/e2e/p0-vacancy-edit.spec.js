@@ -19,6 +19,18 @@ test('P0: vacancy editor opens, cancels, recovers from API failure and persists'
       await page.goto(`/dashboard?tab=vacancies&vacancyDetail=${vacancy.id}&vacancySection=${section}`);
       await page.getByRole('button', { name: 'Editar', exact: true }).first().click();
       await expect(editor).toBeVisible();
+      await expect.poll(() => editor.evaluate(e => e.contains(document.activeElement))).toBe(true);
+      await page.keyboard.press('Shift+Tab');
+      await expect(editor.getByRole('button', { name: 'Salvar', exact: true })).toBeFocused();
+      await page.keyboard.press('Tab');
+      await expect(editor.getByRole('button', { name: 'Voltar para vagas', exact: true })).toBeFocused();
+      await editor.getByRole('button', { name: 'Vencimento da vaga', exact: true }).click();
+      const calendar = page.locator('[role="dialog"]').filter({ has: page.locator('[data-day]') });
+      await expect(calendar).toBeVisible();
+      await expect.poll(() => calendar.evaluate(e => e.contains(document.activeElement))).toBe(true);
+      await page.keyboard.press('Escape');
+      await expect(calendar).toHaveCount(0);
+      await expect(editor).toBeVisible();
       expect(await editor.evaluate(e => getComputedStyle(e).position)).toBe('fixed');
       await expect(editor.getByLabel('Título da vaga', { exact: true })).toHaveValue(vacancy.title);
       await editor.getByRole('button', { name: 'Cancelar', exact: true }).click();

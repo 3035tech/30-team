@@ -304,7 +304,7 @@ export function OnboardingCheckinsBlock({
                         </StatusToneChip>
                       ) : null}
                     </div>
-                    <div className="mt-0.5 text-xs text-ink-muted">
+                    <div className="mt-0.5 text-prose text-ink-muted">
                       {t(locale, 'panel.onboarding.due', { date: row.dueDate || '—' })}
                       {done && row.outcome === 'extend' && row.extendDays != null ? (
                         <span>
@@ -330,7 +330,7 @@ export function OnboardingCheckinsBlock({
                         href={row.meetUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-1 inline-flex min-h-touch items-center font-mono text-2xs text-brand-600"
+                        className="mt-1 inline-flex min-h-touch items-center font-ui text-prose text-brand-600"
                       >
                         {t(locale, 'panel.onboarding.openMeet')}
                       </a>

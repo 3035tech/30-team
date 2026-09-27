@@ -1,7 +1,7 @@
 'use client';
 
-import { OkrBlock } from '../../_components/OkrBlock';
+import { OkrHierarchyBlock } from '../../_components/OkrHierarchyBlock';
 
 export function OkrAdminTab({ locale = 'pt-BR', companyId }) {
-  return <OkrBlock locale={locale} companyId={companyId} />;
+  return <OkrHierarchyBlock locale={locale} companyId={companyId} />;
 }

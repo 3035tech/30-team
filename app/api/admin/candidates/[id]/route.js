@@ -3,14 +3,15 @@ import { verifySessionWithCapabilities } from '../../../../../lib/user-capabilit
 import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../lib/auth';
 import { query, queryRead, withTransaction } from '../../../../../lib/db';
-import { audit } from '../../../../../lib/audit';
+import { audit, auditFromRequest } from '../../../../../lib/audit';
 import { apiError, ERR } from '../../../../../lib/api-error';
 import { normalizeCandidateProfile } from '../../../../../lib/candidate-profile';
 import { titleCasePersonName } from '../../../../../lib/person-name';
 import { buildCandidateTimeline } from '../../../../../lib/hire';
 import { buildCandidatePeopleBrief } from '../../../../../lib/people/candidate-people-brief';
 import { isRichTextEmpty, sanitizeRichTextHtml } from '../../../../../lib/sanitize-html';
-import { canAccessCandidateRecord, isAdminRole } from '../../../../../lib/permissions';
+import { CAP, requireAnyCapability, canAccessCandidateRecord, isAdminRole } from '../../../../../lib/permissions';
+import { upsertDpProfile } from '../../../../../lib/people/employee-dp.js';
 import { listCandidateOverdueLms } from '../../../../../lib/lms.js';
 
 export async function GET(request, props) {
@@ -165,6 +166,11 @@ export async function PATCH(request, props) {
   }
 
   const body = await request.json().catch(() => ({}));
+  const hasDpProfile = body.dpProfile !== undefined;
+  if (hasDpProfile) {
+    if (!requireAnyCapability(payload, [CAP.DP_VIEW, CAP.TEAM_VIEW])) return apiError(request, ERR.UNAUTHORIZED, 401);
+    if (!body.dpProfile || typeof body.dpProfile !== 'object' || Array.isArray(body.dpProfile)) return apiError(request, ERR.INVALID_DATA, 400);
+  }
   const profile = normalizeCandidateProfile(body);
   const hasHrNotes = body.hrNotes !== undefined;
   const hasProfile = Object.values(profile).some((v) => v != null);
@@ -279,6 +285,7 @@ export async function PATCH(request, props) {
   const up = await withTransaction(async (db) => {
     const previous = await db.query('SELECT company_id AS "companyId", work_format AS "workFormat" FROM candidates WHERE id = $1 FOR UPDATE', [id]);
     if (!previous.rowCount) return { rowCount: 0, rows: [] };
+    if (!isAdmin && String(previous.rows[0].companyId) !== String(companyId)) return { errorCode: ERR.UNAUTHORIZED, status: 401 };
     const oldFormat = previous.rows[0].workFormat || null;
     const changesFormat = body.workFormat !== undefined || body.work_format !== undefined;
     const nextFormat = changesFormat ? String(body.workFormat ?? body.work_format ?? '').trim().toLowerCase() || null : oldFormat;
@@ -304,14 +311,39 @@ export async function PATCH(request, props) {
        VALUES ($1, $2, $3, $4, $5::date, $6)`,
       [previous.rows[0].companyId, id, oldFormat, nextFormat, effectiveDate, payload.userId || null]
     );
+    if (hasDpProfile) {
+      const dp = await upsertDpProfile(db, {
+        ...body.dpProfile,
+        companyId: previous.rows[0].companyId,
+        candidateId: id,
+        userId: payload.userId,
+        allowAlumni: true,
+      });
+      // Throw (rather than return) so candidate fields and history roll back too.
+      if (!dp.ok) throw Object.assign(new Error('Invalid DP profile'), { dpErrorCode: dp.errorCode });
+      result.rows[0].dpProfile = dp.profile;
+      result.companyId = previous.rows[0].companyId;
+    }
     return result;
+  }).catch((error) => {
+    if (error.dpErrorCode) return { errorCode: error.dpErrorCode, status: 400 };
+    console.error('PATCH candidate profile transaction', error);
+    return { errorCode: ERR.INTERNAL, status: 500 };
   });
-  if (up.errorCode) return apiError(request, up.errorCode, 400);
+  if (up.errorCode) return apiError(request, up.errorCode, up.status || 400);
   if (up.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
 
   await audit({
     actorUserId: payload.userId || null,
     action: 'candidate.profile_update',
+    targetType: 'candidate',
+    targetId: String(id),
+  });
+
+  if (hasDpProfile) await auditFromRequest(request, {
+    actorUserId: payload.userId || null,
+    companyId: up.companyId,
+    action: 'dp.profile.updated',
     targetType: 'candidate',
     targetId: String(id),
   });

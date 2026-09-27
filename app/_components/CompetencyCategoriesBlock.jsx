@@ -37,21 +37,21 @@ export function CompetencyCategoriesBlock({ companyId, locale = 'pt-BR', onBack 
     return () => { clearTimeout(timer); controller.abort(); };
   }, [companyId, search, includeInactive, page, version]);
 
-  async function mutate(method, values) {
+  async function mutate(method, values, keepFormOpen = false) {
     setBusy(true); setError('');
     try {
       const response = await fetch('/api/admin/competency-categories', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...values, companyId }) });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || String(response.status));
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || (en ? 'Could not save. Try again.' : 'Não foi possível salvar. Tente novamente.'));
       toast(method === 'DELETE' ? (en ? 'Category deleted.' : 'Categoria excluída.') : (en ? 'Category saved.' : 'Categoria salva.'), 'ok');
       reload();
-    } catch (e) { setError(e.message); }
+    } catch (e) { if (keepFormOpen) throw e; setError(e.message); }
     finally { setBusy(false); }
   }
   async function edit(item) {
-    const values = await promptForm({ title: en ? (item ? 'Edit category' : 'New category') : (item ? 'Editar categoria' : 'Nova categoria'),
+    await promptForm({ title: en ? (item ? 'Edit category' : 'New category') : (item ? 'Editar categoria' : 'Nova categoria'),
+      submit: values => mutate(item ? 'PATCH' : 'POST', { ...values, ...(item ? { id: item.id } : {}) }, true),
       fields: [{ key: 'name', label: en ? 'Category name' : 'Nome da categoria', required: true, maxLength: 200, defaultValue: item?.name || '' }] });
-    if (values) await mutate(item ? 'PATCH' : 'POST', { ...values, ...(item ? { id: item.id } : {}) });
   }
   async function toggle(item) {
     if (!await confirm({ title: item.name, message: item.active
@@ -70,8 +70,8 @@ export function CompetencyCategoriesBlock({ companyId, locale = 'pt-BR', onBack 
       <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm">{en ? 'Search categories' : 'Buscar categorias'}<input className={S.input} value={search} maxLength={100} onChange={e => { setSearch(e.target.value); setPage(1); }} /></label>
       <label className="flex flex-col gap-1 text-sm">{en ? 'Status' : 'Status'}<select className={S.select} value={includeInactive ? 'all' : 'active'} onChange={e => { setIncludeInactive(e.target.value === 'all'); setPage(1); }}><option value="all">{en ? 'All' : 'Todas'}</option><option value="active">{en ? 'Active only' : 'Somente ativas'}</option></select></label>
     </div>
-    {error ? <div role="alert" className="text-sm text-danger">{error} <button type="button" className={S.btnGhost} onClick={reload}>{en ? 'Retry' : 'Tentar novamente'}</button></div> : null}
-    {loading ? <AppLoading variant="panel" /> : <>
+    {error ? <div role="alert" className="text-sm text-red-800 dark:text-danger">{error} <button type="button" className={S.btnGhost} onClick={reload}>{en ? 'Retry' : 'Tentar novamente'}</button></div> : null}
+    {loading ? <AppLoading locale={locale} variant="panel" /> : <>
       {items.length ? <div className="min-w-0"><table style={{ minWidth: 0 }} className="block w-full text-left text-sm md:table">
         <thead className="hidden md:table-header-group"><tr className="border-b border-ink/10"><th scope="col" className="p-3">{en ? 'Name' : 'Nome'}</th><th scope="col" className="p-3">Status</th><th scope="col" className="p-3">{en ? 'Competencies' : 'Competências'}</th><th scope="col" className="p-3">{en ? 'Actions' : 'Ações'}</th></tr></thead>
         <tbody className="block md:table-row-group">{items.map(item => <tr key={item.id} className="grid grid-cols-2 border-b border-ink/10 py-3 md:table-row md:py-0">

@@ -113,6 +113,9 @@ export function PromptFormDialog({
 }) {
   const [mounted, setMounted] = useState(false);
   const [values, setValues] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [uploadBusyKey, setUploadBusyKey] = useState('');
   const [uploadError, setUploadError] = useState('');
   const [cropTarget, setCropTarget] = useState(null); // { field, file }
@@ -162,6 +165,9 @@ export function PromptFormDialog({
       }
     }
     submitLockRef.current = false;
+    setSubmitting(false);
+    setSubmitError('');
+    setFieldErrors({});
     setValues(init);
     setUploadBusyKey('');
     setUploadError('');
@@ -172,7 +178,7 @@ export function PromptFormDialog({
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape') onCancel?.();
+      if (e.key === 'Escape' && !submitLockRef.current) onCancel?.();
     };
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -215,7 +221,11 @@ export function PromptFormDialog({
     });
   };
 
-  const setField = (key, value) => setValues((prev) => ({ ...prev, [key]: value }));
+  const setField = (key, value) => {
+    setValues((prev) => ({ ...prev, [key]: value }));
+    setFieldErrors({});
+    setSubmitError('');
+  };
 
   const applyCepLookup = async (fk, digits, autofill) => {
     if (!autofill || digits.length !== 8) return;
@@ -302,6 +312,7 @@ export function PromptFormDialog({
         className="w-full"
       >
         {renderControl(f)}
+        {fieldErrors[fieldKeyOf(f)] ? <p id={`prompt-error-${fieldKeyOf(f)}`} role="alert" className="m-0 mt-1 text-sm text-danger">{fieldErrors[fieldKeyOf(f)]}</p> : null}
       </FormField>
     );
   };
@@ -452,7 +463,7 @@ export function PromptFormDialog({
             return (
               <label
                 key={opt.value}
-                className="flex cursor-pointer items-center gap-2 font-display text-prose text-ink"
+                className="flex cursor-pointer items-center gap-2 font-ui text-sm text-ink"
               >
                 <input
                   type="checkbox"
@@ -492,7 +503,7 @@ export function PromptFormDialog({
       return (
         <label
           className={cn(
-            'flex cursor-pointer items-start gap-2.5 font-display text-sm leading-[1.45] text-ink',
+            'flex cursor-pointer items-start gap-2.5 font-ui text-sm leading-[1.45] text-ink',
             !f.help && 'mt-1'
           )}
         >
@@ -553,6 +564,7 @@ export function PromptFormDialog({
           value={values[fk] ?? ''}
           onChange={(id) => setField(fk, id)}
           searchUrl={f.searchUrl}
+          initialSelection={f.initialSelection}
           locale={locale}
           placeholder={f.placeholder || ''}
           minChars={f.minChars != null ? f.minChars : 1}
@@ -718,6 +730,12 @@ export function PromptFormDialog({
         className={dialogFieldClass}
         autoComplete={f.autoComplete || (f.type === 'password' ? 'new-password' : 'off')}
         inputMode={f.inputMode}
+        min={f.min}
+        max={f.max}
+        step={f.step}
+        aria-label={f.label}
+        aria-invalid={Boolean(fieldErrors[fk]) || undefined}
+        aria-describedby={fieldErrors[fk] ? `prompt-error-${fk}` : undefined}
         maxLength={f.maxLength}
         disabled={disabled}
         required={Boolean(f.required)}
@@ -732,16 +750,26 @@ export function PromptFormDialog({
         className={cn('app-dialog-overlay', dialogOverlayClass)}
         role="presentation"
         onClick={(e) => {
-          if (e.target === e.currentTarget) onCancel?.();
+          if (e.target === e.currentTarget && !submitLockRef.current) onCancel?.();
         }}
       >
         <form
           ref={dialogRef}
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
             if (submitLockRef.current || uploadBusyKey || missingRequired) return;
+            const errors = Object.fromEntries(visibleFields.map(f => [fieldKeyOf(f), f.validate?.(values[fieldKeyOf(f)], values)]).filter(([, message]) => message));
+            setFieldErrors(errors);
+            if (Object.keys(errors).length) {
+              const key = Object.keys(errors)[0];
+              dialogRef.current?.querySelector(`[aria-label="${CSS.escape(fields.find(f => fieldKeyOf(f) === key)?.label || '')}"]`)?.focus();
+              return;
+            }
             submitLockRef.current = true;
-            onSubmit?.(values);
+            setSubmitting(true); setSubmitError('');
+            try { await onSubmit?.(values); }
+            catch (error) { setSubmitError(error?.message || t(locale, 'panel.common.error')); }
+            finally { submitLockRef.current = false; setSubmitting(false); }
           }}
           onKeyDown={(event) => {
             if (event.key !== 'Tab' || !event.currentTarget.contains(event.target)) return;
@@ -767,14 +795,14 @@ export function PromptFormDialog({
           </span>
           <h2
             id="prompt-form-title"
-            className="mb-0 mt-2 font-display text-xl font-normal leading-tight text-ink"
+            className="mb-0 mt-2 font-ui text-xl font-semibold leading-snug text-ink"
           >
             {heading}
           </h2>
           {message ? (
             <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
           ) : null}
-          <div className="mt-4 flex flex-col gap-5">
+          <fieldset disabled={submitting} className="m-0 mt-4 flex min-w-0 flex-col gap-5 border-0 p-0">
             {fieldGroups.map((group, gi) =>
               group.row && group.fields.length > 1 ? (
                 <div
@@ -787,20 +815,21 @@ export function PromptFormDialog({
                 group.fields.map((f) => renderFieldBlock(f))
               )
             )}
-          </div>
+          </fieldset>
+          {submitError ? <p role="alert" className="mt-4 rounded-control border border-danger/30 p-3 text-sm text-danger">{submitError}</p> : null}
           <div className="mt-[22px] flex flex-wrap justify-end gap-2.5">
-            <button type="button" onClick={onCancel} className={dialogBtnGhostClass} disabled={Boolean(uploadBusyKey)}>
+            <button type="button" onClick={onCancel} className={dialogBtnGhostClass} disabled={submitting || Boolean(uploadBusyKey)}>
               {cancelLabel || t(locale, 'panel.common.cancel')}
             </button>
             <button
               type="submit"
-              disabled={Boolean(uploadBusyKey) || missingRequired}
+              disabled={submitting || Boolean(uploadBusyKey) || missingRequired}
               className={cn(
                 dialogBtnPrimaryClass,
                 (uploadBusyKey || missingRequired) && 'cursor-not-allowed opacity-55'
               )}
             >
-              {confirmLabel || t(locale, 'panel.common.save')}
+              {submitting ? t(locale, 'common.loading') : confirmLabel || t(locale, 'panel.common.save')}
             </button>
           </div>
         </form>

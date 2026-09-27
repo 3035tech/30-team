@@ -1,9 +1,10 @@
 'use client';
 
+import { UI_TYPE } from '../../lib/ui-typography';
 import { SelectField } from '../_components/SelectField';
 
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
+import { createContext, useContext, useEffect, useRef } from 'react';
 import { TYPE_DATA } from '../../lib/data';
 import { t } from '../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../lib/assessment-filters';
@@ -30,9 +31,9 @@ import { getDashboardTabNav } from '../../lib/dashboard-navigation';
 /** Shared Tailwind class tokens (prefer `className={S.x}` — do not reinvent). */
 const S = {
   label:
-    'mb-3 block font-mono text-2xs uppercase tracking-[2.5px] text-ink-label',
-  card: 'rounded-card border border-ink/12 bg-surface p-7 backdrop-blur-[16px]',
-  cardTight: 'rounded-card border border-ink/12 bg-surface p-5',
+    `mb-2 block ${UI_TYPE.label}`,
+  card: 'rounded-card border border-ink/12 bg-surface p-4 sm:p-6',
+  cardTight: 'rounded-card border border-ink/12 bg-surface p-4 sm:p-5',
   /** Native select — custom chevron via `.ui-select` (globals.css). */
   select: fieldSelectClass,
   /** Page-size / dense chrome selects. */
@@ -42,12 +43,12 @@ const S = {
   textarea: fieldTextareaClass,
   checkbox: fieldCheckboxClass,
   sidebarSection:
-    'mb-1 block px-3 font-mono text-2xs uppercase tracking-[2px] text-ink-label',
+    `mb-1 block px-3 ${UI_TYPE.label}`,
   filterChip:
     'inline-flex items-center gap-1 rounded-full border border-brand-500/25 bg-brand-500/10 px-2.5 py-1 font-mono text-xs text-brand-600',
   /** Primary CTA — brand (use once per viewport when possible) */
   btnPrimary:
-    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border-0 bg-brand-500 px-4 py-2.5 font-ui text-sm font-medium text-white transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 disabled:cursor-default disabled:opacity-55',
+    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border-0 bg-brand-500 px-4 py-2.5 font-ui text-sm font-medium text-white dark:text-canvas transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 disabled:cursor-default disabled:opacity-55',
   /** Secondary soft brand */
   btnBrandSoft:
     'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border border-brand-500/35 bg-brand-500/10 px-3.5 py-2.5 font-ui text-sm font-medium text-brand-600 transition-colors hover:bg-brand-500/[0.15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35 disabled:cursor-default disabled:opacity-55',
@@ -60,20 +61,21 @@ const S = {
    */
   btnRowIcon:
     'inline-flex min-h-touch min-w-touch shrink-0 cursor-pointer items-center justify-center rounded-control border p-0 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35 disabled:cursor-default disabled:opacity-50',
-  muted: 'font-ui text-prose leading-relaxed text-ink-muted',
-  faint: 'font-ui text-xs leading-snug text-ink-faint',
+  muted: UI_TYPE.supporting,
+  faint: UI_TYPE.supporting,
   stack: 'flex flex-col gap-4',
   row: 'flex flex-wrap items-center gap-2',
   /**
    * Overview / intel cards — one type scale (title → subtitle → body → chips).
    * Prefer these over ad-hoc text-[Npx] / font-medium vs font-semibold mix.
    */
-  cardTitle: 'font-ui text-base font-semibold text-ink',
-  cardSubtitle: 'font-ui text-xs text-ink-muted',
-  cardBody: 'font-ui text-sm text-ink',
-  cardMuted: 'font-ui text-xs text-ink-muted',
-  cardFaint: 'font-ui text-xs leading-snug text-ink-faint',
-  cardSection: 'mb-2 font-ui text-base font-semibold leading-snug text-ink',
+  cardTitle: UI_TYPE.card,
+  cardSubtitle: UI_TYPE.supporting,
+  cardBody: UI_TYPE.body,
+  cardMuted: UI_TYPE.supporting,
+  cardFaint: UI_TYPE.supporting,
+  sectionTitle: UI_TYPE.section,
+  cardSection: `mb-2 ${UI_TYPE.section}`,
   cardRowTitle: 'truncate font-ui text-sm font-medium text-ink',
   cardLink: 'font-ui text-xs font-medium text-brand-600 hover:text-brand-700',
   cardChip:
@@ -81,7 +83,7 @@ const S = {
   cardMetric: 'font-mono text-sm font-semibold tabular-nums',
   cardMetricHero: 'font-mono text-3xl font-bold tabular-nums',
   /** Dashboard page H1 */
-  pageTitle: 'm-0 break-words font-ui text-2xl font-semibold leading-tight tracking-tight text-ink',
+  pageTitle: `m-0 break-words ${UI_TYPE.page}`,
   /** Flex row for FormField — items-start evita altura “esticada” por hint/readonly */
   fieldRow: 'flex flex-wrap items-start gap-2.5',
 };
@@ -165,7 +167,7 @@ function SortableTh({ children, columnKey, sortKey, dir, onSort, align = 'left' 
         }
       }}
       className={cn(
-        'cursor-pointer select-none border-b border-ink/12 px-3 py-2.5 font-mono text-2xs font-semibold uppercase tracking-[0.06em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/35',
+        'cursor-pointer select-none border-b border-ink/12 px-3 py-2.5 font-ui text-prose font-semibold normal-case focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/35',
         active ? 'text-brand-600' : 'text-ink-muted',
         align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
       )}
@@ -405,14 +407,14 @@ function DashboardBreadcrumb({ locale, tab, onHome }) {
         type="button"
         onClick={onHome}
         title={t(locale, 'dashboard.homeAria')}
-        className="m-0 cursor-pointer border-none bg-transparent p-0 font-mono text-2xs uppercase tracking-[2.5px] text-ink-label"
+        className={cn(UI_TYPE.label, "m-0 cursor-pointer border-none bg-transparent p-0 hover:text-ink")}
       >
         {t(locale, 'dashboard.panel')}
       </button>
       {sectionLabel ? (
         <>
           {sep}
-          <span className="text-ink-faint">{sectionLabel}</span>
+          <span>{sectionLabel}</span>
         </>
       ) : null}
       {sep}
@@ -746,7 +748,7 @@ function AdminActionsTh({ children }) {
   return (
     <th
       scope="col"
-      className="w-px whitespace-nowrap border-b border-ink/12 px-4 py-3 text-right align-middle font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted"
+      className={cn('w-px whitespace-nowrap border-b border-ink/12 px-4 py-3 text-right align-middle', UI_TYPE.label)}
     >
       {children}
     </th>
@@ -759,7 +761,7 @@ function AdminTh({ children, align = 'left', className }) {
     <th
       scope="col"
       className={cn(
-        'border-b border-ink/12 px-4 py-3 font-mono text-2xs uppercase tracking-[0.06em] text-ink-muted',
+        'border-b border-ink/12 px-4 py-3', UI_TYPE.label,
         align === 'right' ? 'text-right' : 'text-left',
         className
       )}
@@ -806,11 +808,18 @@ function AdminTableShell({
   );
 }
 
+/** The dashboard owns the page heading; embedded modules only add distinct headings. */
+export const DashboardPageTitleContext = createContext(null);
+
 /** Standard admin tab title + optional subtitle + primary actions (create).
  * Create CTA stays top-right of the title row — never inside AdminListFilters.
  */
 function AdminPageHeader({ title, subtitle = null, description = null, actions = null, className }) {
   const lead = subtitle || description;
+  const pageTitle = useContext(DashboardPageTitleContext);
+  const repeatedTitle = typeof title === 'string' && typeof pageTitle === 'string'
+    && title.trim().toLocaleLowerCase() === pageTitle.trim().toLocaleLowerCase();
+  const Heading = pageTitle ? 'h2' : 'h1';
   return (
     <header
       className={cn(
@@ -819,7 +828,7 @@ function AdminPageHeader({ title, subtitle = null, description = null, actions =
       )}
     >
       <div className="min-w-0 flex-1">
-        <h1 className={S.pageTitle}>{title}</h1>
+        {!repeatedTitle ? <Heading className={pageTitle ? S.sectionTitle : S.pageTitle}>{title}</Heading> : null}
         {lead ? (
           <p className={cn(S.muted, 'm-0 mt-1.5 max-w-[62ch] text-prose')}>{lead}</p>
         ) : null}

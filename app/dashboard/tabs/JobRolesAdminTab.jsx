@@ -44,7 +44,7 @@ import {
   stripSalary,
 } from '../../../lib/br-masks';
 
-const FIELD = `${fieldInputClass} w-full font-mono text-xs`;
+const FIELD = `${fieldInputClass} w-full font-mono text-prose`;
 
 const emptyForm = () => ({
   name: '',
@@ -394,7 +394,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
   if (error) {
     return (
       <div className={S.card}>
-        <p className="text-danger">{error}</p>
+        <p className="text-red-800 dark:text-danger">{error}</p>
       </div>
     );
   }
@@ -476,7 +476,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
                     <td className="px-3 py-2 align-middle text-sm font-medium text-ink whitespace-nowrap">
                       {role.name}
                     </td>
-                    <td className="max-w-[280px] px-3 py-2 align-middle text-xs text-ink-muted">
+                    <td className="max-w-[280px] px-3 py-2 align-middle text-prose text-ink-muted">
                       <span
                         className="line-clamp-1"
                         title={
@@ -490,24 +490,24 @@ export function JobRolesAdminTab({ locale, companyId }) {
                           : '—'}
                       </span>
                     </td>
-                    <td className="px-3 py-2 align-middle font-mono text-2xs text-ink-muted whitespace-nowrap">
+                    <td className="px-3 py-2 align-middle font-ui text-prose text-ink-muted whitespace-nowrap">
                       {formatVacancySalaryRangeDisplay(
                         role.marketSalaryMin,
                         role.marketSalaryMax
                       ) || '—'}
                     </td>
-                    <td className="px-3 py-2 align-middle font-mono text-2xs text-ink-faint whitespace-nowrap">
+                    <td className="px-3 py-2 align-middle font-ui text-prose text-ink/75 whitespace-nowrap">
                       {rubricKeys.length > 0
                         ? `${rubricKeys.length} ${t(locale, 'jobRoles.rubricTypesCount')}`
                         : t(locale, 'jobRoles.rubricEmpty')}
                     </td>
                     <td className="px-3 py-2 align-middle whitespace-nowrap">
                       {role.active ? (
-                        <span className="font-mono text-2xs text-ink-muted">
+                        <span className="font-ui text-prose text-ink-muted">
                           {t(locale, 'panel.common.yes')}
                         </span>
                       ) : (
-                        <span className="rounded bg-ink/10 px-1.5 py-0.5 font-mono text-2xs uppercase text-ink-muted">
+                        <span className="rounded bg-ink/10 px-1.5 py-0.5 font-ui text-prose normal-case text-ink-muted">
                           {t(locale, 'jobRoles.inactive')}
                         </span>
                       )}
@@ -680,7 +680,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
             variant="panel"
           >
             <div className="flex flex-col gap-3">
-              <p className="m-0 text-xs text-ink-muted">{t(locale, 'jobRoles.marketBandHint')}</p>
+              <p className="m-0 text-prose text-ink-muted">{t(locale, 'jobRoles.marketBandHint')}</p>
               <div className={cn(S.fieldRow, 'items-start gap-3')}>
                 <FormField label={t(locale, 'jobRoles.marketMinLabel')}>
                   <input
@@ -718,7 +718,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
 
           <FormField as="div" label={t(locale, 'jobRoles.rubricLabel')}>
             <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-              <p className="m-0 min-w-0 flex-1 text-xs text-ink-muted">
+              <p className="m-0 min-w-0 flex-1 text-prose text-ink-muted">
                 {t(locale, 'jobRoles.rubricHint')}
               </p>
               <button
@@ -727,7 +727,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
                 disabled={saving || aiBusy || !String(form.name || '').trim()}
                 aria-busy={aiBusy || undefined}
                 className={cn(
-                  'inline-flex min-h-touch shrink-0 items-center justify-center gap-2 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3 py-2 font-mono text-2xs text-brand-500',
+                  'inline-flex min-h-touch shrink-0 items-center justify-center gap-2 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3 py-2 font-ui text-prose text-brand-500',
                   (saving || aiBusy || !String(form.name || '').trim()) && 'cursor-default opacity-60'
                 )}
               >
@@ -738,7 +738,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
                 )}
               </button>
             </div>
-            <p className="m-0 mb-2 text-2xs leading-normal text-ink-faint">
+            <p className="m-0 mb-2 text-prose leading-normal text-ink/75">
               {t(locale, 'jobRoles.rubricAiHint')}
             </p>
             <RubricEditor

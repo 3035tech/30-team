@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
+import { t } from '../../../lib/i18n';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { EmptyState } from '../../_components/EmptyState';
 import { SelectField } from '../../_components/SelectField';
@@ -181,7 +182,7 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
 
   return (
     <div className="flex flex-col gap-4">
-      <AdminPageHeader title={copy.title} subtitle={copy.subtitle} />
+      <AdminPageHeader title={t(locale, 'dashboard.pdi')} subtitle={copy.subtitle} />
 
       {!companyId ? (
         <EmptyState title={copy.selectCompanyTitle} message={copy.selectCompanyBody} />
@@ -208,9 +209,9 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                 <div className="flex flex-col gap-1 border-b border-warning/15 px-4 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
                   <div>
                     <h2 className="m-0 text-sm font-semibold text-ink">{copy.nextActions}</h2>
-                    <p className="m-0 mt-0.5 text-xs text-ink-muted">{copy.nextActionsBody}</p>
+                    <p className="m-0 mt-0.5 text-prose text-ink-muted">{copy.nextActionsBody}</p>
                   </div>
-                  <span className="font-mono text-2xs text-warning">
+                  <span className="font-ui text-prose text-amber-800 dark:text-warning">
                     {locale === 'en'
                       ? `${priorityItems.length} ${priorityItems.length === 1 ? 'case' : 'cases'} shown`
                       : `${priorityItems.length} ${priorityItems.length === 1 ? 'caso exibido' : 'casos exibidos'}`}
@@ -233,12 +234,12 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                       <div key={`${item.priorityKind}-${item.candidateId}`} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="min-w-0">
                           <p className="m-0 truncate text-sm font-medium text-ink">{item.candidateName}</p>
-                          <p className="m-0 mt-0.5 truncate text-xs text-ink-muted">{title} · {detail}</p>
+                          <p className="m-0 mt-0.5 truncate text-prose text-ink-muted">{title} · {detail}</p>
                         </div>
                         <button
                           type="button"
                           onClick={() => openPerson(item)}
-                          className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 whitespace-nowrap text-xs')}
+                          className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 whitespace-nowrap text-prose')}
                         >
                           {copy.seePerson}
                           <Icon name="chevronRight" className="h-3.5 w-3.5" />
@@ -294,11 +295,11 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <h2 className="m-0 text-sm font-medium text-ink">{row.candidateName}</h2>
-                            {!hasPlan ? <span className="rounded-full bg-warning/10 px-2 py-1 font-mono text-2xs text-warning">{copy.noPlanStatus}</span> : null}
-                            {row.periodOverdue ? <span className="rounded-full bg-danger/10 px-2 py-1 font-mono text-2xs text-danger">{copy.overduePlan}</span> : null}
+                            {!hasPlan ? <span className="rounded-full bg-warning/10 px-2 py-1 font-ui text-prose text-amber-800 dark:text-warning">{copy.noPlanStatus}</span> : null}
+                            {row.periodOverdue ? <span className="rounded-full bg-danger/10 px-2 py-1 font-ui text-prose text-red-800 dark:text-danger">{copy.overduePlan}</span> : null}
                           </div>
                           {hasPlan ? (
-                          <p className="m-0 mt-1 text-xs text-ink-muted">
+                          <p className="m-0 mt-1 text-prose text-ink-muted">
                             {row.planTitle}
                               {periodEndLabel ? ` · ${periodEndLabel}` : ''}
                             {row.overdueItemCount > 0
@@ -306,13 +307,13 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                               : ''}
                           </p>
                           ) : (
-                            <p className="m-0 mt-1 text-xs text-ink-muted">{copy.noPlanRowDetail}</p>
+                            <p className="m-0 mt-1 text-prose text-ink-muted">{copy.noPlanRowDetail}</p>
                           )}
                         </div>
                         <div className="flex shrink-0 items-center gap-3">
                           {hasPlan ? (
                             <div className="min-w-[120px]">
-                              <div className="mb-1 flex justify-between font-mono text-2xs text-ink-faint">
+                              <div className="mb-1 flex justify-between font-ui text-prose text-ink/75">
                                 <span>{row.doneCount}/{row.itemCount || 0} {copy.done}</span>
                                 <span>{row.donePct ?? 0}%</span>
                               </div>
@@ -321,7 +322,7 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                               </div>
                             </div>
                           ) : null}
-                          <button type="button" onClick={() => openPerson(row)} className={cn(S.btnBrandSoft, 'min-h-touch whitespace-nowrap text-xs')}>
+                          <button type="button" onClick={() => openPerson(row)} className={cn(S.btnBrandSoft, 'min-h-touch whitespace-nowrap text-prose')}>
                             <Icon name={hasPlan ? 'externalLink' : 'plus'} className="h-3.5 w-3.5" />
                             {hasPlan ? copy.open : copy.create}
                           </button>

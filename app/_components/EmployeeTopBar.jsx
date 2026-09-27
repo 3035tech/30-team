@@ -127,11 +127,13 @@ export function EmployeeTopBar({
   const persistLocale = async (next) => {
     onLocaleChange?.(next);
     try {
-      await fetch('/api/employee/me', {
+      const response = await fetch('/api/employee/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ preferredLocale: next }),
       });
+      // Page content receives its locale from the refreshed session on the server.
+      if (response.ok) router.refresh();
     } catch {
       /* ignore */
     }

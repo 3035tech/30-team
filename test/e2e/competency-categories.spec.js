@@ -10,6 +10,8 @@ test('categories: CRUD, selector, inactive links, tenant isolation and database 
   const db = new pg.Client({ host: '127.0.0.1', port: 55432, database: 'enneagram_dtov', user: 'dtov', password: 'dtov_local_only', ssl: false });
   await db.connect();
   let foreignCompany;
+  let createdCategoryId;
+  let createdCompetencyId;
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   async function json(promise, status = 200) {
     const response = await promise;
@@ -51,6 +53,7 @@ test('categories: CRUD, selector, inactive links, tenant isolation and database 
     await dialog.getByRole('button', { name: 'Salvar', exact: true }).click();
     await expect(page.getByRole('rowheader', { name, exact: true })).toBeVisible();
     const category = (await json(page.request.get(`${endpoint}?q=${stamp}`))).items[0];
+    createdCategoryId = category.id;
     await json(page.request.post(endpoint, { data: { name: ` ${name.toUpperCase()} ` } }), 409);
     await json(page.request.post(endpoint, { data: { name: '  ' } }), 400);
     await page.getByRole('row').filter({ has: page.getByRole('rowheader', { name, exact: true }) }).getByRole('button', { name: 'Editar', exact: true }).click();
@@ -86,6 +89,7 @@ test('categories: CRUD, selector, inactive links, tenant isolation and database 
     await expect(dialog).toHaveCount(0);
     await expect(page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: competencyName }) })).toContainText(renamed);
     const competency = (await json(page.request.get('/api/admin/formal-competencies'))).competencies.find(c => c.name === competencyName);
+    createdCompetencyId = competency.id;
     expect(Number(competency.categoryId)).toBe(Number(category.id));
     await openCategories();
     await expect(row().getByRole('button', { name: 'Excluir', exact: true })).toBeDisabled();
@@ -119,6 +123,9 @@ test('categories: CRUD, selector, inactive links, tenant isolation and database 
     expect((await json(page.request.get(`${endpoint}?q=${stamp}&includeInactive=true`))).items).toHaveLength(0);
     expect(errors).toEqual([]);
   } finally {
+    // Remove only this run's fixtures, including after an assertion failure.
+    if (createdCompetencyId) await db.query('DELETE FROM company_competencies WHERE id=$1', [createdCompetencyId]);
+    if (createdCategoryId) await db.query('DELETE FROM competency_categories WHERE id=$1', [createdCategoryId]);
     if (foreignCompany) await db.query('DELETE FROM companies WHERE id=$1', [foreignCompany]);
     await db.end();
   }

@@ -523,15 +523,17 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         ariaLabel={t('title')}
         active={mode === 'goals' ? 'formal' : mode}
         onChange={setMode}
-        scrollable={false}
+        scrollable
+        className="[&>button]:min-w-0 [&>button]:flex-1 [&>button]:px-2"
         variant="pill"
         tabs={[
           { id: 'formal', label: locale.startsWith('en') ? 'Reviews' : 'Avaliações' },
           { id: 'catalog', label: locale.startsWith('en') ? 'Competencies' : 'Competências' },
+          { id: 'nine-box', label: '9-Box' },
         ]}
       />
 
-      {mode === 'catalog' ? <CompetencyCatalogBlock locale={locale} companyId={companyId} /> : mode === 'formal' ? (
+      {mode === 'nine-box' ? <NineBoxBlock locale={locale} companyId={companyId} /> : mode === 'catalog' ? <CompetencyCatalogBlock locale={locale} companyId={companyId} /> : mode === 'formal' ? (
         <FormalCompetencyReviewsBlock locale={locale} companyId={companyId} />
       ) : (
       <>
@@ -540,10 +542,10 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         subtitle={t('subtitle')}
         actions={<AdminCreateButton label={t('createCycleButton')} onClick={handleCreateCycle} />}
       />
-      <InlineCallout tone="info" className="text-xs text-ink-muted">
+      <InlineCallout tone="info" className="text-prose text-ink-muted">
         {t('autoPdiNote')}
       </InlineCallout>
-      <InlineCallout tone="brand" className="text-xs text-ink-muted">
+      <InlineCallout tone="brand" className="text-prose text-ink-muted">
         {t('continuousFeedbackNote')}{' '}
         <a href="/dashboard?tab=team" className="font-medium text-brand-600 hover:underline">
           {t('continuousFeedbackCta')}
@@ -623,19 +625,19 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
                   <td className="px-4 py-3">
                     <p className="text-sm font-medium text-ink">{cycle.title}</p>
                     {cycle.description ? (
-                      <p className="mt-0.5 text-xs text-ink-muted line-clamp-2">
+                      <p className="mt-0.5 text-prose text-ink-muted line-clamp-2">
                         {htmlToPlainText(cycle.description)}
                       </p>
                     ) : null}
                     {cycle.allowSelfReview || cycle.allowPeerReview ? (
-                      <p className="mt-1 font-mono text-2xs text-ink-muted">
+                      <p className="mt-1 font-ui text-prose text-ink-muted">
                         {cycle.allowSelfReview ? t('allowSelfReview') : ''}
                         {cycle.allowSelfReview && cycle.allowPeerReview ? ' · ' : ''}
                         {cycle.allowPeerReview ? t('allowPeerReview') : ''}
                       </p>
                     ) : null}
                     {cycle.periodEnd ? (
-                      <p className="mt-1 text-xs text-ink-faint">
+                      <p className="mt-1 text-prose text-ink/75">
                         {t('periodEnd')}: {formatDate(cycle.periodEnd)}
                       </p>
                     ) : null}
@@ -691,7 +693,6 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
           />
         </>
       )}
-      <NineBoxBlock locale={locale} companyId={companyId} />
       {selectedCycle ? (
         <CalibrationBlock
           locale={locale}

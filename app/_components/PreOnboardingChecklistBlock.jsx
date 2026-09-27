@@ -177,7 +177,7 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
       <p className={cn(S.muted, 'm-0 mt-1 text-prose')}>{t(locale, 'panel.preOnboarding.hint')}</p>
       {items.length > 0 ? (
         <div className="mt-2">
-          <p className={cn(S.faint, 'm-0 mb-1.5 font-mono text-2xs')}>
+          <p className={cn(S.faint, 'm-0 mb-1.5 font-ui text-prose')}>
             {t(locale, 'panel.preOnboarding.progress', { done: doneCount, total: items.length })}
           </p>
           <MeterBar
@@ -237,7 +237,7 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
                         </StatusToneChip>
                       ) : null}
                     </div>
-                    <div className="mt-0.5 font-mono text-2xs text-ink-muted">
+                    <div className="mt-0.5 font-ui text-prose text-ink-muted">
                       {t(locale, 'panel.preOnboarding.due', { date: row.dueDate || '—' })}
                       {row.employeeAckAt ? (
                         <span className="text-success">
@@ -251,7 +251,7 @@ export function PreOnboardingChecklistBlock({ locale, candidateId, employmentSta
                         href={row.meetUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-1 inline-flex min-h-touch items-center font-mono text-2xs text-brand-600"
+                        className="mt-1 inline-flex min-h-touch items-center font-ui text-prose text-brand-600"
                       >
                         {t(locale, 'panel.preOnboarding.openMeet')}
                       </a>

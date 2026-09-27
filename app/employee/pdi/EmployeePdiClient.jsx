@@ -95,16 +95,16 @@ export function EmployeePdiClient({ locale = 'pt-BR' }) {
             {allItems.length > 0 ? (
               <section className="grid grid-cols-1 gap-2.5 sm:grid-cols-3" aria-label={t(locale, 'employeeHome.pdiSummary')}>
                 <div className="rounded-control border border-ink/12 bg-surface px-3.5 py-3">
-                  <div className="font-display text-2xl text-ink">{allItems.length}</div>
-                  <div className="mt-1 text-xs font-medium text-ink-muted">{t(locale, 'employeeHome.pdiSummaryItems')}</div>
+                  <div className="font-ui text-2xl font-semibold tabular-nums text-ink">{allItems.length}</div>
+                  <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.pdiSummaryItems')}</div>
                 </div>
                 <div className="rounded-control border border-success/20 bg-success/[0.04] px-3.5 py-3">
-                  <div className="font-display text-2xl text-ink">{doneItems}</div>
-                  <div className="mt-1 text-xs font-medium text-ink-muted">{t(locale, 'employeeHome.pdiSummaryDone')}</div>
+                  <div className="font-ui text-2xl font-semibold tabular-nums text-ink">{doneItems}</div>
+                  <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.pdiSummaryDone')}</div>
                 </div>
                 <div className="rounded-control border border-brand-500/20 bg-brand-500/[0.045] px-3.5 py-3">
                   <div className="truncate text-sm font-medium text-ink">{nextItem?.title || t(locale, 'employeeHome.pdiSummaryAllDone')}</div>
-                  <div className="mt-1 text-xs font-medium text-ink-muted">{t(locale, 'employeeHome.pdiSummaryNext')}</div>
+                  <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.pdiSummaryNext')}</div>
                 </div>
               </section>
             ) : null}
@@ -131,7 +131,7 @@ export function EmployeePdiClient({ locale = 'pt-BR' }) {
                           <li key={item.id} className="flex flex-col gap-2 rounded-control border border-ink/12 bg-canvas/50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
                               <p className={cn('m-0 break-words text-sm', item.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE ? 'text-ink-muted line-through' : 'text-ink')}>{item.title}</p>
-                              <p className="m-0 mt-1 text-xs text-ink-muted">
+                              <p className={cn(S.cardMuted, 'm-0 mt-1')}>
                                 {itemStatusLabel(locale, item.status)}
                                 {item.dueDate ? ` · ${formatDisplayDate(item.dueDate, locale)}` : ''}
                               </p>

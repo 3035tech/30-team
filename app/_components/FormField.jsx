@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '../../lib/cn';
-import { S } from '../dashboard/dashboard-shared';
+import { UI_TYPE } from '../../lib/ui-typography';
 
 /**
  * Labeled form control for dashboard grids and system forms.
@@ -39,7 +39,7 @@ export function FormField({
     >
       <span
         className={cn(
-          'mb-0 font-ui text-xs font-medium normal-case tracking-normal text-ink-muted',
+          UI_TYPE.label,
           labelClassName
         )}
       >
@@ -47,7 +47,7 @@ export function FormField({
       </span>
       <div className="w-full min-w-0">{children}</div>
       {hint ? (
-        <p className="m-0 font-mono text-2xs leading-snug text-ink-faint">{hint}</p>
+        <p className={cn("m-0", UI_TYPE.supporting)}>{hint}</p>
       ) : null}
     </Tag>
   );

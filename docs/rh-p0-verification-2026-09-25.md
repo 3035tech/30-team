@@ -30,3 +30,11 @@ Prova: `test/dtov/dp-download.test.js` executa handlers compilados e PostgreSQL/
 Preservados: controles de acesso, isolamento por empresa, assinatura/bloqueio de documentos, inspeção de bytes no servidor, limite de 5 MB, suporte PNG, dados e regras das vagas. Nenhuma migração necessária. Não foi criado ou alegado um serviço de antivírus.
 
 O harness remove somente os containers/volume DTOV ao terminar; dados sintéticos podem ser recriados com `npm run dtov:reset`. Não certifica configuração nem implantação em produção.
+
+## Revisão complementar — 26/09/2026
+
+- Upload usa atualização condicional: assinatura concluída ou troca de anexo durante envio impede substituição. Apenas o objeto rejeitado é removido; o anterior permanece. `node --experimental-vm-modules test/dtov/p0-upload-race.test.js`: três cenários aprovados com SQL real e armazenamento simulado, tudo em transação com rollback, sem reset do DTOV.
+- RH e colaborador têm timeout de 30 segundos e mensagem que orienta conferir a lista antes de reenviar. Os dois cenários de `p0-upload-recovery.spec.js` passaram, sem armazenamento externo.
+- Editor recebe foco, mantém Tab/Shift+Tab dentro da sobreposição e devolve foco ao fechar. Calendário e confirmação sobrepostos continuam independentes. `p0-vacancy-edit.spec.js` passou com foco/calendário nas dez combinações de seção/status.
+- Ações de documentos quebram linha dentro do card em 390px; screenshot e limites geométricos validados.
+- Build, 50 testes de segurança, três de preflight e regressão de dependentes aprovados. Sem nova migration, deploy ou alteração de produção. A integração destrutiva `dp-download.test.js` não foi reexecutada nesta revisão.

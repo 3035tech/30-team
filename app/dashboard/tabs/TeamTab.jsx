@@ -29,6 +29,7 @@ import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { CompensationBlock } from '../../_components/CompensationBlock';
 import { BenefitAssignmentsBlock } from '../../_components/BenefitAssignmentsBlock';
 import { DpBlock } from '../../_components/DpBlock';
+import { CandidateRegistrationBlock } from '../../_components/CandidateRegistrationBlock';
 import { OrgManagerBlock } from '../../_components/OrgManagerBlock';
 import { ContinuousFeedbackBlock } from '../../_components/ContinuousFeedbackBlock';
 import { PeopleManagementPanel } from '../../_components/PeopleManagementPanel';
@@ -77,20 +78,20 @@ function IntegratedProfileSynthesis({ synthesis, locale, summaryOnly = false }) 
 
   return (
     <section className="mb-4 rounded-control border border-ink/12 bg-brand-500/[0.06] p-3.5">
-      <span className={cn(S.label, 'mb-0.5')}>{t(locale, summaryOnly ? 'panel.team.synthesisTitle' : 'panel.team.briefPrepareTitle')}</span>
-      {!summaryOnly ? <p className="mb-2 mt-0 font-mono text-2xs leading-snug text-ink-faint">
+      <h3 className={cn(S.sectionTitle, 'mb-2 mt-0')}>{t(locale, summaryOnly ? 'panel.team.synthesisTitle' : 'panel.team.briefPrepareTitle')}</h3>
+      {!summaryOnly ? <p className="mb-2 mt-0 font-ui text-prose leading-snug text-ink/75">
         {t(locale, 'panel.team.briefPrepareHint')}
       </p> : null}
       <p className="mb-3 mt-0 font-ui text-sm leading-snug text-ink">
         {synthesis.headline}
       </p>
       {!summaryOnly && actions.length > 0 ? (
-        <ol className="mb-3 mt-0 list-decimal space-y-2 pl-5 text-xs leading-snug text-ink">
+        <ol className="mb-3 mt-0 list-decimal space-y-2 pl-5 text-prose leading-snug text-ink">
           {actions.map((a) => (
             <li key={`${a.source}-${a.text}`}>
               <span className="text-ink">{a.text}</span>
               {a.sourceLabel ? (
-                <span className="ml-1.5 font-mono text-2xs text-ink-faint">
+                <span className="ml-1.5 font-ui text-prose text-ink/75">
                   · {a.sourceLabel}
                 </span>
               ) : null}
@@ -101,7 +102,7 @@ function IntegratedProfileSynthesis({ synthesis, locale, summaryOnly = false }) 
       {sections.length > 0 ? (
         <CollapsibleBlock
           locale={locale}
-          title={t(locale, 'panel.team.synthesisTitle')}
+          title={t(locale, 'panel.team.synthesisDetailsTitle')}
           defaultOpen={summaryOnly}
           count={sections.length}
           bordered={false}
@@ -110,10 +111,10 @@ function IntegratedProfileSynthesis({ synthesis, locale, summaryOnly = false }) 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
             {sections.map(([key, labelKey]) => (
               <div key={key}>
-                <span className="font-mono text-2xs uppercase tracking-[0.08em] text-ink-faint">
+                <span className="font-ui text-prose normal-case tracking-normal text-ink/75">
                   {t(locale, labelKey)}
                 </span>
-                <ul className="mb-0 mt-1.5 list-disc pl-[18px] text-xs leading-snug text-ink-muted">
+                <ul className="mb-0 mt-1.5 list-disc pl-[18px] text-prose leading-snug text-ink-muted">
                   {synthesis[key].map((item) => <li key={item} className="mb-1">{item}</li>)}
                 </ul>
               </div>
@@ -904,7 +905,7 @@ export function TeamTab({
   const personHeaderActions = focusCandidateId ? (
     <div className="flex items-center gap-1">
       {currentPersonIndex >= 0 ? (
-        <span className="mr-1 hidden whitespace-nowrap font-mono text-2xs text-ink-faint sm:inline">
+        <span className="mr-1 hidden whitespace-nowrap font-ui text-prose text-ink/75 sm:inline">
           {currentPersonIndex + 1} / {personRows.length}
         </span>
       ) : null}
@@ -966,7 +967,7 @@ export function TeamTab({
         <OrgUnitFilter key={companyId} companyId={companyId} locale={locale} value={orgUnitFilter}
           onChange={(orgUnit) => navigateDashboard?.({ orgUnit: orgUnit || null, teamPage: 1 })} />
         {activeSearch ? (
-          <span className="mb-2.5 self-end font-mono text-2xs text-ink-faint">
+          <span className="mb-2.5 self-end font-ui text-prose text-ink/75">
             {t(locale, 'panel.team.searchResultsTotal', { n: listTotal })}
           </span>
         ) : null}
@@ -990,7 +991,7 @@ export function TeamTab({
         aria-label={t(locale, 'panel.team.sortAria')}
         className="flex flex-wrap items-center gap-2 rounded-control border border-ink/10 bg-ink/[0.02] px-3.5 py-2.5"
       >
-        <label className="flex cursor-pointer items-center gap-1.5 font-mono text-2xs text-ink-muted">
+        <label className="flex cursor-pointer items-center gap-1.5 font-ui text-prose text-ink-muted">
           <input
             type="checkbox"
             checked={allSelected}
@@ -1000,7 +1001,7 @@ export function TeamTab({
           />
           {t(locale, 'panel.team.all')}
         </label>
-        <span className="font-ui text-xs text-ink-faint">
+        <span className="font-ui text-prose text-ink/75">
           {t(locale, 'panel.team.sortBy')}
         </span>
         {sortColumns.map(({ k, labelKey }) => {
@@ -1012,7 +1013,7 @@ export function TeamTab({
               onClick={() => onSort(k)}
               aria-pressed={active}
               className={cn(
-                'min-h-9 cursor-pointer rounded-control border px-3 py-1.5 font-ui text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35',
+                'min-h-9 cursor-pointer rounded-control border px-3 py-1.5 font-ui text-prose transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35',
                 active
                   ? 'border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
                   : 'border-ink/12 bg-transparent text-ink-muted'
@@ -1027,14 +1028,14 @@ export function TeamTab({
 
       {selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-2.5 rounded-xl border border-brand-500/25 bg-brand-500/[0.04] px-4 py-3">
-          <span className="font-mono text-prose text-brand-500">
+          <span className="font-ui text-prose text-brand-500">
             {t(locale, 'panel.team.selectedCount', { n: selectedIds.size })}
           </span>
           <SelectField
             value={bulkStage}
             onChange={(e) => setBulkStage(e.target.value)}
             disabled={bulkBusy}
-            className={cn(S.select, 'bg-transparent py-1.5 text-xs')}
+            className={cn(S.select, 'bg-transparent py-1.5 text-prose')}
           >
             {PIPELINE_OPTIONS.map((code) => (
               <option key={code} value={code}>{pipelineLabel(locale, code)}</option>
@@ -1045,7 +1046,7 @@ export function TeamTab({
             onClick={applyBulk}
             disabled={bulkBusy}
             className={cn(
-              'flex cursor-pointer items-center gap-1.5 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-[7px] font-mono text-xs text-brand-500',
+              'flex cursor-pointer items-center gap-1.5 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-[7px] font-mono text-prose text-brand-500',
               bulkBusy && 'opacity-60'
             )}
           >
@@ -1056,12 +1057,12 @@ export function TeamTab({
             type="button"
             onClick={() => setSelectedIds(new Set())}
             disabled={bulkBusy}
-            className="cursor-pointer rounded-lg border border-ink/12 bg-transparent px-3 py-[7px] font-mono text-xs text-ink-muted"
+            className="cursor-pointer rounded-lg border border-ink/12 bg-transparent px-3 py-[7px] font-mono text-prose text-ink-muted"
           >
             {t(locale, 'panel.compare.clearSelection')}
           </button>
           {bulkMsg && (
-            <span className={cn('font-mono text-xs', bulkMsgIsError ? 'text-danger' : 'text-success')}>
+            <span className={cn('font-mono text-prose', bulkMsgIsError ? 'text-red-800 dark:text-danger' : 'text-success')}>
               {bulkMsg}
             </span>
           )}
@@ -1110,7 +1111,7 @@ export function TeamTab({
         && String(detail.candidate.id) === String(focusCandidateId)
         && !(results || []).some((r) => String(r.candidateId) === String(focusCandidateId)) ? (
         <div className={cn(S.card, 'mb-4 px-[18px] py-3.5')}>
-          <p className="m-0 text-xs text-ink-muted">
+          <p className="m-0 text-prose text-ink-muted">
             {t(locale, 'dashboard.notifOpenOutsideFilters')}
           </p>
         </div>
@@ -1163,7 +1164,7 @@ export function TeamTab({
                   {createdLabel ? (
                     <span
                       title={t(locale, 'dashboard.teamListDateHelp')}
-                      className="font-mono text-2xs text-ink-faint"
+                      className="font-ui text-prose text-ink/75"
                     >
                       {t(locale, 'dashboard.teamAssessmentDate')}: {createdLabel}
                     </span>
@@ -1206,7 +1207,7 @@ export function TeamTab({
                   )}
                 </div>
                 </div>
-                <span className="hidden shrink-0 font-ui text-xs font-medium text-brand-500 sm:inline">{t(locale, 'panel.team.openDetail')}</span>
+                <span className="hidden shrink-0 font-ui text-prose font-medium text-brand-500 sm:inline">{t(locale, 'panel.team.openDetail')}</span>
               </button>
               <div className="flex shrink-0 items-center gap-2">
                 {r.candidateId ? (
@@ -1246,7 +1247,7 @@ export function TeamTab({
                         type="button"
                         onClick={() => deleteCandidate(r.candidateId, r.name)}
                         disabled={deleting}
-                        className="min-h-touch rounded-control px-3 py-2 text-left font-ui text-sm text-danger hover:bg-danger/[0.08] disabled:opacity-60"
+                        className="min-h-touch rounded-control px-3 py-2 text-left font-ui text-sm text-red-800 dark:text-danger hover:bg-danger/[0.08] disabled:opacity-60"
                       >
                         {t(locale, 'panel.team.ariaDeletePerson')}
                       </button>
@@ -1292,7 +1293,7 @@ export function TeamTab({
                 {openRow.scores ? (
                   <EnneagramCross scores={openRow.scores} locale={locale} />
                 ) : (
-                  <p className="mb-4 mt-0 text-xs text-ink-muted">
+                  <p className="mb-4 mt-0 text-prose text-ink-muted">
                     {t(locale, 'panel.team.peopleMissingEnneagram')}
                   </p>
                 )}
@@ -1300,7 +1301,7 @@ export function TeamTab({
 
                 {openRow.scores ? <div className="mb-4">
                   {openCluster.size > 1 ? (
-                    <p className="mb-2 mt-0 text-xs leading-snug text-ink-faint">
+                    <p className="mb-2 mt-0 text-prose leading-snug text-ink/75">
                       {t(locale, 'panel.team.scoresClusterHint')}
                     </p>
                   ) : null}
@@ -1318,17 +1319,6 @@ export function TeamTab({
                       dimensionScores={detail.people.management.motivators.dimensionScores}
                       compact
                     />
-                    {detail.people.management.motivators.top?.length ? (
-                      <p className="m-0 mt-2 text-xs leading-relaxed text-ink-muted">
-                        {t(locale, 'panel.team.motivatorsRadarSummary', {
-                          names: detail.people.management.motivators.top
-                            .slice(0, 5)
-                            .map((item) => item.label)
-                            .filter(Boolean)
-                            .join(', '),
-                        })}
-                      </p>
-                    ) : null}
                   </div>
                 ) : detailMatchesOpen && detail?.people?.management?.motivators?.top?.length ? (
                   <div className="mb-4 rounded-control border border-ink/12 bg-ink/[0.02] p-3.5">
@@ -1339,7 +1329,7 @@ export function TeamTab({
                       {detail.people.management.motivators.top.map((d) => (
                         <span
                           key={d.key}
-                          className="inline-flex min-h-8 items-center rounded-control border border-ink/12 bg-surface px-2.5 text-xs text-ink"
+                          className="inline-flex min-h-8 items-center rounded-control border border-ink/12 bg-surface px-2.5 text-prose text-ink"
                         >
                           {d.label} · {Math.round(d.score)}
                         </span>
@@ -1347,7 +1337,7 @@ export function TeamTab({
                     </div>
                   </div>
                 ) : detailMatchesOpen ? (
-                  <p className="mb-4 mt-0 font-mono text-2xs text-ink-faint">
+                  <p className="mb-4 mt-0 font-ui text-prose text-ink/75">
                     {t(locale, 'panel.team.motivatorsStyleEmpty')}
                   </p>
                 ) : null}
@@ -1485,19 +1475,31 @@ export function TeamTab({
                         </>
                       ) : null}
                       {activePeopleSubTab === 'dp' && isInternalPerson ? (
+                        <>
                         <DpBlock
                           locale={locale}
                           candidateId={detail.candidate.id}
                           employmentStatus={detail.candidate.employmentStatus}
                           companyId={detail.candidate.companyId}
                         />
+                        <CandidateRegistrationBlock
+                          key={detail.candidate.id}
+                          locale={locale}
+                          candidate={detail.candidate}
+                          lmsOverdue={detail.lmsOverdue || []}
+                          readOnly={detail.candidate.employmentStatus === EMPLOYMENT_STATUS.ALUMNI}
+                          onSaved={data => setDetail(prev => prev?.candidate?.id === data.id
+                            ? { ...prev, candidate: { ...prev.candidate, ...data } }
+                            : prev)}
+                        />
+                        </>
                       ) : null}
                     </ContentEnter>
                   </>
                     );
                   })()
                 ) : (
-                  <p className="m-0 text-xs text-ink-muted">—</p>
+                  <p className="m-0 text-prose text-ink-muted">—</p>
                 )}
               </ContentEnter>
             ) : null}
@@ -1518,7 +1520,7 @@ export function TeamTab({
                   {detailLoading ? (
                     <AppLoading locale={locale} variant="inline" />
                   ) : detailErr ? (
-                    <p className="m-0 text-xs text-danger">{detailErr}</p>
+                    <p className="m-0 text-prose text-red-800 dark:text-danger">{detailErr}</p>
                   ) : detail?.assessments?.length ? (
                     <div className="flex flex-col gap-2.5">
                       {detail.assessments.map((a) => (
@@ -1527,17 +1529,17 @@ export function TeamTab({
                           className="flex flex-wrap items-center gap-2.5 rounded-lg border border-ink/12 bg-surface/40 p-2.5"
                         >
                           <div>
-                            <span className="font-mono text-xs text-ink-muted">
+                            <span className="font-mono text-prose text-ink-muted">
                               #{a.id} · {a.areaLabel}
                               {a.vacancyTitle ? ` · ${a.vacancyTitle}` : ''}
                             </span>
                             {isAdmin && (a.fillDurationMs != null || a.copyEventCount != null) && (
                               <div
                                 className={cn(
-                                  'mt-1.5 font-mono text-2xs leading-snug',
+                                  'mt-1.5 font-ui text-prose leading-snug',
                                   isSuspiciouslyFast(a.fillDurationMs) || (a.copyEventCount || 0) > 0
-                                    ? 'text-warning'
-                                    : 'text-ink-faint'
+                                    ? 'text-amber-800 dark:text-warning'
+                                    : 'text-ink/75'
                                 )}
                                 title={t(locale, 'panel.team.integrityTitle')}
                               >
@@ -1551,17 +1553,17 @@ export function TeamTab({
                               </div>
                             )}
                             {a.rejectionReason ? (
-                              <div className="mt-1 font-mono text-2xs text-danger">
+                              <div className="mt-1 font-ui text-prose text-red-800 dark:text-danger">
                                 {t(locale, 'recruiting.rejectionReasonLabel')}: {rejectionReasonLabel(locale, a.rejectionReason)}
                               </div>
                             ) : null}
                             {a.startDate && a.pipelineStage === PIPELINE_STAGE.HIRED ? (
-                              <div className="mt-1 font-mono text-2xs text-success">
+                              <div className="mt-1 font-ui text-prose text-success">
                                 {t(locale, 'recruiting.startDateLabel')}: {a.startDate}
                               </div>
                             ) : null}
                             {a.pipelineHistory?.length > 0 && (
-                              <div className="mt-1 font-mono text-2xs leading-loose text-ink-faint">
+                              <div className="mt-1 font-ui text-prose leading-loose text-ink/75">
                                 {a.pipelineHistory.map((h, i) => (
                                   <span key={i} className="mr-2.5">
                                     {h.fromStage || '—'} → {h.toStage}
@@ -1574,7 +1576,7 @@ export function TeamTab({
                               </div>
                             )}
                           </div>
-                          <label className="flex items-center gap-1.5 text-xs text-ink-muted">
+                          <label className="flex items-center gap-1.5 text-prose text-ink-muted">
                             {t(locale, 'recruiting.stageLabel')}
                             <SelectField
                               value={a.pipelineStage || PIPELINE_STAGE.TEST_COMPLETED}
@@ -1593,7 +1595,7 @@ export function TeamTab({
                             type="button"
                             disabled={deleting}
                             onClick={() => deleteAssessment(a.id)}
-                            className="ml-auto cursor-pointer rounded-lg border border-danger/35 bg-danger/[0.08] px-2.5 py-1.5 font-mono text-xs text-danger"
+                            className="ml-auto cursor-pointer rounded-lg border border-danger/35 bg-danger/[0.08] px-2.5 py-1.5 font-mono text-prose text-red-800 dark:text-danger"
                           >
                             {t(locale, 'recruiting.allowRetake')}
                           </button>
@@ -1601,7 +1603,7 @@ export function TeamTab({
                       ))}
                     </div>
                   ) : (
-                    <p className="m-0 text-xs text-ink-muted">—</p>
+                    <p className="m-0 text-prose text-ink-muted">—</p>
                   )}
                 </div>
               </ContentEnter>
@@ -1633,7 +1635,7 @@ export function TeamTab({
                           setProfileMsg('');
                           setNotesMsg('');
                         }}
-                        className="cursor-pointer rounded-md border border-ink/12 bg-transparent px-2.5 py-[3px] font-mono text-2xs text-ink-muted"
+                        className="cursor-pointer rounded-md border border-ink/12 bg-transparent px-2.5 py-[3px] font-ui text-prose text-ink-muted"
                       >
                         {t(locale, 'panel.team.editNote')}
                       </button>
@@ -1672,11 +1674,11 @@ export function TeamTab({
                       ].filter(Boolean);
                       if (!bits.length) {
                         return (
-                          <p className="m-0 text-xs italic text-ink-faint">—</p>
+                          <p className="m-0 text-prose italic text-ink/75">—</p>
                         );
                       }
                       return (
-                        <div className="font-mono text-prose leading-relaxed text-ink">
+                        <div className="font-ui text-prose leading-relaxed text-ink">
                           {c?.phone ? <div>{formatPhoneBr(c.phone)}</div> : null}
                           {locBits ? <div>{locBits}</div> : null}
                           {c?.linkedinUrl ? (
@@ -1704,7 +1706,7 @@ export function TeamTab({
                             </div>
                           ) : null}
                           {c?.createdAt || c?.createdByName ? (
-                            <div className="mt-2 border-t border-ink/[0.06] pt-2 font-mono text-2xs text-ink-faint">
+                            <div className="mt-2 border-t border-ink/[0.06] pt-2 font-ui text-prose text-ink/75">
                               {(() => {
                                 const d = c.createdAt != null ? new Date(c.createdAt) : null;
                                 const dateLabel =
@@ -1756,7 +1758,7 @@ export function TeamTab({
                             placeholder={t(locale, 'recruiting.phonePh')}
                             inputMode="tel"
                             aria-label={t(locale, 'recruiting.phoneLabel')}
-                            className={cn(S.input, 'w-full font-mono text-xs')}
+                            className={cn(S.input, 'w-full font-mono text-prose')}
                           />
                         </FormField>
                         <FormField
@@ -1772,7 +1774,7 @@ export function TeamTab({
                             autoComplete="off"
                             name="linkedin-url"
                             aria-label={t(locale, 'recruiting.linkedinLabel')}
-                            className={cn(S.input, 'w-full font-mono text-xs')}
+                            className={cn(S.input, 'w-full font-mono text-prose')}
                           />
                         </FormField>
                         <FormField
@@ -1785,7 +1787,7 @@ export function TeamTab({
                               setProfileDraft((p) => ({ ...p, state, city: '' }))
                             }
                             locale={locale}
-                            className={cn(S.select, 'w-full font-mono text-xs')}
+                            className={cn(S.select, 'w-full font-mono text-prose')}
                           />
                         </FormField>
                         <FormField
@@ -1797,7 +1799,7 @@ export function TeamTab({
                             value={profileDraft.city}
                             onChange={(city) => setProfileDraft((p) => ({ ...p, city }))}
                             locale={locale}
-                            className={cn(S.select, 'w-full font-mono text-xs')}
+                            className={cn(S.select, 'w-full font-mono text-prose')}
                           />
                         </FormField>
                         <FormField
@@ -1816,7 +1818,7 @@ export function TeamTab({
                             inputMode="numeric"
                             autoComplete="off"
                             aria-label={t(locale, 'recruiting.salaryExpectationLabel')}
-                            className={cn(S.input, 'w-full font-mono text-xs')}
+                            className={cn(S.input, 'w-full font-mono text-prose')}
                           />
                         </FormField>
                         <FormField
@@ -1829,7 +1831,7 @@ export function TeamTab({
                               setProfileDraft((p) => ({ ...p, availability: e.target.value }))
                             }
                             aria-label={t(locale, 'recruiting.availabilityLabel')}
-                            className={cn(S.select, 'w-full font-mono text-xs')}
+                            className={cn(S.select, 'w-full font-mono text-prose')}
                           >
                             <option value="">{t(locale, 'recruiting.availabilityLabel')}</option>
                             <option value="immediate">
@@ -1851,7 +1853,7 @@ export function TeamTab({
                               setProfileDraft((p) => ({ ...p, source: e.target.value }))
                             }
                             aria-label={t(locale, 'recruiting.sourceLabel')}
-                            className={cn(S.select, 'w-full font-mono text-xs')}
+                            className={cn(S.select, 'w-full font-mono text-prose')}
                           >
                             <option value="">{t(locale, 'recruiting.sourceLabel')}</option>
                             <option value="linkedin">{t(locale, 'recruiting.sourceLinkedin')}</option>
@@ -1871,7 +1873,7 @@ export function TeamTab({
                               setProfileDraft((p) => ({ ...p, birthDate: e.target.value || '' }))
                             }
                             aria-label={t(locale, 'panel.team.birthDate')}
-                            className="w-full font-mono text-xs"
+                            className="w-full font-mono text-prose"
                           />
                         </FormField>
                         {detail?.candidate?.startDate ? (
@@ -1884,7 +1886,7 @@ export function TeamTab({
                             <div
                               className={cn(
                                 S.input,
-                                'flex min-h-touch w-full cursor-default items-center font-mono text-xs text-ink-muted opacity-90'
+                                'flex min-h-touch w-full cursor-default items-center font-mono text-prose text-ink-muted opacity-90'
                               )}
                               aria-readonly="true"
                             >
@@ -1910,7 +1912,7 @@ export function TeamTab({
                           onClick={saveProfile}
                           disabled={profileBusy}
                           className={cn(
-                            'cursor-pointer rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-[7px] font-mono text-xs text-brand-500',
+                            'cursor-pointer rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-[7px] font-mono text-prose text-brand-500',
                             profileBusy && 'opacity-60'
                           )}
                         >
@@ -1925,7 +1927,7 @@ export function TeamTab({
                             setProfileMsg('');
                           }}
                           disabled={profileBusy}
-                          className="cursor-pointer rounded-lg border border-ink/12 bg-transparent px-3.5 py-[7px] font-mono text-xs text-ink-muted"
+                          className="cursor-pointer rounded-lg border border-ink/12 bg-transparent px-3.5 py-[7px] font-mono text-prose text-ink-muted"
                         >
                           {t(locale, 'panel.admin.cancel')}
                         </button>
@@ -1933,7 +1935,7 @@ export function TeamTab({
                     </div>
                   )}
                   {profileMsg ? (
-                    <p className={cn('mt-2 mb-0 font-mono text-2xs', profileMsgIsError ? 'text-danger' : 'text-success')}>
+                    <p className={cn('mt-2 mb-0 font-ui text-prose', profileMsgIsError ? 'text-red-800 dark:text-danger' : 'text-success')}>
                       {profileMsg}
                     </p>
                   ) : null}
@@ -1947,7 +1949,7 @@ export function TeamTab({
                       <button
                         type="button"
                         onClick={() => { setNotesDraft(detail?.candidate?.hrNotes || ''); setNotesEditing(true); setNotesMsg(''); }}
-                        className="cursor-pointer rounded-md border border-ink/12 bg-transparent px-2.5 py-[3px] font-mono text-2xs text-ink-muted"
+                        className="cursor-pointer rounded-md border border-ink/12 bg-transparent px-2.5 py-[3px] font-ui text-prose text-ink-muted"
                       >
                         {detail?.candidate?.hrNotes && !isRichTextEmpty(detail.candidate.hrNotes)
                           ? t(locale, 'panel.team.editNote')
@@ -1959,7 +1961,7 @@ export function TeamTab({
                     !isRichTextEmpty(detail?.candidate?.hrNotes) ? (
                       <RichTextView html={detail.candidate.hrNotes} />
                     ) : (
-                      <p className="m-0 text-xs italic text-ink-faint">
+                      <p className="m-0 text-prose italic text-ink/75">
                         {t(locale, 'panel.team.noNotes')}
                       </p>
                     )
@@ -1981,7 +1983,7 @@ export function TeamTab({
                           onClick={saveNotes}
                           disabled={notesBusy}
                           className={cn(
-                            'flex cursor-pointer items-center gap-1.5 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-[7px] font-mono text-xs text-brand-500',
+                            'flex cursor-pointer items-center gap-1.5 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3.5 py-[7px] font-mono text-prose text-brand-500',
                             notesBusy && 'opacity-60'
                           )}
                         >
@@ -1992,12 +1994,12 @@ export function TeamTab({
                           type="button"
                           onClick={() => { setNotesEditing(false); setNotesDraft(detail?.candidate?.hrNotes || ''); }}
                           disabled={notesBusy}
-                          className="cursor-pointer rounded-lg border border-ink/12 bg-transparent px-3 py-[7px] font-mono text-xs text-ink-muted"
+                          className="cursor-pointer rounded-lg border border-ink/12 bg-transparent px-3 py-[7px] font-mono text-prose text-ink-muted"
                         >
                           {t(locale, 'panel.admin.cancel')}
                         </button>
                         {notesMsg && (
-                          <span className={cn('font-mono text-xs', notesMsgIsError ? 'text-danger' : 'text-success')}>
+                          <span className={cn('font-mono text-prose', notesMsgIsError ? 'text-red-800 dark:text-danger' : 'text-success')}>
                             {notesMsg}
                           </span>
                         )}
@@ -2005,7 +2007,7 @@ export function TeamTab({
                     </div>
                   )}
                   {!notesEditing && notesMsg && (
-                    <p className={cn('mt-1.5 mb-0 font-mono text-xs', notesMsgIsError ? 'text-danger' : 'text-success')}>
+                    <p className={cn('mt-1.5 mb-0 font-mono text-prose', notesMsgIsError ? 'text-red-800 dark:text-danger' : 'text-success')}>
                       {notesMsg}
                     </p>
                   )}

@@ -13,6 +13,7 @@ export function EntitySearchSelect({
   onChange,
   searchUrl,
   options,
+  initialSelection,
   locale = 'pt-BR',
   placeholder = '',
   disabled = false,
@@ -24,6 +25,7 @@ export function EntitySearchSelect({
   const listId = useId();
   const wrapRef = useRef(null);
   const typingReset = useRef(false);
+  const hydratedSelection = useRef('');
   const [query, setQuery] = useState('');
   const [selectedLabel, setSelectedLabel] = useState('');
   const [open, setOpen] = useState(false);
@@ -42,6 +44,11 @@ export function EntitySearchSelect({
   const clearLabel = locale === 'en' ? 'Clear' : 'Limpar';
 
   useEffect(() => {
+    if (value && initialSelection?.id != null && String(value) === String(initialSelection.id) && hydratedSelection.current !== String(value)) {
+      hydratedSelection.current = String(value);
+      setSelectedLabel(initialSelection.label || '');
+      setQuery(initialSelection.label || '');
+    }
     if (!value) {
       if (typingReset.current) {
         typingReset.current = false;
@@ -50,7 +57,7 @@ export function EntitySearchSelect({
       setSelectedLabel('');
       setQuery('');
     }
-  }, [value]);
+  }, [value, initialSelection]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -112,6 +119,7 @@ export function EntitySearchSelect({
   }
 
   function clear() {
+    hydratedSelection.current = '';
     setSelectedLabel('');
     setQuery('');
     onChange?.('', null);
@@ -161,7 +169,7 @@ export function EntitySearchSelect({
           </button>
         ) : null}
       </div>
-      {open && (loading || items.length > 0 || String(query).trim().length >= minChars) ? (
+      {open && !(value && query === selectedLabel) && (loading || items.length > 0 || String(query).trim().length >= minChars) ? (
         <ul
           id={listId}
           role="listbox"
