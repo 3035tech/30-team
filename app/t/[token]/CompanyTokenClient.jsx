@@ -20,7 +20,12 @@ export default function CompanyTokenClient({ token, initial }) {
     return (
       <AssessmentFlow
         companyToken={tokenValue}
-        notice={{ kind: 'warning', title: t(locale, 'publicPages.invalidOpenTitle'), message }}
+        notice={{
+          kind: 'warning',
+          title: t(locale, 'publicPages.invalidOpenTitle'),
+          message,
+          hint: t(locale, 'publicPages.invalidLinkHint'),
+        }}
         startDisabled={true}
         initialLocale={locale}
       />

@@ -354,8 +354,6 @@ textarea:focus-visible {
 }
 .cand-flow-fields {
   width: 100%;
-  max-width: 28rem; /* ~448px — readable input line length */
-  margin-inline: auto;
 }
 .cand-likert-row {
   display: flex;
@@ -406,9 +404,6 @@ textarea:focus-visible {
     padding: 22px 18px !important;
     border-radius: 16px !important;
     max-width: 100% !important;
-  }
-  .cand-flow-fields {
-    max-width: 100%;
   }
   .cand-q-text {
     font-size: 17px !important;

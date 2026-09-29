@@ -33,7 +33,13 @@ function VacancyEntryInner({ token, initial }) {
       <AssessmentFlow
         vacancyToken={tokenValue}
         inviteToken={inviteToken}
-        notice={{ kind: 'warning', title: t(locale, 'publicPages.invalidOpenTitle'), message }}
+        notice={{
+          kind: 'warning',
+          title: t(locale, 'publicPages.invalidOpenTitle'),
+          message,
+          hint: t(locale, 'publicPages.invalidLinkHint'),
+          action: { href: '/jobs', label: t(locale, 'publicVacancy.browseOpenCta') },
+        }}
         startDisabled={true}
         initialLocale={locale}
       />
@@ -49,6 +55,7 @@ function VacancyEntryInner({ token, initial }) {
         message: t(locale, 'publicVacancy.closedThanksAndBrowse', {
           title: v?.title || t(locale, 'publicVacancy.thisRole'),
         }),
+        action: { href: '/jobs', label: t(locale, 'publicVacancy.browseOpenCta') },
       }
     : {
         kind: 'info',
@@ -59,26 +66,14 @@ function VacancyEntryInner({ token, initial }) {
       };
 
   return (
-    <div>
-      {isClosed ? (
-        <div className="relative z-[2] mx-auto mt-6 max-w-[660px] px-6 text-center">
-          <a
-            href="/jobs"
-            className="mb-2 inline-block font-display text-base text-brand-500"
-          >
-            {t(locale, 'publicVacancy.browseOpenCta')}
-          </a>
-        </div>
-      ) : null}
-      <AssessmentFlow
-        vacancyToken={tokenValue}
-        inviteToken={inviteToken}
-        notice={notice}
-        startDisabled={isClosed}
-        requireCandidateEmail={true}
-        initialLocale={locale}
-      />
-    </div>
+    <AssessmentFlow
+      vacancyToken={tokenValue}
+      inviteToken={inviteToken}
+      notice={notice}
+      startDisabled={isClosed}
+      requireCandidateEmail={true}
+      initialLocale={locale}
+    />
   );
 }
 

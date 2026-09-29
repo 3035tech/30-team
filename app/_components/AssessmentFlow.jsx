@@ -3,7 +3,6 @@
 import { SelectField } from './SelectField';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { computeAssessmentFromAnswers } from '../../lib/assessment-score';
 import { drawLocalizedQuestions, getScaleLabels, localizeAreaLabel } from '../../lib/i18n-data';
 import { errorMessage, t } from '../../lib/i18n';
@@ -15,6 +14,10 @@ import { BrCitySelect } from './BrCitySelect';
 import { FormField, formFieldCandLabelClass, formFieldRowClass } from './FormField';
 import { formatPhoneBr, stripPhone } from '../../lib/br-masks';
 import { titleCasePersonName } from '../../lib/person-name';
+import { fieldCheckboxClass, fieldInputClass, fieldSelectBlockClass } from './form-control-styles';
+import { InlineCallout } from './InlineCallout';
+import { BrandMark } from './BrandMark';
+import { AppLoading } from './AppLoading';
 
 
 const SC = {
@@ -23,10 +26,10 @@ const SC = {
   card: 'cand-flow-card relative z-[1] box-border w-full max-w-[34rem] rounded-card border border-ink/12 bg-white px-7 py-9 shadow-card sm:px-9 sm:py-10',
   label: 'mb-4 block font-mono text-2xs uppercase tracking-[3px] text-ink-label',
   h1: 'mb-3 text-[clamp(26px,4.5vw,36px)] font-bold leading-[1.15] tracking-tight text-ink',
-  p: 'mb-7 text-base italic leading-[1.65] text-ink-muted',
+  p: 'mb-7 font-ui text-base leading-[1.65] text-ink-muted',
   btn: 'min-h-touch cursor-pointer rounded-control border-none bg-action px-8 py-3.5 font-ui text-sm font-semibold text-action-ink transition-colors duration-150 hover:bg-action-hover',
-  input: 'ui-field box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
-  select: 'ui-select box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
+  input: `${fieldInputClass} w-full`,
+  select: fieldSelectBlockClass,
   fields: 'cand-flow-fields flex flex-col gap-4',
 };
 
@@ -58,7 +61,6 @@ function HomeScreen({
   const [startError, setStartError] = useState('');
   const [inviteIdentity, setInviteIdentity] = useState(null);
   const [inviteIdentityLoading, setInviteIdentityLoading] = useState(Boolean(inviteToken));
-  const router = useRouter();
 
   useEffect(() => {
     let cancelled = false;
@@ -158,6 +160,14 @@ function HomeScreen({
     areaOptions.length > 0 &&
     !startBusy &&
     !inviteIdentityLoading;
+  const blocked = startDisabled && notice?.kind === 'warning';
+  const missingItems = [
+    effectiveName.trim().length > 1 ? null : t(locale, 'candidate.missingName'),
+    emailOk ? null : t(locale, 'candidate.missingEmail'),
+    consent ? null : t(locale, 'candidate.missingConsent'),
+  ].filter(Boolean);
+  const showMissingHint =
+    !blocked && !startBusy && !areasLoading && !inviteIdentityLoading && missingItems.length > 0;
   const startPayload = {
     name: titleCasePersonName(effectiveName),
     email: effectiveEmail,
@@ -187,67 +197,51 @@ function HomeScreen({
     <div className={SC.app}>
       <div className={SC.glow} />
       <div className={SC.card}>
-        <div className="cand-flow-header mb-4">
-          <span className={cn(SC.label, 'mb-0')}>{t(locale, 'candidate.brand')}</span>
+        <div className="cand-flow-header mb-6">
+          <BrandMark size={26} withWordmark className="text-ink" />
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
-        <h1 className={SC.h1}>
-          {t(locale, 'candidate.mapTitle').split('\n').map((line, i) => (
-            <span key={line}>
-              {i > 0 ? <br /> : null}
-              {line}
-            </span>
-          ))}
-        </h1>
-        <p className={SC.p}>
-          {t(locale, 'candidate.intro').split('\n').map((line, i) => (
-            <span key={line}>
-              {i > 0 ? <br /> : null}
-              {line}
-            </span>
-          ))}
-        </p>
+        <h1 className={cn(SC.h1, 'font-display')}>{t(locale, 'candidate.mapTitle').replace(/\n/g, ' ')}</h1>
+        <p className={SC.p}>{t(locale, 'candidate.intro').replace(/\n/g, ' ')}</p>
 
-        {notice ? (
-          <div
-            className={cn(
-              'mb-[18px] rounded-xl px-3.5 py-3',
-              notice.kind === 'warning'
-                ? 'border border-danger/20 bg-danger/[0.06]'
-                : 'border border-ink/12 bg-ink/[0.04]'
-            )}
-          >
-            <div
-              className={cn(
-                'mb-1.5 font-mono text-2xs',
-                notice.kind === 'warning' ? 'text-danger' : 'text-ink-faint'
-              )}
-            >
-              {notice.title}
-            </div>
-            <div className="text-xs leading-relaxed text-ink-muted">{notice.message}</div>
+        {blocked ? (
+          <div className="flex flex-col gap-4">
+            <InlineCallout tone="warning" emphasis role="alert" title={notice.title}>
+              <p className="m-0">{notice.message}</p>
+              {notice.hint ? <p className="m-0 mt-1.5 font-normal text-ink-muted">{notice.hint}</p> : null}
+            </InlineCallout>
+            {notice.action?.href ? (
+              <a href={notice.action.href} className={cn(SC.btn, 'inline-flex items-center justify-center self-start no-underline')}>
+                {notice.action.label}
+              </a>
+            ) : null}
           </div>
+        ) : (
+        <>
+        {notice ? (
+          <InlineCallout tone={notice.kind === 'warning' ? 'warning' : 'info'} title={notice.title} className="mb-5">
+            {notice.message}
+          </InlineCallout>
         ) : null}
 
-        <div className="mb-7 flex flex-wrap gap-x-5 gap-y-3">
+        <dl className="mb-7 grid grid-cols-3 gap-3">
           {[
             ['54', t(locale, 'candidate.statsQuestions')],
             ['~12', t(locale, 'candidate.statsMinutes')],
             ['9', t(locale, 'candidate.statsTypes')],
-            ['300', t(locale, 'candidate.statsBank')],
           ].map(([n, l]) => (
-            <div key={l}>
-              <div className="text-xl text-brand-600 sm:text-2xl">{n}</div>
-              <div className="font-mono text-2xs uppercase tracking-[2px] text-ink-muted">
-                {l}
-              </div>
+            <div key={l} className="flex flex-col-reverse">
+              <dt className="font-ui text-xs text-ink-muted">{l}</dt>
+              <dd className="m-0 font-mono text-xl font-semibold tabular-nums text-ink sm:text-2xl">{n}</dd>
             </div>
           ))}
-        </div>
+        </dl>
 
         <div className={SC.fields}>
         {inviteIdentityLoading ? (
-          <div className={cn(SC.input, 'mb-4 text-ink-muted')}>{t(locale, 'candidate.inviteIdentityLoading')}</div>
+          <div className={cn(SC.input, 'flex items-center text-ink-muted')}>
+            <AppLoading variant="button" locale={locale} label={t(locale, 'candidate.inviteIdentityLoading')} />
+          </div>
         ) : (
           <>
             {identityFromInvite ? (
@@ -277,13 +271,13 @@ function HomeScreen({
 
         <FormField as="div" label={t(locale, 'candidate.area')} labelClassName={formFieldCandLabelClass} className="w-full">
           {areasLoading ? (
-            <div className={cn(SC.input, 'text-ink-muted')}>{t(locale, 'candidate.loadingAreas')}</div>
-          ) : areasError ? (
-            <div
-              className={cn(SC.input, 'border-danger/35 bg-danger/[0.06] text-danger')}
-            >
-              {areasError}
+            <div className={cn(SC.input, 'flex items-center text-ink-muted')}>
+              <AppLoading variant="button" locale={locale} label={t(locale, 'candidate.loadingAreas')} />
             </div>
+          ) : areasError ? (
+            <InlineCallout tone="danger" role="alert">
+              {areasError}
+            </InlineCallout>
           ) : (
             <SelectField
               value={areaKey}
@@ -365,7 +359,7 @@ function HomeScreen({
                 setCity('');
               }}
               locale={locale}
-              className={SC.input}
+              className="w-full"
             />
           </FormField>
           <FormField
@@ -374,39 +368,55 @@ function HomeScreen({
             labelClassName={formFieldCandLabelClass}
             className="min-w-[180px] flex-[2_1_180px]"
           >
-            <BrCitySelect uf={stateUf} value={city} onChange={setCity} locale={locale} className={SC.input} />
+            <BrCitySelect uf={stateUf} value={city} onChange={setCity} locale={locale} className="w-full" />
           </FormField>
         </div>
 
-        <label className="mb-4 flex items-start gap-2.5 text-xs leading-normal text-ink-muted">
-          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
+        <label className="flex cursor-pointer items-start gap-2.5 font-ui text-prose leading-normal text-ink-muted">
+          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className={fieldCheckboxClass} />
           {t(locale, 'candidate.consent')}
         </label>
 
         {startError ? (
-          <div className="mb-4 rounded-xl border border-danger/20 bg-danger/[0.06] px-3.5 py-3 text-xs leading-normal text-danger">
+          <InlineCallout tone="danger" role="alert">
             {startError}
-          </div>
+          </InlineCallout>
         ) : null}
 
-        <button
-          disabled={!canStart}
-          className={cn(
-            SC.btn,
-            !canStart && 'opacity-40',
-            startBusy ? 'cursor-wait' : canStart ? 'cursor-pointer' : 'cursor-not-allowed'
-          )}
-          onClick={handleSubmitStart}
-        >
-          {startBusy ? t(locale, 'common.validating') : t(locale, 'candidate.start')}
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            disabled={!canStart}
+            aria-describedby={showMissingHint ? 'cand-start-missing' : undefined}
+            className={cn(
+              SC.btn,
+              'self-start',
+              !canStart && 'opacity-40',
+              startBusy ? 'cursor-wait' : canStart ? 'cursor-pointer' : 'cursor-not-allowed'
+            )}
+            onClick={handleSubmitStart}
+          >
+            {startBusy ? (
+              <AppLoading variant="button" locale={locale} label={t(locale, 'common.validating')} />
+            ) : (
+              t(locale, 'candidate.start')
+            )}
+          </button>
+          {showMissingHint ? (
+            <p id="cand-start-missing" className="m-0 font-ui text-xs text-ink-muted">
+              {t(locale, 'candidate.startMissingHint', { items: missingItems.join(' · ') })}
+            </p>
+          ) : null}
         </div>
+        </div>
+        </>
+        )}
 
-        <div className="mt-6 border-t border-ink/12 pt-5">
-          <span className="text-2xs text-ink-faint">{t(locale, 'candidate.manager')} </span>
-          <span className="cursor-pointer text-2xs text-brand-600 underline" onClick={() => router.push('/login')}>
+        <div className="mt-6 flex flex-wrap items-center gap-x-1.5 border-t border-ink/12 pt-4 font-ui text-xs text-ink-faint">
+          <span>{t(locale, 'candidate.manager')}</span>
+          <a href="/login" className="inline-flex min-h-touch items-center text-brand-600 underline underline-offset-2">
             {t(locale, 'candidate.dashboardAccess')}
-          </span>
+          </a>
         </div>
       </div>
     </div>

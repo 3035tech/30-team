@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
-import { Bar, PanelSubNav, S, SortableTh, AdminListPager, AdminTableShell, AdminActionsCell, AdminActionsTh, AdminIconButton, AdminPageHeader, AdminCreateButton, AdminViewButton, AdminDeleteButton, clientSortNextDir } from '../dashboard-shared';
+import { Bar, PanelSubNav, S, SortableTh, AdminListPager, AdminListSearch, AdminTableShell, AdminActionsCell, AdminActionsTh, AdminIconButton, AdminPageHeader, AdminCreateButton, AdminViewButton, AdminDeleteButton, clientSortNextDir } from '../dashboard-shared';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { SystemNoticeModal } from '../SystemNoticeModal';
 import { useAppFeedback } from '../../_components/AppFeedback';
@@ -517,6 +517,19 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
   const [detail, setDetail] = useState(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [searchDraft, setSearchDraft] = useState('');
+  const [q, setQ] = useState('');
+  const focusId = Number(focusAttemptId) || null;
+
+  useEffect(() => {
+    const next = searchDraft.trim();
+    if (next === q) return undefined;
+    const timer = window.setTimeout(() => {
+      setQ(next);
+      setPage(1);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchDraft, q]);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -527,15 +540,21 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
       sort,
       sortDir,
     });
+    if (q) p.set('q', q);
     if (isAdmin && companyFilter && companyFilter !== 'all') p.set('company', companyFilter);
     fetch(`/api/admin/ae/attempts?${p}`)
       .then((r) => r.json())
       .then((d) => {
-        setItems(d.items || []);
+        const nextItems = d.items || [];
+        setItems(nextItems);
         setTotal(Number(d.total) || 0);
+        setSelected((cur) => {
+          if (cur && (cur === focusId || nextItems.some((row) => row.id === cur))) return cur;
+          return nextItems[0]?.id ?? null;
+        });
       })
       .finally(() => setLoading(false));
-  }, [isAdmin, companyFilter, page, pageSize, sort, sortDir]);
+  }, [isAdmin, companyFilter, page, pageSize, sort, sortDir, q, focusId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -554,10 +573,12 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
   }, [focusAttemptId]);
 
   useEffect(() => {
-    if (!selected) { setDetail(null); return; }
+    if (!selected) { setDetail(null); return undefined; }
+    let cancelled = false;
     fetch(`/api/admin/ae/attempts/${selected}`)
       .then((r) => r.json())
-      .then((d) => setDetail(d));
+      .then((d) => { if (!cancelled) setDetail(d); });
+    return () => { cancelled = true; };
   }, [selected]);
 
   const reloadDetail = () => {
@@ -618,7 +639,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
   };
 
   return (
-    <div className={cn('grid gap-5', detail ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1')}>
+    <div className={cn('grid items-start gap-5', selected || detail ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1')}>
       <SystemNoticeModal
         open={Boolean(notice)}
         locale={locale}
@@ -629,8 +650,35 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
       />
       <div className={S.card}>
         <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.results.title')}</span>
+        <AdminListFilters
+          aria-label={t(locale, 'panel.motivatorsAdmin.results.title')}
+          locale={locale}
+          className="mt-2"
+          onClear={() => setSearchDraft('')}
+          clearEnabled={searchDraft.trim().length > 0}
+        >
+          <AdminListSearch
+            locale={locale}
+            value={searchDraft}
+            onChange={setSearchDraft}
+            onSubmit={(v) => {
+              setQ(String(v || '').trim());
+              setPage(1);
+            }}
+            placeholder={t(locale, 'panel.motivatorsAdmin.results.searchPh')}
+          />
+        </AdminListFilters>
         {loading ? <AppLoading variant="panel" label={t(locale, 'panel.common.loading')} /> : null}
-        <AdminTableShell locale={locale} minWidth="480px">
+        {!loading && items.length === 0 ? (
+          <EmptyState
+            message={
+              q
+                ? t(locale, 'panel.motivatorsAdmin.results.emptySearch', { q })
+                : t(locale, 'panel.motivatorsAdmin.results.empty')
+            }
+          />
+        ) : (
+        <AdminTableShell locale={locale} minWidth="480px" animKey={`ae-results-${q}-${page}`}>
           <thead>
             <tr className="bg-ink/[0.02]">
               <SortableTh columnKey="candidateName" sortKey={sort} dir={sortDir} onSort={toggleSort}>
@@ -644,15 +692,23 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
           </thead>
             <tbody>
               {items.map((row) => (
-                <tr key={row.id} className="border-t border-ink/12">
-                  <td className="px-4 py-2.5">
-                    <div>{row.candidateName}</div>
+                <tr
+                  key={row.id}
+                  aria-current={row.id === selected ? 'true' : undefined}
+                  onClick={() => setSelected(row.id)}
+                  className={cn(
+                    'cursor-pointer border-t border-ink/12 transition-colors',
+                    row.id === selected ? 'bg-ink/[0.05]' : 'hover:bg-ink/[0.025]'
+                  )}
+                >
+                  <td className={cn('border-l-[3px] px-4 py-2.5', row.id === selected ? 'border-l-brand-500' : 'border-l-transparent')}>
+                    <div className={cn(row.id === selected && 'font-semibold')}>{row.candidateName}</div>
                     <div className="text-2xs text-ink-muted">{row.areaLabel || t(locale, 'panel.common.notApplicable')}</div>
                   </td>
                   <td className="px-4 py-2.5 text-ink-muted">
                     {formatDisplayDate(row.completedAt, locale, { fallback: t(locale, 'panel.common.notApplicable') })}
                   </td>
-                  <td className="px-4 py-2.5 text-right">
+                  <td className="px-4 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
                     <AdminActionsCell>
                       <AdminViewButton
                         label={t(locale, 'panel.motivatorsAdmin.results.view')}
@@ -669,6 +725,7 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
               ))}
             </tbody>
         </AdminTableShell>
+        )}
           <AdminListPager
             locale={locale}
             page={page}
@@ -683,6 +740,11 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
             }}
           />
       </div>
+      {selected && !detail?.attempt ? (
+        <div className={S.card}>
+          <AppLoading variant="panel" locale={locale} label={t(locale, 'panel.common.loading')} />
+        </div>
+      ) : null}
       {detail?.attempt ? (
         <ContentEnter animKey={`ae-result-${detail.attempt.id}`}>
         <div className={S.card}>
