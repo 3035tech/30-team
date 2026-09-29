@@ -28,7 +28,7 @@ export function MeterBar({
         borderRadius: height / 2,
         background: typeof color === 'string' && color.includes('gradient')
           ? color
-          : `linear-gradient(90deg,${color}99,${color})`,
+          : color,
       }
     : { width: `${pct}%`, height: '100%', borderRadius: height / 2 };
 

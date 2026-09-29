@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
 import { z } from 'zod';
+import { mobileCommunityBody } from '../../lib/mobile-employee-payload.js';
 
 async function setup(session) {
   const calls = [];
@@ -11,7 +12,8 @@ async function setup(session) {
     apiError: (_request, code, status) => ({ code, status }), apiErrorFromResult: (_request, result) => result,
     HTTP_STATUS: { UNAUTHORIZED: 401, BAD_REQUEST: 400, INTERNAL_SERVER_ERROR: 500 }, ERR: { UNAUTHORIZED: 'UNAUTHORIZED', INVALID_DATA: 'INVALID_DATA', INTERNAL: 'INTERNAL' },
     authenticateMobileEmployee: async () => session, mobileEmployeeBearerToken: () => 'test',
-    listCompanyPosts: async (_db, options) => { calls.push(options); return { ok: true, posts: [], total: 21 }; },
+    mobileCommunityBody,
+    listCompanyPosts: async (_db, options) => { calls.push(options); return { ok: true, posts: [{ id: '12', title: 'Mural', bodyHtml: '<p>Aviso</p>', authorName: 'RH', createdAt: '2026-09-28T12:00:00.000Z' }], total: 21 }; },
     listCompanyKudos: async (_db, options) => { calls.push(options); return { ok: true, kudos: [], total: 31 }; },
     searchEmployeeColleagues: async (_db, options) => { calls.push(options); return { ok: true, people: [] }; },
     createCompanyKudo: async () => ({ ok: true, kudo: { id: 1, toCandidateId: 2 } }),
@@ -30,6 +32,7 @@ test('GET defaults to page one and POST remains compatible with old consumers', 
   const result = await route.GET({ url: 'https://example.com/community' });
   assert.equal(result.headers['Cache-Control'], 'no-store');
   assert.equal(result.body.pagination.posts.page, 1);
+  assert.equal(result.body.posts[0].id, 12);
   assert.equal(result.body.pagination.posts.totalPages, 3);
   assert.equal(calls[0].page, 1);
   const sent = await route.POST({ json: async () => ({ toCandidateId: 2, message: 'Obrigado' }) });

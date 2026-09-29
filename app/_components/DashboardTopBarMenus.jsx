@@ -298,7 +298,7 @@ export function DashboardTopBarMenus({
             <path d="M10.3 21a1.7 1.7 0 0 0 3.4 0" />
           </svg>
           {unreadCount > 0 ? (
-            <span className="absolute right-1 top-1 min-w-[16px] rounded-full bg-brand-500 px-1 text-center font-mono text-2xs leading-4 text-white">
+            <span className="absolute right-1 top-1 min-w-[16px] rounded-full bg-action px-1 text-center font-ui text-2xs leading-4 text-action-ink">
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           ) : null}
@@ -306,7 +306,7 @@ export function DashboardTopBarMenus({
         {notifOpen ? (
           <div id="dashboard-notif-menu" className={cn(dropdownClass, 'db-dropdown-panel')} role="menu">
             <div className="flex items-center justify-between border-b border-ink/12 px-3.5 py-3">
-              <span className="font-mono text-xs text-ink">
+              <span className="font-ui text-xs text-ink">
                 {t(locale, 'dashboard.notificationsTitle')}
               </span>
               {unreadCount > 0 ? (
@@ -314,7 +314,7 @@ export function DashboardTopBarMenus({
                   type="button"
                   onClick={markAll}
                   disabled={loading}
-                  className="cursor-pointer border-none bg-transparent font-mono text-2xs text-brand-500"
+                  className="cursor-pointer border-none bg-transparent font-ui text-2xs text-brand-500"
                 >
                   {t(locale, 'dashboard.notificationsMarkAll')}
                 </button>
@@ -363,7 +363,7 @@ export function DashboardTopBarMenus({
                     {notifBody(locale, item) ? (
                       <div className="mt-1 text-xs text-ink-muted">{notifBody(locale, item)}</div>
                     ) : null}
-                    <div className="mt-1.5 font-mono text-2xs text-ink-faint">
+                    <div className="mt-1.5 font-ui text-2xs text-ink-faint">
                       {formatWhen(item.createdAt, locale)}
                     </div>
                   </div>

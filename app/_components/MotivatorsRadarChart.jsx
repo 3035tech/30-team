@@ -173,15 +173,6 @@ export function MotivatorsRadarChart({
           compact ? 'px-0.5 py-0.5' : 'px-1.5 py-1.5'
         )}
       >
-        {!embedded ? (
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.28]"
-            style={{
-              background: `radial-gradient(ellipse at 50% 45%, ${LOGO.petalLavender}40 0%, transparent 64%)`,
-            }}
-            aria-hidden
-          />
-        ) : null}
         <div
           className="relative w-full"
           style={{ height }}

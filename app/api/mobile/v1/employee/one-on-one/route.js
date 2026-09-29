@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { apiError, apiErrorFromResult, HTTP_STATUS, ERR } from '../../../../../../lib/api-error.js';
 import { getEmployeeOneOnOne } from '../../../../../../lib/employee-home.js';
+import { mobileOneOnOneBody } from '../../../../../../lib/mobile-employee-payload.js';
 import { submitEmployeeOneOnOnePrep } from '../../../../../../lib/employee-one-on-one-prep.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit.js';
@@ -20,7 +21,7 @@ export async function GET(request) {
     const locale = new URL(request.url).searchParams.get('locale') === 'en' ? 'en' : 'pt-BR';
     const result = await getEmployeeOneOnOne(null, { ...session, locale });
     if (!result.ok) return apiErrorFromResult(request, result, { fallbackCode: ERR.UNAUTHORIZED });
-    return NextResponse.json(result, { headers: NO_STORE });
+    return NextResponse.json(mobileOneOnOneBody(result), { headers: NO_STORE });
   } catch {
     return apiError(request, ERR.INTERNAL, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }

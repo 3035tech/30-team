@@ -21,11 +21,11 @@ const SESSION_MINUTES = Math.max(10, Math.round(SESSION_QUESTIONS * 0.4));
 const SC = {
   app: 'cand-flow relative box-border flex min-h-screen flex-col items-center justify-center overflow-auto bg-canvas p-6 font-display text-ink [color-scheme:light]',
   glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
-  card: 'cand-flow-card relative z-[1] box-border w-full max-w-[34rem] rounded-[20px] border border-ink/12 bg-white px-7 py-9 shadow-card backdrop-blur-3xl sm:px-9 sm:py-10',
+  card: 'cand-flow-card relative z-[1] box-border w-full max-w-[34rem] rounded-card border border-ink/12 bg-white px-7 py-9 shadow-card sm:px-9 sm:py-10',
   label: 'mb-4 block font-mono text-2xs uppercase tracking-[3px] text-ink-label',
-  h1: 'mb-3 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(26px,4.5vw,36px)] font-normal leading-[1.15] text-transparent',
+  h1: 'mb-3 text-[clamp(26px,4.5vw,36px)] font-bold leading-[1.15] tracking-tight text-ink',
   p: 'mb-7 text-base italic leading-[1.65] text-ink-muted',
-  btn: 'cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-8 py-3.5 font-display text-sm text-white',
+  btn: 'min-h-touch cursor-pointer rounded-control border-none bg-action px-8 py-3.5 font-ui text-sm font-semibold text-action-ink transition-colors duration-150 hover:bg-action-hover',
   input: 'ui-field box-border w-full rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
   select: 'ui-select box-border w-full cursor-pointer rounded-control border border-ink/12 bg-ink/[0.04] px-4 py-3 font-display text-base text-ink',
   fields: 'cand-flow-fields flex flex-col gap-4',
@@ -231,7 +231,7 @@ function RankingChoice({ question, onConfirm, locale }) {
                 className={cn(
                   'inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full font-mono text-prose',
                   ranked
-                    ? 'border border-brand-500 bg-brand-500 text-white'
+                    ? 'border border-brand-500 bg-action text-action-ink'
                     : 'border border-ink/12 bg-transparent text-ink-muted'
                 )}
               >
@@ -346,9 +346,8 @@ function TestScreen({ questions, onComplete, locale }) {
                 <button
                   key={v}
                   type="button"
-                  className="cand-likert-btn"
                   onClick={() => advance({ likertValue: v })}
-                  className="h-12 w-12 cursor-pointer rounded-full border-2 border-brand-500/25 bg-brand-500/[0.06] text-base text-brand-800"
+                  className="cand-likert-btn h-12 w-12 cursor-pointer rounded-full border-2 border-brand-500/25 bg-brand-500/[0.06] text-base text-brand-800 transition-colors duration-150 hover:border-brand-500/60 hover:bg-brand-500/[0.12]"
                 >
                   {v}
                 </button>

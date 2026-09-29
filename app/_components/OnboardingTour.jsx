@@ -77,7 +77,7 @@ export function OnboardingTour({ onComplete }) {
   if (isOpen && currentStep === -1) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4">
-        <div className="w-full max-w-md rounded-card border border-ink/10 bg-white p-6 shadow-lg">
+        <div className="w-full max-w-md rounded-card border border-ink/10 bg-surface p-6 shadow-dialog">
           <h2 className="m-0 mb-2 font-display text-xl text-ink">
             {t(locale, 'panel.tour.welcomeTitle')}
           </h2>
@@ -102,7 +102,7 @@ export function OnboardingTour({ onComplete }) {
       <>
         <div className="fixed inset-0 z-40 bg-ink/40" onClick={handleFinish} aria-hidden />
         <div className="fixed bottom-4 left-1/2 z-50 mx-4 w-full max-w-md -translate-x-1/2">
-          <div className="overflow-hidden rounded-card border border-ink/12 bg-white shadow-lg">
+          <div className="overflow-hidden rounded-card border border-ink/12 bg-surface shadow-dialog">
             <div className="h-1 bg-ink/10">
               <div
                 className="h-full bg-brand-500 transition-all duration-300"

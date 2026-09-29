@@ -32,8 +32,8 @@ import { getDashboardTabNav } from '../../lib/dashboard-navigation';
 const S = {
   label:
     `mb-2 block ${UI_TYPE.label}`,
-  card: 'rounded-card border border-ink/12 bg-surface p-4 sm:p-6',
-  cardTight: 'rounded-card border border-ink/12 bg-surface p-4 sm:p-5',
+  card: 'rounded-card border border-line bg-surface p-4 sm:p-6',
+  cardTight: 'rounded-card border border-line bg-surface p-4 sm:p-5',
   /** Native select — custom chevron via `.ui-select` (globals.css). */
   select: fieldSelectClass,
   /** Page-size / dense chrome selects. */
@@ -45,10 +45,10 @@ const S = {
   sidebarSection:
     `mb-1 block px-3 ${UI_TYPE.label}`,
   filterChip:
-    'inline-flex items-center gap-1 rounded-full border border-brand-500/25 bg-brand-500/10 px-2.5 py-1 font-mono text-xs text-brand-600',
+    'inline-flex items-center gap-1 rounded-full border border-brand-500/25 bg-brand-500/10 px-2.5 py-1 font-ui text-xs text-brand-600',
   /** Primary CTA — brand (use once per viewport when possible) */
   btnPrimary:
-    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border-0 bg-brand-500 px-4 py-2.5 font-ui text-sm font-medium text-white dark:text-canvas transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 disabled:cursor-default disabled:opacity-55',
+    'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border-0 bg-action px-4 py-2.5 font-ui text-sm font-semibold text-action-ink  transition-colors hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-2 disabled:cursor-default disabled:opacity-55',
   /** Secondary soft brand */
   btnBrandSoft:
     'inline-flex min-h-touch cursor-pointer items-center justify-center gap-2 rounded-control border border-brand-500/35 bg-brand-500/10 px-3.5 py-2.5 font-ui text-sm font-medium text-brand-600 transition-colors hover:bg-brand-500/[0.15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35 disabled:cursor-default disabled:opacity-55',
@@ -79,9 +79,9 @@ const S = {
   cardRowTitle: 'truncate font-ui text-sm font-medium text-ink',
   cardLink: 'font-ui text-xs font-medium text-brand-600 hover:text-brand-700',
   cardChip:
-    'inline-flex items-center gap-1 rounded-control border border-brand-500/20 bg-brand-500/[0.08] px-1.5 py-0.5 font-mono text-xs text-ink-muted',
-  cardMetric: 'font-mono text-sm font-semibold tabular-nums',
-  cardMetricHero: 'font-mono text-3xl font-bold tabular-nums',
+    'inline-flex items-center gap-1 rounded-control border border-brand-500/20 bg-brand-500/[0.08] px-1.5 py-0.5 font-ui text-xs text-ink-muted',
+  cardMetric: 'font-ui text-sm font-semibold tabular-nums',
+  cardMetricHero: 'font-ui text-3xl font-bold tabular-nums',
   /** Dashboard page H1 */
   pageTitle: `m-0 break-words ${UI_TYPE.page}`,
   /** Flex row for FormField — items-start evita altura “esticada” por hint/readonly */
@@ -114,7 +114,7 @@ const TypeBadge = ({ type, locale = 'pt-BR', compact = false }) => {
   const tip = typeHintTooltip(type, locale);
   const label = compact ? `T${type}` : short;
   const base = cn(
-    'ui-type-badge inline-flex flex-shrink-0 cursor-help items-center font-mono rounded-full',
+    'ui-type-badge inline-flex flex-shrink-0 cursor-help items-center font-ui rounded-full',
     compact ? 'gap-0.5 px-[7px] py-0.5 text-2xs' : 'gap-1 px-2.5 py-[3px] text-2xs'
   );
   if (!d) {
@@ -194,7 +194,7 @@ const PAGER_BTN_IDLE =
 const PAGER_BTN_DISABLED =
   'cursor-default border-ink/12 bg-transparent text-ink-faint';
 const PAGER_BTN_ACTIVE =
-  'cursor-default border-brand-500 bg-brand-500 text-white';
+  'cursor-default border-brand-500 bg-action text-action-ink';
 
 /**
  * Canonical list footer: count + page size + numbered pages + prev/next.
@@ -247,7 +247,7 @@ function AdminListPager({
         className
       )}
     >
-      <span className="font-mono text-2xs text-ink-muted">{label}</span>
+      <span className="font-ui text-2xs text-ink-muted">{label}</span>
       <div className="flex flex-wrap items-center gap-1.5">
         <SelectField
           value={String(pageSize)}
@@ -281,7 +281,7 @@ function AdminListPager({
               return (
                 <span
                   key={`e-${ellipsisIdx}`}
-                  className="min-w-[1.5rem] px-1 text-center font-mono text-2xs text-ink-faint"
+                  className="min-w-[1.5rem] px-1 text-center font-ui text-2xs text-ink-faint"
                   aria-hidden
                 >
                   …
@@ -331,7 +331,7 @@ const CompatBadge = ({ level, locale = 'pt-BR' }) => {
   if (!m) return null;
   return (
     <span
-      className="rounded-full px-[9px] py-0.5 font-mono text-xs"
+      className="rounded-full px-[9px] py-0.5 font-ui text-xs"
       style={{
         background: `${m.color}18`,
         border: `1px solid ${m.color}44`,

@@ -624,7 +624,7 @@ export function PeopleManagementPanel({
               disabled={busy || isRichTextEmpty(notes)}
               onClick={save}
               className={cn(
-                'rounded-lg border-none bg-brand-500 px-3.5 py-2 font-inherit text-prose text-white',
+                'rounded-lg border-none bg-action px-3.5 py-2 font-inherit text-prose text-action-ink',
                 busy || isRichTextEmpty(notes) ? 'cursor-default opacity-50' : 'cursor-pointer'
               )}
             >

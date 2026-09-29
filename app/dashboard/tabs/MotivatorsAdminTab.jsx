@@ -1173,7 +1173,7 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
               : t(locale, 'panel.motivatorsAdmin.setup.notInitialized')}
           </p>
           {moduleStatus.reason !== 'schema_missing' ? (
-            <button type="button" disabled={setupBusy} onClick={runSetup} className="cursor-pointer rounded-lg border-none bg-brand-500 px-4 py-2 text-white disabled:cursor-not-allowed">
+            <button type="button" disabled={setupBusy} onClick={runSetup} className="cursor-pointer rounded-lg border-none bg-action px-4 py-2 text-action-ink disabled:cursor-not-allowed">
               {setupBusy ? t(locale, 'panel.motivatorsAdmin.setup.initializing') : t(locale, 'panel.motivatorsAdmin.setup.initializeNow')}
             </button>
           ) : null}

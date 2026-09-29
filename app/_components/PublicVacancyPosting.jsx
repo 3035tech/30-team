@@ -62,9 +62,9 @@ const SC = {
   input: cn(fieldInputClass, 'w-full bg-surface'),
   select: cn(fieldSelectBlockClass, 'bg-surface text-ink'),
   btnPrimary:
-    'inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-prose font-medium text-white disabled:cursor-default disabled:opacity-60',
+    'inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border-none bg-action px-4 py-2.5 font-mono text-prose font-medium text-action-ink disabled:cursor-default disabled:opacity-60',
   btnPrimaryBlock:
-    'inline-flex min-h-touch w-full cursor-pointer items-center justify-center rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-prose font-medium text-white sm:w-auto disabled:cursor-default disabled:opacity-60',
+    'inline-flex min-h-touch w-full cursor-pointer items-center justify-center rounded-control border-none bg-action px-4 py-2.5 font-mono text-prose font-medium text-action-ink sm:w-auto disabled:cursor-default disabled:opacity-60',
   filterChip:
     'inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-surface px-3 py-1.5 font-mono text-2xs text-ink-muted no-underline hover:border-brand-500/30 hover:text-brand-500',
 };
@@ -255,7 +255,7 @@ className="mb-2 mt-0 font-mono text-2xs uppercase tracking-[2px] text-warning"
                   : t(locale, 'publicVacancy.closedBadge')}
               </p>
               <h1
-                className="mb-3 break-words bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text font-display text-[clamp(1.625rem,5vw,2.25rem)] font-normal leading-snug text-transparent"
+                className="mb-3 break-words text-ink font-display text-[clamp(1.625rem,5vw,2.25rem)] font-bold leading-snug"
               >
                 {t(locale, 'publicVacancy.closedTitle')}
               </h1>
@@ -293,7 +293,7 @@ className="mb-2 mt-0 font-mono text-prose text-ink-faint"
                 ) : null}
                 <Link
                   href="/jobs"
-                  className="inline-block cursor-pointer rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3 font-display text-sm text-white no-underline"
+                  className="inline-block cursor-pointer rounded-control border-none bg-action px-5 py-3 font-ui text-sm font-semibold text-action-ink no-underline transition-colors duration-150 hover:bg-action-hover"
                 >
                   {t(locale, 'publicVacancy.browseOpenCta')}
                 </Link>
@@ -347,7 +347,7 @@ className="mb-2.5 mt-0 font-mono text-xs tracking-wide text-ink-muted"
                   </p>
                 ) : null}
                 <h1
-                  className="mb-3 break-words bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text font-display text-[clamp(1.75rem,5vw,2.5rem)] font-normal leading-snug text-transparent"
+                  className="mb-3 break-words text-ink font-display text-[clamp(1.75rem,5vw,2.5rem)] font-bold leading-snug"
                 >
                   {posting.title}
                 </h1>
@@ -442,7 +442,7 @@ className="mb-2.5 mt-0 font-mono text-xs tracking-wide text-ink-muted"
                       <button
                         type="button"
                         onClick={() => setApplyOpen(true)}
-                        className="inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border-none bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3 font-mono text-sm text-white"
+                        className="inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border-none bg-action px-5 py-3 font-ui text-sm font-semibold text-action-ink transition-colors duration-150 hover:bg-action-hover"
                       >
                         {t(locale, 'publicVacancy.applyCta')}
                       </button>
@@ -652,7 +652,7 @@ export function PublicVacanciesIndexView({
             </p>
           ) : null}
           <h1
-            className="m-0 break-words bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text font-display text-[clamp(1.625rem,4vw,2.25rem)] font-normal leading-snug text-transparent"
+            className="m-0 break-words text-ink font-display text-[clamp(1.625rem,4vw,2.25rem)] font-bold leading-snug"
           >
             {heading}
           </h1>
@@ -914,7 +914,7 @@ export function PublicCompanyPageView({ locale = 'pt-BR', company, items = [], t
           <span className="text-ink">{name}</span>
         </nav>
 
-        <header className="relative mb-6 overflow-hidden rounded-2xl border border-ink/10 bg-gradient-to-br from-brand-500/[0.12] via-ink/[0.03] to-transparent px-5 py-6 sm:px-7 sm:py-8">
+        <header className="relative mb-6 overflow-hidden rounded-2xl border border-ink/10 bg-surface px-5 py-6 sm:px-7 sm:py-8">
           <div className="flex flex-wrap items-center gap-4">
             {logoUrl ? (
               <img

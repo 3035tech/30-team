@@ -20,7 +20,7 @@ export function RosterEmptyHint({
   const canNav = typeof navigateDashboard === 'function';
 
   return (
-    <div className={cn('rounded-[14px] border border-dashed border-ink/12 bg-ink/[0.02] px-5 py-7 text-center', className)}>
+    <div className={cn('rounded-card border border-dashed border-ink/12 bg-ink/[0.02] px-5 py-7 text-center', className)}>
       <p className="mb-2 mt-0 font-display text-base text-ink">
         {t(locale, 'dashboard.rosterEmptyTitle')}
       </p>

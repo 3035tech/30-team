@@ -120,12 +120,12 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-3 backdrop-blur-sm sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/45 p-3 sm:p-6">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="onboarding-step-title"
-        className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[640px] flex-col overflow-hidden rounded-card border border-ink/12 bg-white shadow-xl sm:max-h-[calc(100dvh-3rem)]"
+        className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[640px] flex-col overflow-hidden rounded-card border border-ink/12 bg-surface shadow-dialog sm:max-h-[calc(100dvh-3rem)]"
       >
         {/* Header com steps */}
         <div className="border-b border-ink/8 px-6 py-4">
@@ -202,7 +202,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
               <button
                 type="button"
                 onClick={handleNext}
-                className="inline-flex min-h-touch items-center rounded-control bg-brand-500 px-6 py-3 text-base font-medium text-white hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                className="inline-flex min-h-touch items-center rounded-control bg-action px-6 py-3 text-base font-medium text-action-ink hover:bg-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
               >
                 {t(locale, 'onboarding.welcome.cta')}
               </button>
@@ -276,7 +276,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                   setModulesTouched(true);
                   handleNext();
                 }}
-                className="min-h-touch w-full rounded-control bg-brand-500 px-6 py-3 text-base font-medium text-white hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                className="min-h-touch w-full rounded-control bg-action px-6 py-3 text-base font-medium text-action-ink hover:bg-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
               >
                 {t(locale, 'onboarding.modules.cta')}
               </button>
@@ -342,7 +342,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                   href="/dashboard?tab=vacancies"
                   onClick={(event) => void completeAndNavigate(event, '/dashboard?tab=vacancies')}
                   aria-disabled={completing}
-                  className="flex-1 rounded-control border border-brand-500 bg-brand-500 px-4 py-3 text-center text-base text-white no-underline hover:bg-brand-600"
+                  className="flex-1 rounded-control border border-brand-500 bg-action px-4 py-3 text-center text-base text-action-ink no-underline hover:bg-action-hover"
                 >
                   {t(locale, 'onboarding.vacancy.createCta')}
                 </Link>
@@ -473,7 +473,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                 onClick={handleComplete}
                 disabled={completing}
                 className={cn(
-                  'min-h-touch w-full rounded-control bg-brand-500 px-6 py-3 text-base font-medium text-white hover:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
+                  'min-h-touch w-full rounded-control bg-action px-6 py-3 text-base font-medium text-action-ink hover:bg-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500',
                   completing && 'cursor-default opacity-60'
                 )}
               >

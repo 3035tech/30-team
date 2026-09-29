@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { apiError, apiErrorFromResult, HTTP_STATUS, ERR } from '../../../../../../lib/api-error.js';
 import { completeLmsLesson, listCandidateLmsCourses, uncompleteLmsLesson, upsertLmsWatchProgress } from '../../../../../../lib/lms.js';
+import { mobileLmsBody } from '../../../../../../lib/mobile-employee-payload.js';
 import { getLessonQuiz, submitLessonQuiz } from '../../../../../../lib/lms-quiz.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit.js';
@@ -9,7 +10,7 @@ export const dynamic = 'force-dynamic';
 const NO_STORE = Object.freeze({ 'Cache-Control': 'no-store, private' });
 const LMS_ACTION = Object.freeze({ COMPLETE: 'completeLesson', GET_QUIZ: 'getQuiz', SAVE_WATCH: 'saveWatchProgress', SUBMIT_QUIZ: 'submitQuiz', UNCOMPLETE: 'uncompleteLesson' });
 async function auth(request) { return authenticateMobileEmployee(mobileEmployeeBearerToken(request)); }
-async function load(session) { return { courses: await listCandidateLmsCourses(null, { companyId: session.companyId, candidateId: session.candidateId }) }; }
+async function load(session) { return mobileLmsBody(await listCandidateLmsCourses(null, { companyId: session.companyId, candidateId: session.candidateId })); }
 
 export async function GET(request) {
   try {

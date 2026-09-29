@@ -36,7 +36,7 @@ export function EmptyStateActionable({
         {primaryAction && (
           <button
             onClick={primaryAction.onClick}
-            className="inline-flex min-h-touch items-center justify-center rounded-control bg-brand-500 px-6 py-3 font-ui text-prose font-semibold text-white transition-colors hover:bg-brand-600"
+            className="inline-flex min-h-touch items-center justify-center rounded-control bg-action px-6 py-3 font-ui text-prose font-semibold text-action-ink transition-colors hover:bg-action-hover"
           >
             {primaryAction.icon && <span className="mr-2">{primaryAction.icon}</span>}
             {primaryAction.label}
@@ -57,14 +57,14 @@ export function EmptyStateActionable({
       {/* Tips */}
       {tips.length > 0 && (
         <div className="max-w-lg">
-          <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+          <div className="mb-3 font-ui text-2xs font-semibold uppercase tracking-wide text-ink-label">
             Dicas para começar
           </div>
           <div className="grid grid-cols-1 gap-2">
             {tips.map((tip, idx) => (
               <div
                 key={idx}
-                className="flex items-start gap-2 text-left p-3 bg-gray-50 rounded-lg border border-gray-200"
+                className="flex items-start gap-2 text-left rounded-control border border-line bg-canvas p-3"
               >
                 <svg
                   className="mt-0.5 h-5 w-5 flex-shrink-0 text-brand-600"
@@ -79,7 +79,7 @@ export function EmptyStateActionable({
                     d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                   />
                 </svg>
-                <span className="text-sm text-gray-700">{tip}</span>
+                <span className="font-ui text-sm text-ink">{tip}</span>
               </div>
             ))}
           </div>
@@ -97,7 +97,7 @@ export function EmptyVacancies({ onCreateVacancy, onViewHelp }) {
   return (
     <EmptyStateActionable
       icon={
-        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-8 w-8 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -138,7 +138,7 @@ export function EmptyCandidates({ onInvitePeople, onCreateVacancy }) {
   return (
     <EmptyStateActionable
       icon={
-        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-8 w-8 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -184,7 +184,7 @@ export function EmptyAnalytics({ onViewTutorial }) {
   return (
     <EmptyStateActionable
       icon={
-        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-8 w-8 text-ink-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

@@ -206,7 +206,7 @@ export function GModePending({ isActive, locale = 'pt-BR' }) {
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <div className="flex items-center gap-2 rounded-control bg-brand-500 px-4 py-2 text-white shadow-md">
+      <div className="flex items-center gap-2 rounded-control bg-action px-4 py-2 text-action-ink shadow-md">
         <kbd className="rounded-control bg-brand-700 px-2 py-1 font-mono text-xs">g</kbd>
         <span className="font-ui text-prose">{t(locale, 'panel.shortcuts.waitingKey')}</span>
       </div>

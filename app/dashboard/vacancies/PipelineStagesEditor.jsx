@@ -22,7 +22,7 @@ const CANONICAL_OPTIONS_CUSTOM = [
 ];
 
 const BTN_PRIMARY =
-  'min-h-touch cursor-pointer rounded-control border-none bg-brand-500 px-3.5 py-2 font-ui text-xs font-medium text-white disabled:opacity-60';
+  'min-h-touch cursor-pointer rounded-control border-none bg-action px-3.5 py-2 font-ui text-xs font-medium text-action-ink disabled:opacity-60';
 const BTN_GHOST =
   'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-3 py-1.5 font-ui text-xs text-ink-muted disabled:opacity-60';
 const BTN_DANGER =

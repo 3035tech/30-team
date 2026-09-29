@@ -292,7 +292,7 @@ export function HelpAssistantWidget({
       <button
         type="button"
         className={cn(
-          'pointer-events-auto inline-flex min-h-touch min-w-touch items-center gap-2 rounded-full border border-brand-500/35 bg-brand-500 px-4 py-2.5 font-ui text-prose font-semibold text-white dark:text-canvas shadow-toast',
+          'pointer-events-auto inline-flex min-h-touch min-w-touch items-center gap-2 rounded-full border border-brand-500/35 bg-action px-4 py-2.5 font-ui text-prose font-semibold text-action-ink  shadow-toast',
           open && 'bg-brand-600'
         )}
         onClick={() => setOpen((v) => !v)}

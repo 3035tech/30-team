@@ -2,8 +2,10 @@
 /**
  * Tailwind theme aligned to lib/theme.js + lib/brand.js.
  * Canvas / ink / brand / semantic colors use CSS vars so `.dark` on <html> remaps them
- * (see app/dark-mode.css). Brand purple ≠ pipeline/status.
+ * (see app/dark-mode.css). Grow identity is separate from semantic states.
  */
+const { SHADOWS } = require('./lib/brand-tokens.cjs');
+const uiFont = ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'];
 module.exports = {
   darkMode: 'class',
   content: ['./app/**/*.{js,jsx}', './lib/**/*.{js,jsx}'],
@@ -17,9 +19,9 @@ module.exports = {
         surface: 'rgb(var(--surface) / <alpha-value>)',
         ink: {
           DEFAULT: 'rgb(var(--ink) / <alpha-value>)',
-          muted: 'rgb(var(--ink) / 0.62)',
-          faint: 'rgb(var(--ink) / 0.38)',
-          label: 'rgb(var(--ink) / 0.28)',
+          muted: 'rgb(var(--ink-secondary) / <alpha-value>)',
+          faint: 'rgb(var(--ink-faint) / <alpha-value>)',
+          label: 'rgb(var(--ink-label) / <alpha-value>)',
         },
         brand: {
           50: 'rgb(var(--brand-50) / <alpha-value>)',
@@ -34,6 +36,11 @@ module.exports = {
           900: 'rgb(var(--brand-900) / <alpha-value>)',
           DEFAULT: 'rgb(var(--brand-500) / <alpha-value>)',
         },
+        action: {DEFAULT: 'rgb(var(--action) / <alpha-value>)', hover: 'rgb(var(--action-hover) / <alpha-value>)', ink: 'rgb(var(--on-action) / <alpha-value>)'},
+        line: 'rgb(var(--border) / <alpha-value>)',
+        'input-line': 'rgb(var(--input-border) / <alpha-value>)',
+        navy: 'rgb(var(--navy) / <alpha-value>)',
+        teal: 'rgb(var(--teal) / <alpha-value>)',
         success: 'rgb(var(--success) / <alpha-value>)',
         danger: 'rgb(var(--danger) / <alpha-value>)',
         warning: 'rgb(var(--warning) / <alpha-value>)',
@@ -50,8 +57,11 @@ module.exports = {
           archived: 'rgb(var(--ink) / 0.3)',
         },
       },
+      // Small brand-colored text needs a darker tone than decorative identity green.
+      textColor: { brand: { 500: 'rgb(var(--brand-700) / <alpha-value>)', 600: 'rgb(var(--brand-700) / <alpha-value>)' } },
       fontFamily: {
         ui: [
+          'Inter',
           'system-ui',
           '-apple-system',
           'Segoe UI',
@@ -60,7 +70,7 @@ module.exports = {
           'Arial',
           'sans-serif',
         ],
-        display: ['Georgia', 'Times New Roman', 'serif'],
+        display: uiFont,
         mono: [
           'ui-monospace',
           'SF Mono',
@@ -83,12 +93,7 @@ module.exports = {
         card: '16px',
         control: '10px',
       },
-      boxShadow: {
-        card: '0 12px 40px rgba(26,22,37,.08), 0 4px 16px rgba(26,22,37,.04)',
-        dialog: '0 24px 64px rgba(26,22,37,0.18)',
-        toast: '0 12px 32px rgba(26,22,37,.14)',
-        menu: '0 8px 24px rgba(26,22,37,.12)',
-      },
+      boxShadow: SHADOWS,
       minHeight: {
         touch: '40px',
       },

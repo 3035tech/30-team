@@ -15,7 +15,7 @@ import { typeHintTooltip, typeShortLabel } from '../../../lib/type-en';
 const BTN_SM =
   'inline-flex min-h-touch items-center justify-center gap-2 rounded-lg border border-brand-500/35 bg-brand-500/[0.09] px-3 py-2 font-mono text-2xs text-brand-500 disabled:cursor-default disabled:opacity-60';
 const BTN_PRIMARY =
-  'inline-flex min-h-touch items-center justify-center gap-2 rounded-lg border border-brand-500 bg-brand-500 px-3 py-2 font-mono text-2xs text-white disabled:cursor-default disabled:opacity-60';
+  'inline-flex min-h-touch items-center justify-center gap-2 rounded-lg border border-brand-500 bg-action px-3 py-2 font-mono text-2xs text-action-ink disabled:cursor-default disabled:opacity-60';
 
 export function VacancyRubricEditor({ vacancyId, locale, vacancyTitle = '', vacancyDescription = '', onSaved }) {
   const { notice, toast } = useAppFeedback();

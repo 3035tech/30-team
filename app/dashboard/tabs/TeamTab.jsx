@@ -1220,7 +1220,7 @@ export function TeamTab({
                     >
                       <Icon name="moreHorizontal" />
                     </summary>
-                    <div className="absolute right-0 z-30 mt-1.5 grid min-w-[210px] gap-1 rounded-control border border-ink/12 bg-surface p-1.5 shadow-lg">
+                    <div className="absolute right-0 z-30 mt-1.5 grid min-w-[210px] gap-1 rounded-control border border-ink/12 bg-surface p-1.5 shadow-menu">
                       {isAdmin ? (
                         <button
                           type="button"

@@ -54,7 +54,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
             </Link>
             <Link
               href="/signup"
-              className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-3.5 py-2 text-sm text-white no-underline"
+              className="inline-flex min-h-touch items-center rounded-control bg-action hover:bg-action-hover text-action-ink px-3.5 py-2 text-sm font-semibold no-underline"
             >
               {t(locale, 'pricing.navEarly')}
             </Link>
@@ -67,7 +67,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
           <p className="mb-4 inline-block rounded-control border border-success/25 bg-success/10 px-3 py-1.5 font-mono text-2xs uppercase tracking-[0.1em] text-success">
             {t(locale, 'pricing.earlyBadge')}
           </p>
-          <h1 className="mb-4 max-w-2xl bg-gradient-to-br from-brand-200 via-brand-400 to-brand-600 bg-clip-text text-[clamp(2rem,5.5vw,3rem)] font-normal leading-[1.12] text-transparent">
+          <h1 className="mb-4 max-w-2xl text-ink text-[clamp(2rem,5.5vw,3rem)] font-bold leading-[1.12]">
             {t(locale, 'pricing.heroTitle')}
           </h1>
           <p className="mb-2 max-w-2xl text-lg leading-relaxed text-ink">{t(locale, 'pricing.heroLead')}</p>
@@ -179,7 +179,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Link
                     href="/signup"
-                    className="inline-flex min-h-touch items-center justify-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-4 py-3 text-sm text-white no-underline"
+                    className="inline-flex min-h-touch items-center justify-center rounded-control bg-action hover:bg-action-hover text-action-ink px-4 py-3 text-sm font-semibold no-underline"
                   >
                     {t(locale, 'pricing.ctaSignup')}
                   </Link>
@@ -308,7 +308,7 @@ export default function PricingPageClient({ locale: initialLocale }) {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/signup"
-              className="inline-flex min-h-touch items-center rounded-control bg-gradient-to-br from-brand-500 to-brand-800 px-5 py-3.5 text-sm text-white no-underline"
+              className="inline-flex min-h-touch items-center rounded-control bg-action hover:bg-action-hover text-action-ink px-5 py-3.5 text-sm font-semibold no-underline"
             >
               {t(locale, 'pricing.ctaSignup')}
             </Link>

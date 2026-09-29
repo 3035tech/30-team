@@ -15,7 +15,7 @@ const PipelineExtrasContext = createContext(null);
 const FIELD = `${fieldInputClass} w-full font-ui text-sm`;
 const FIELD_SELECT = `${fieldSelectClass} w-full font-ui text-sm`;
 const BTN_PRIMARY =
-  'min-h-touch cursor-pointer rounded-control border-none bg-brand-500 px-4 py-2.5 font-mono text-prose text-white';
+  'min-h-touch cursor-pointer rounded-control border-none bg-action px-4 py-2.5 font-mono text-prose text-action-ink';
 const BTN_GHOST =
   'min-h-touch cursor-pointer rounded-control border border-ink/12 bg-transparent px-4 py-2.5 font-mono text-prose text-ink-muted';
 

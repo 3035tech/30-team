@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { apiError, apiErrorFromResult, HTTP_STATUS, ERR } from '../../../../../../lib/api-error.js';
 import { listEmployeeSurveyInbox, submitEmployeeClimateSurvey, submitEmployeeTeamPulse } from '../../../../../../lib/employee-surveys.js';
+import { mobileSurveyInbox } from '../../../../../../lib/mobile-employee-payload.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit.js';
 
@@ -8,7 +9,9 @@ export const dynamic = 'force-dynamic';
 const NO_STORE = Object.freeze({ 'Cache-Control': 'no-store' });
 const SURVEY_KIND = Object.freeze({ CLIMATE: 'climate', PULSE: 'pulse' });
 async function auth(request) { return authenticateMobileEmployee(mobileEmployeeBearerToken(request)); }
-async function load(session) { return listEmployeeSurveyInbox(null, { companyId: session.companyId, candidateId: session.candidateId, locale: 'pt-BR' }); }
+async function load(session) {
+  return mobileSurveyInbox(await listEmployeeSurveyInbox(null, { companyId: session.companyId, candidateId: session.candidateId, locale: 'pt-BR' }));
+}
 
 export async function GET(request) {
   try {

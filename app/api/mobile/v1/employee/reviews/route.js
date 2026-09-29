@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { apiError, apiErrorFromResult, HTTP_STATUS, ERR } from '../../../../../../lib/api-error.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
+import { mobileReviewDetail, mobileReviewList } from '../../../../../../lib/mobile-employee-payload.js';
 import { getSentFormalReviewForEmployee, listSentFormalReviewsForEmployee } from '../../../../../../lib/people/formal-competency-reviews.js';
 
 export const dynamic = 'force-dynamic';
@@ -14,10 +15,10 @@ export async function GET(request) {
     if (reviewId) {
       const result = await getSentFormalReviewForEmployee(null, { companyId: session.companyId, candidateId: session.candidateId, reviewId });
       if (!result.ok) return apiErrorFromResult(request, result, { fallbackCode: ERR.NOT_FOUND });
-      return NextResponse.json({ review: result.review }, { headers: NO_STORE });
+      return NextResponse.json({ review: mobileReviewDetail(result.review) }, { headers: NO_STORE });
     }
     const reviews = await listSentFormalReviewsForEmployee(null, { companyId: session.companyId, candidateId: session.candidateId });
-    return NextResponse.json({ reviews }, { headers: NO_STORE });
+    return NextResponse.json({ reviews: mobileReviewList(reviews) }, { headers: NO_STORE });
   } catch (error) {
     console.error('GET mobile employee reviews', error);
     return apiError(request, ERR.INTERNAL, HTTP_STATUS.INTERNAL_SERVER_ERROR);

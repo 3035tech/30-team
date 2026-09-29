@@ -1,6 +1,6 @@
 import { t } from '../../../lib/i18n';
 import { unsubscribeJobAlert } from '../../../lib/job-alerts';
-import { brandMarkSrc } from '../../../lib/brand';
+import { BrandMark } from '../../_components/BrandMark';
 import Link from 'next/link';
 
 export const metadata = {
@@ -32,11 +32,10 @@ export default async function JobAlertUnsubscribePage(props) {
         : t(locale, 'publicVacancy.alertUnsubInvalid');
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-canvas font-display text-ink">
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-radial-glow" />
+    <div className="relative min-h-screen overflow-hidden bg-canvas font-ui text-ink">
       <div className="relative mx-auto max-w-[520px] px-5 py-12">
-        <img src={brandMarkSrc(64)} alt="" width={40} height={40} className="mb-4" />
-        <h1 className="m-0 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-500 bg-clip-text text-[clamp(24px,4vw,32px)] font-normal text-transparent">
+        <BrandMark size={28} withWordmark className="mb-6 text-navy" />
+        <h1 className="m-0 font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
           {title}
         </h1>
         <div className="mt-5 rounded-card border border-ink/12 bg-white px-6 py-[22px]">

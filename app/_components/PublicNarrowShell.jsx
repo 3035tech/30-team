@@ -32,7 +32,7 @@ export function PublicNarrowShell({
     <div className={cn('mx-auto w-full', maxWidthClass, pad, className)}>
       <ContentEnter>
         {title ? (
-          <h1 className="mb-3 mt-0 font-display text-xl font-normal text-ink sm:text-2xl">
+          <h1 className="mb-3 mt-0 font-display text-xl font-bold text-ink sm:text-2xl">
             {title}
           </h1>
         ) : null}

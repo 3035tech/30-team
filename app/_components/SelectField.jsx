@@ -156,7 +156,7 @@ export function SelectField({
 
   const menu = open && !disabled && position ? (
     <ul ref={menuRef} id={listId} role="listbox" aria-label={ariaLabel} aria-labelledby={labelledBy || (!ariaLabel ? id || generatedId : undefined)}
-      className="z-[10080] m-0 overflow-y-auto overscroll-contain rounded-control border border-ink/15 bg-surface p-1 shadow-xl [scrollbar-width:thin]"
+      className="z-[10080] m-0 overflow-y-auto overscroll-contain rounded-control border border-ink/15 bg-surface p-1 shadow-menu [scrollbar-width:thin]"
       style={position}
       onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); }}
       onClick={(event) => event.stopPropagation()}>

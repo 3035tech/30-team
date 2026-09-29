@@ -187,7 +187,7 @@ export function DateField({
             aria-label={date.toLocaleDateString(locale, { dateStyle: 'full' })} aria-disabled={unavailable}
             aria-pressed={draft.slice(0, 10) === key} aria-current={key === dayKey(new Date()) ? 'date' : undefined}
             className={cn('min-h-touch rounded-control font-ui text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500',
-              unavailable ? 'cursor-not-allowed text-ink-faint' : draft.slice(0, 10) === key ? 'bg-brand-500 text-white' : 'hover:bg-brand-500/10',
+              unavailable ? 'cursor-not-allowed text-ink-faint' : draft.slice(0, 10) === key ? 'bg-action text-action-ink' : 'hover:bg-brand-500/10',
               key.slice(0, 7) !== month && 'opacity-50')}
             onClick={() => { if (unavailable) return; if (withTime) { setDraft(`${key}T${timeValue}`); setActive(key); setMonth(key.slice(0, 7)); } else commit(key); }}>
             {date.getDate()}

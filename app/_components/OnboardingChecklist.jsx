@@ -66,7 +66,7 @@ export function OnboardingChecklist({ locale = 'pt-BR', initialProgress, initial
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500 font-mono text-sm font-semibold text-white"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-action font-mono text-sm font-semibold text-action-ink"
             aria-hidden
           >
             {progress}%

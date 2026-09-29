@@ -190,7 +190,7 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
           const dx = event.clientX < bounds.left + 40 ? -20 : event.clientX > bounds.right - 40 ? 20 : 0;
           const dy = event.clientY < bounds.top + 40 ? -20 : event.clientY > bounds.bottom - 40 ? 20 : 0;
           if (dx || dy) canvas.scrollBy({ left: dx, top: dy, behavior: 'instant' });
-        }} role="region" tabIndex={0} aria-label={msg('canvas')} className="relative max-h-[640px] min-h-72 min-w-0 overflow-auto overscroll-contain rounded-card border border-ink/15 bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" style={{ backgroundImage: 'radial-gradient(var(--color-ink-faint, #b4acbf) 0.6px, transparent 0.6px)', backgroundSize: '20px 20px' }}>
+        }} role="region" tabIndex={0} aria-label={msg('canvas')} className="relative max-h-[640px] min-h-72 min-w-0 overflow-auto overscroll-contain rounded-card border border-ink/15 bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" style={{ backgroundImage: 'radial-gradient(rgb(var(--ink-faint) / 0.45) 0.6px, transparent 0.6px)', backgroundSize: '20px 20px' }}>
           <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
             <div className="relative origin-top-left" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
               <svg className="pointer-events-none absolute inset-0 text-brand-500/50" width={layout.width} height={layout.height} aria-hidden="true">

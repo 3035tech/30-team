@@ -203,7 +203,7 @@ export function CompatTab({
               key={x.id}
               type="button"
               onClick={() => goSection(x.id)}
-              className="cursor-pointer rounded-[14px] border bg-surface px-5 py-[18px] text-left"
+              className="cursor-pointer rounded-card border bg-surface px-5 py-[18px] text-left"
               style={{
                 borderColor: active ? x.c : `${x.c}25`,
                 boxShadow: active ? `0 0 0 2px ${x.c}22` : 'none',
@@ -322,7 +322,7 @@ export function CompatTab({
             return (
               <div
                 key={pairKey}
-                className="mb-3 rounded-[14px] border bg-surface p-[18px]"
+                className="mb-3 rounded-card border bg-surface p-[18px]"
                 style={{ borderColor: `${lc}30` }}
               >
                 <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">

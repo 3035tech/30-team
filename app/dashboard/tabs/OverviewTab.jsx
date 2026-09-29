@@ -381,7 +381,7 @@ export function OverviewTab({
               hint={t(locale, 'panel.overview.funnelStageShare', {
                 pct: Math.round(((data.funnel[stage] || 0) / funnelSum) * 100),
               })}
-              className="min-w-0 rounded-[14px] border-ink/12 bg-surface px-3 py-2.5"
+              className="min-w-0 rounded-card border-ink/12 bg-surface px-3 py-2.5"
               onClick={() => go({ tab: 'team', pipeline: stage })}
             />
           ))}

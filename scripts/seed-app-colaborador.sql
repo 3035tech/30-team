@@ -163,6 +163,9 @@ BEGIN
     IF to_regclass('public.ae_invites') IS NOT NULL THEN
       DELETE FROM ae_invites WHERE company_id = v_purge_id;
     END IF;
+    IF to_regclass('public.okr_activity_checkins') IS NOT NULL THEN
+      DELETE FROM okr_activity_checkins WHERE company_id = v_purge_id;
+    END IF;
 
     DELETE FROM candidates WHERE company_id = v_purge_id;
 
@@ -839,8 +842,12 @@ $html$,
   INSERT INTO climate_survey_questions (survey_id, company_id, prompt, question_kind, sort_order)
   VALUES (v_survey_open, v_company_id, 'O que mais ajudaria no seu dia a dia?', 'text', 1)
   RETURNING id INTO v_q_text;
-  INSERT INTO climate_survey_questions (survey_id, company_id, prompt, question_kind, sort_order)
-  VALUES (v_survey_open, v_company_id, 'De 0 a 10, quanto você recomendaria a App Colaborador como lugar para trabalhar?', 'enps', 2)
+  INSERT INTO climate_survey_questions (survey_id, company_id, prompt, question_kind, sort_order, scale_min, scale_max)
+  VALUES (
+    v_survey_open, v_company_id,
+    'De 1 a 10, quanto você recomendaria a App Colaborador como lugar para trabalhar?',
+    'enps', 2, 1, 10
+  )
   RETURNING id INTO v_q_enps;
 
   INSERT INTO climate_survey_invites (survey_id, company_id, token, expires_at, candidate_id)

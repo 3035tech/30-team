@@ -110,7 +110,7 @@ export function ContextualTooltip({
         />
         
         {/* Content */}
-        <div className="rounded-control bg-brand-500 p-4 text-white shadow-toast">
+        <div className="rounded-control bg-action p-4 text-action-ink shadow-toast">
           {title && (
             <div className="font-semibold text-sm mb-2 flex items-start justify-between">
               <span>{title}</span>

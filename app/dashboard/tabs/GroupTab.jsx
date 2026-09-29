@@ -692,7 +692,7 @@ export function GroupTab({
                             already ? 'cursor-not-allowed' : 'cursor-pointer'
                           )}
                           style={{
-                            background: already ? 'rgba(26,22,37,.04)' : `${lc}18`,
+                            background: already ? 'rgba(17,24,39,.04)' : `${lc}18`,
                             borderColor: already ? C.border : `${lc}55`,
                             color: already ? C.faint : lc,
                           }}

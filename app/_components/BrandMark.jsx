@@ -1,10 +1,14 @@
 'use client';
 
-import { brandMarkSrc } from '../../lib/brand';
+
 import { cn } from '../../lib/cn';
+import brandTokens from '../../lib/brand-tokens.cjs';
+
+const { LOGO_PATHS } = brandTokens;
 
 /**
- * Official 30Grow mark (person + petals).
+ * 30grow vector identity: the 3 follows currentColor (navy on light, white on navy);
+ * zero, arrow and "grow" use the Grow green.
  * Pass `href` or `onClick` to make the mark a home / nav control.
  * @param {{
  *   size?: number,
@@ -21,7 +25,7 @@ import { cn } from '../../lib/cn';
 export function BrandMark({
   size = 32,
   withWordmark = false,
-  wordmark = '30Grow',
+  wordmark = '30grow',
   style,
   className,
   href,
@@ -29,38 +33,20 @@ export function BrandMark({
   title,
   'aria-label': ariaLabel,
 }) {
-  const src = brandMarkSrc(size);
-  const radius = Math.max(6, Math.round(size * 0.22));
-  const interactive = Boolean(href || onClick);
-  const gap = withWordmark ? Math.max(8, Math.round(size * 0.28)) : 0;
-
+  const vbWidth = withWordmark ? 368 : 140;
+  const vbHeight = withWordmark ? 114 : 110;
+  const height = (size * vbHeight) / 110;
   const inner = (
-    <>
-      <img
-        src={src}
-        width={size}
-        height={size}
-        alt={interactive ? '' : wordmark}
-        className="block shrink-0 object-cover"
-        style={{
-          width: size,
-          height: size,
-          borderRadius: radius,
-        }}
-      />
-      {withWordmark ? (
-        <span
-          className="font-display leading-none tracking-[-0.02em] text-ink"
-          style={{ fontSize: Math.max(14, Math.round(size * 0.55)) }}
-        >
-          {wordmark}
-        </span>
-      ) : null}
-    </>
+    <svg viewBox={`0 0 ${vbWidth} ${vbHeight}`} width={(height * vbWidth) / vbHeight} height={height} className="block shrink-0" aria-hidden="true">
+      <path fill="currentColor" d={LOGO_PATHS.three} />
+      <path fill="var(--grow-primary)" d={LOGO_PATHS.zero} />
+      {withWordmark
+        ? LOGO_PATHS.grow.map((d) => <path key={d.slice(0, 12)} fill="var(--grow-primary)" fillRule="evenodd" d={d} />)
+        : null}
+    </svg>
   );
-
-  const layoutClass = cn('inline-flex items-center', className);
-  const layoutStyle = { gap, ...style };
+  const layoutClass = cn('brand-mark inline-flex items-center', className);
+  const layoutStyle = { gap: 0, ...style };
 
   if (href) {
     return (
@@ -93,7 +79,7 @@ export function BrandMark({
   }
 
   return (
-    <span className={layoutClass} style={layoutStyle}>
+    <span role="img" aria-label={ariaLabel || wordmark} className={layoutClass} style={layoutStyle}>
       {inner}
     </span>
   );

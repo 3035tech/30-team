@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { apiError, apiErrorFromResult, ERR, HTTP_STATUS } from '../../../../../../lib/api-error.js';
 import { listCompanyPosts } from '../../../../../../lib/company-posts.js';
+import { mobileCommunityBody } from '../../../../../../lib/mobile-employee-payload.js';
 import { createCompanyKudo, listCompanyKudos, searchEmployeeColleagues } from '../../../../../../lib/company-kudos.js';
 import { EMPLOYEE_NOTIF, notifyCandidate } from '../../../../../../lib/employee-notifications.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
@@ -28,7 +29,7 @@ async function load(session, { postsPage = 1, kudosPage = 1, kudoId } = {}) {
   if (!feed.ok) return feed;
   if (!kudos.ok) return kudos;
   if (!colleagues.ok) return colleagues;
-  return { ok: true, posts: feed.posts, postTotal: feed.total, kudos: kudos.kudos, kudosTotal: kudos.total, colleagues: colleagues.people.map((person) => ({ id: Number(person.id), fullName: person.fullName })),
+  return { ok: true, ...mobileCommunityBody({ posts: feed.posts, postTotal: feed.total, kudos: kudos.kudos, kudosTotal: kudos.total, colleagues: colleagues.people }),
     pagination: {
       posts: { page: postsPage, totalPages: Math.min(MAX_PAGE, Math.max(1, Math.ceil(feed.total / FEED_PAGE_SIZE))) },
       kudos: { page: kudosPage, totalPages: Math.min(MAX_PAGE, Math.max(1, Math.ceil(kudos.total / KUDOS_PAGE_SIZE))) },

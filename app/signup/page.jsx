@@ -124,12 +124,12 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-canvas p-6 font-display">
       <div className="pointer-events-none fixed inset-0 bg-radial-glow-single" />
       <div className="relative z-[1] w-full max-w-[540px] rounded-card border border-ink/12 bg-white px-8 py-10 shadow-card">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 [&>label>span]:hidden">
           <BrandMark size={36} withWordmark />
           <LanguageSelect locale={locale} onChange={setLocale} compact />
         </div>
 
-        <h1 className="mb-2 bg-gradient-to-br from-brand-200 via-brand-400 to-brand-600 bg-clip-text text-3xl font-normal leading-tight text-transparent">
+        <h1 className="mb-2 text-ink text-3xl font-bold leading-tight">
           {t(locale, 'signup.title')}
         </h1>
         <p className="mb-4 text-base leading-relaxed text-ink-muted">{t(locale, 'signup.intro', publicPricingTextValues(locale))}</p>

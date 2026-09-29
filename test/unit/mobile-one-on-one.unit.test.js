@@ -4,6 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import { z } from 'zod';
 import { getEmployeeOneOnOnePrep, submitEmployeeOneOnOnePrep } from '../../lib/employee-one-on-one-prep.js';
+import { mobileOneOnOneBody } from '../../lib/mobile-employee-payload.js';
 
 async function route(session) {
   const calls = [];
@@ -16,7 +17,8 @@ async function route(session) {
     authenticateMobileEmployee: async () => session,
     mobileEmployeeBearerToken: () => 'test',
     checkRateLimit: async () => ({ ok: true }), clientIpFromRequest: () => 'test',
-    getEmployeeOneOnOne: async (_db, scope) => { calls.push(scope); return { ok: true, agreements: [], prompts: [], preparation: { preparedAt: null, noteToManager: '' } }; },
+    mobileOneOnOneBody,
+    getEmployeeOneOnOne: async (_db, scope) => { calls.push(scope); return { ok: true, agreements: [{ id: '8', meetingDate: '2026-09-15', nextSteps: '<p>Combinado.</p>' }], prompts: [], preparation: { preparedAt: null, noteToManager: '' } }; },
     submitEmployeeOneOnOnePrep: async (_db, scope) => { calls.push(scope); return { ok: true, preparedAt: null, noteToManager: scope.noteToManager }; },
   };
   const context = vm.createContext({ URL });
@@ -44,6 +46,8 @@ test('tenant A and B use only authenticated identity; injected scope is rejected
     const request = { url: 'https://example.com/employee/one-on-one?locale=en&companyId=999', json: async () => ({ noteToManager: 'Nota' }) };
     const read = await handlers.GET(request);
     assert.equal(read.headers['Cache-Control'], 'no-store');
+    assert.equal(read.body.agreements[0].id, 8);
+    assert.equal(read.body.agreements[0].nextSteps, 'Combinado.');
     await handlers.POST(request);
     assert.deepEqual(calls.map((call) => call.companyId), [companyId, companyId]);
     assert.deepEqual(calls.map((call) => call.candidateId), [session.candidateId, session.candidateId]);

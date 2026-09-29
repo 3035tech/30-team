@@ -77,7 +77,7 @@ const NAV_GROUPS = Object.freeze([
 function NavBadge({ n }) {
   if (!n || n < 1) return null;
   return (
-    <span className="ml-auto min-w-[18px] rounded-full bg-brand-500 px-1.5 text-center font-mono text-2xs text-white">
+    <span className="ml-auto min-w-[18px] rounded-full bg-action px-1.5 text-center font-mono text-2xs text-action-ink">
       {n > 9 ? '9+' : n}
     </span>
   );
@@ -159,7 +159,7 @@ export function EmployeeSidebar({
     <aside
       id="employee-sidebar"
       className={cn(
-        'db-sidebar flex flex-shrink-0 flex-col gap-2 border-r border-ink/12 bg-surface/95 backdrop-blur-[14px]',
+        'db-sidebar flex flex-shrink-0 flex-col gap-2 border-r border-ink/12 bg-surface',
         open && 'db-sidebar-open',
         navCollapsed ? 'db-sidebar-collapsed w-[72px] px-2.5 pb-6 pt-5' : 'w-[220px] px-3.5 pb-8 pt-5'
       )}

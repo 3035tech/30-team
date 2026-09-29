@@ -119,7 +119,7 @@ export function AdminRichFormDrawer({
                 'w-full border-0 bg-canvas shadow-none',
                 withinShell ? 'min-h-screen overflow-visible' : 'h-screen'
               )
-            : 'mx-6 my-6 max-h-[92vh] rounded-[18px] shadow-dialog'
+            : 'mx-6 my-6 max-h-[92vh] rounded-card shadow-dialog'
         )}
         style={fullPage ? undefined : { width: `min(100%, ${maxWidth})` }}
         onClick={(e) => e.stopPropagation()}

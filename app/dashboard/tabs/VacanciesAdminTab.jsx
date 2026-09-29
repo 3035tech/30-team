@@ -1442,7 +1442,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         className="h-3.5 w-3.5 transition-transform duration-150 group-open:rotate-180"
                       />
                     </summary>
-                    <div className="absolute right-0 z-30 mt-1.5 grid min-w-[190px] gap-1 rounded-control border border-ink/12 bg-surface p-1.5 shadow-lg">
+                    <div className="absolute right-0 z-30 mt-1.5 grid min-w-[190px] gap-1 rounded-control border border-ink/12 bg-surface p-1.5 shadow-menu">
                       <button
                         type="button"
                         onClick={() =>
@@ -2116,7 +2116,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           <Icon name="moreHorizontal" className="h-4 w-4" />
                           <span className="sr-only">{t(locale, 'recruiting.moreActions')}</span>
                         </summary>
-                        <div className="absolute right-0 z-30 mt-1.5 grid min-w-[210px] gap-1 rounded-control border border-ink/12 bg-surface p-1.5 shadow-lg">
+                        <div className="absolute right-0 z-30 mt-1.5 grid min-w-[210px] gap-1 rounded-control border border-ink/12 bg-surface p-1.5 shadow-menu">
                           <button
                             type="button"
                             onClick={() => cloneVacancyAction(v)}
