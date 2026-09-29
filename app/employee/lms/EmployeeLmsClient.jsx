@@ -467,7 +467,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
           </div>
         </div>
 
-        {!inCourseView && continueInfo ? (
+        {!inCourseView && continueInfo && courses.some(course => course.enrollmentId === continueInfo.enrollmentId && !course.isComplete) ? (
           <InlineCallout tone={continueInfo.overdue ? 'warning' : 'info'} className="mb-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-ui text-prose text-ink">

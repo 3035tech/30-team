@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { errorMessage, t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { profilePanelClass as panelClass, profilePanelHeaderClass as panelHeaderClass } from './ProfileUi';
 import { PanelSubNav, S as dashS } from '../dashboard/dashboard-shared';
 import LanguageSelect from './LanguageSelect';
 import { FormField } from './FormField';
@@ -20,8 +21,6 @@ import {
 } from '../../lib/company-modules';
 
 const inputClass = dashS.input;
-const panelClass = 'rounded-card border border-ink/10 bg-canvas/35 p-5 sm:p-6';
-const panelHeaderClass = 'mb-5 border-b border-ink/10 pb-4';
 
 /**
  * Tela de perfil do usuário logado (hr / direction / admin — dados próprios).

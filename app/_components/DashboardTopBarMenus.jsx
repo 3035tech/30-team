@@ -11,6 +11,7 @@ import { statusToneClass } from './StatusToneChip';
 import { EmptyState } from './EmptyState';
 import { ContentEnter } from './AppLoading';
 import { Icon } from './Icon';
+import { ProfileMenuTrigger, profileMenuPanelClass, profileMenuItemClass } from './ProfileUi';
 
 function formatWhen(iso, locale) {
   if (!iso) return '';
@@ -375,32 +376,21 @@ export function DashboardTopBarMenus({
       </div>
 
       <div className="relative">
-        <button
-          type="button"
-          className={cn(
-            'db-profile-btn flex h-[42px] max-w-[200px] cursor-pointer items-center gap-2 rounded-xl border border-ink/12 px-3 font-mono text-xs text-ink-muted',
-            profileOpen ? 'bg-brand-500/[0.07]' : 'bg-surface/90'
-          )}
+        <ProfileMenuTrigger
+          label={displayLabel}
+          fallback={t(locale, 'dashboard.profile')}
+          open={profileOpen}
+          controls="dashboard-profile-menu"
+          ariaLabel={t(locale, 'dashboard.profileMenuAria')}
           onClick={() => { setProfileOpen((v) => !v); setNotifOpen(false); }}
-          aria-expanded={profileOpen}
-          aria-haspopup="true"
-          aria-controls="dashboard-profile-menu"
-          aria-label={t(locale, 'dashboard.profileMenuAria')}
-        >
-          <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-2xs text-brand-500">
-            {(displayLabel || '?').slice(0, 1).toUpperCase()}
-          </span>
-          <span className="db-profile-label overflow-hidden text-ellipsis whitespace-nowrap">
-            {displayLabel || t(locale, 'dashboard.profile')}
-          </span>
-        </button>
+        />
         {profileOpen ? (
-          <div id="dashboard-profile-menu" className={cn(dropdownClass, 'w-[220px]', 'db-dropdown-panel')} role="menu">
+          <div id="dashboard-profile-menu" className={profileMenuPanelClass} role="menu">
             <button
               type="button"
               role="menuitem"
               onClick={() => { setProfileOpen(false); navigateToTab('profile'); }}
-              className="flex w-full cursor-pointer items-center gap-2.5 border-none border-b border-ink/12 bg-transparent px-3.5 py-3 text-left font-mono text-xs text-ink"
+              className={cn(profileMenuItemClass, 'border-b border-ink/12')}
             >
               <Icon name="user" className="h-4 w-4 shrink-0 opacity-80" />
               <span>{t(locale, 'dashboard.profile')}</span>
@@ -409,7 +399,7 @@ export function DashboardTopBarMenus({
               type="button"
               role="menuitem"
               onClick={() => { setProfileOpen(false); onLogout(); }}
-              className="flex w-full cursor-pointer items-center gap-2.5 border-none bg-transparent px-3.5 py-3 text-left font-mono text-xs text-danger/75"
+              className={cn(profileMenuItemClass, 'text-danger/75')}
             >
               <Icon name="logout" className="h-4 w-4 shrink-0 opacity-80" />
               <span>{t(locale, 'dashboard.logout')}</span>

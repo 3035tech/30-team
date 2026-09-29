@@ -32,9 +32,9 @@ export function EmployeeTimeClockClient({ locale = 'pt-BR' }) {
       title={t(locale, 'employeeHome.timeClockPageTitle')}
       hint={t(locale, 'employeeHome.timeClockPageHint')}
     >
-      <EmployeeTimeClockSection locale={locale} onBadge={onBadge} />
-      <div className="mt-6">
-        <h2 className="mb-2 font-display text-base text-ink">
+      <section className="rounded-card border border-ink/12 bg-surface p-4 sm:p-5"><EmployeeTimeClockSection locale={locale} onBadge={onBadge} /></section>
+      <div className="mt-4 rounded-card border border-ink/12 bg-surface p-4 sm:p-5">
+        <h2 className="mb-3 mt-0 font-ui text-base font-semibold text-ink">
           {t(locale, 'employeeHome.hourBank.sectionTitle')}
         </h2>
         <EmployeeHourBankSection locale={locale} />

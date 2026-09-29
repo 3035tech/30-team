@@ -1136,6 +1136,9 @@ function DashboardClientContent({
             {can(sessionAuth, CAP.HELP_VIEW) ? (
               <NavLink id="help" icon="help" label={t(locale, 'dashboard.help')} />
             ) : null}
+            {can(sessionAuth, CAP.PROFILE_SELF) ? (
+              <NavLink id="profile" icon="user" label={t(locale, 'dashboard.profile')} />
+            ) : null}
             <IconActionTip
               label={t(locale, 'dashboard.logout')}
               className="w-full"

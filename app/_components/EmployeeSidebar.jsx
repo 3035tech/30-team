@@ -18,6 +18,7 @@ export const EMPLOYEE_NAV_ITEMS = Object.freeze([
   { id: 'journey', href: '/employee#journey', icon: 'sparkles', labelKey: 'employeeHome.journeyTitle', hash: 'journey' },
   { id: 'surveys', href: '/employee#surveys', icon: 'climate', labelKey: 'employeeHome.surveysTitle', hash: 'surveys' },
   { id: 'pdi', href: '/employee/pdi', icon: 'clipboard', labelKey: 'panel.employeePortal.pdiTitle' },
+  { id: 'formalReviews', href: '/employee#formalReviews', icon: 'clipboard', labelKey: 'dashboard.performanceReviews', hash: 'formalReviews' },
   { id: 'okr', href: '/employee#okr', icon: 'chart', labelKey: 'employeeHome.okrTitle', hash: 'okr' },
   { id: 'lms', href: '/employee/lms', icon: 'book', labelKey: 'employeeHome.lmsTitle' },
   {
@@ -51,7 +52,7 @@ export const EMPLOYEE_NAV_ITEMS = Object.freeze([
   { id: 'feed', href: '/employee#feed', icon: 'bell', labelKey: 'employeeHome.feedTitle', hash: 'feed' },
   { id: 'kudos', href: '/employee#kudos', icon: 'gift', labelKey: 'employeeHome.kudosTitle', hash: 'kudos' },
   { id: 'company', href: '/employee#company', icon: 'building', labelKey: 'employeeHome.companyTitle', hash: 'company' },
-  { id: 'profile', href: '/employee/profile', icon: 'user', labelKey: 'employeeHome.profile' },
+  { id: 'profile', href: '/employee/profile', icon: 'user', labelKey: 'dashboard.profile' },
 ]);
 
 /** Menu groups — same chrome idea as dashboard section labels. */
@@ -64,17 +65,12 @@ const NAV_GROUPS = Object.freeze([
   {
     id: 'grow',
     labelKey: 'employeeHome.navGroupGrow',
-    ids: ['pdi', 'okr', 'lms', 'oneOnOne', 'feedback'],
+    ids: ['pdi', 'formalReviews', 'okr', 'lms', 'oneOnOne', 'feedback'],
   },
   {
     id: 'work',
     labelKey: 'employeeHome.navGroupWork',
     ids: ['dp', 'timeClock', 'variablePay', 'feed', 'kudos', 'company'],
-  },
-  {
-    id: 'account',
-    labelKey: 'employeeHome.navGroupAccount',
-    ids: ['profile'],
   },
 ]);
 
@@ -265,14 +261,15 @@ export function EmployeeSidebar({
                     <li key={item.id}>
                       <Link
                         href={item.href}
+                        aria-label={navCollapsed ? t(locale, item.labelKey) : undefined}
                         title={navCollapsed ? t(locale, item.labelKey) : undefined}
                         aria-current={active ? 'page' : undefined}
                         className={cn(
-                          'relative flex min-h-touch items-center gap-2.5 rounded-control font-ui text-prose no-underline transition-colors',
-                          navCollapsed ? 'justify-center px-2 py-2' : 'px-2.5 py-2',
-                          active
-                            ? 'bg-brand-500/12 font-medium text-brand-700'
-                            : 'text-ink-muted hover:bg-ink/[0.04] hover:text-ink'
+                          'relative mb-0.5 flex min-h-touch w-full items-center gap-2.5 rounded-control border-none font-ui text-sm font-medium no-underline transition-colors',
+                          navCollapsed ? 'justify-center px-0 py-2.5' : 'justify-start py-2.5',
+                          !navCollapsed && (active ? 'border-l-[3px] border-l-brand-500 pl-[9px] pr-3' : 'border-l-[3px] border-l-transparent pl-[11px] pr-3'),
+                          active ? 'bg-brand-500/[0.09] text-brand-800' : 'bg-transparent text-ink-muted hover:bg-ink/[0.035] hover:text-ink',
+                          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500'
                         )}
                         onClick={(e) => goItem(item, e)}
                       >
@@ -298,6 +295,14 @@ export function EmployeeSidebar({
         })}
       </nav>
       <div className="shrink-0 border-t border-ink/10 py-2">
+        <Link href="/employee/profile" onClick={onClose} aria-label={t(locale, 'dashboard.profile')} aria-current={onProfile ? 'page' : undefined}
+          title={navCollapsed ? t(locale, 'dashboard.profile') : undefined}
+          className={cn('flex min-h-touch w-full items-center gap-2.5 rounded-control py-2.5 font-ui text-sm font-medium no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500',
+            navCollapsed ? 'justify-center px-0' : 'px-[11px]',
+            onProfile ? 'bg-brand-500/[0.09] text-brand-800' : 'text-ink-muted hover:bg-ink/[0.035] hover:text-ink')}>
+          <Icon name="user" />
+          {!navCollapsed ? <span>{t(locale, 'dashboard.profile')}</span> : null}
+        </Link>
         <EmployeeLogoutButton locale={locale} compact={navCollapsed} onLoggedOut={onClose} />
       </div>
     </aside>

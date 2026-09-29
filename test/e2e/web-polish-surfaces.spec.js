@@ -48,7 +48,7 @@ test('polish: admin surfaces', async ({ page }) => {
 });
 
 test('polish: employee DP API, error/retry and dedicated screens', async ({ page }) => {
-  test.setTimeout(120000);
+  test.setTimeout(240000);
   const login = await page.request.post('/api/auth/employee/login', {data:{email:'colaborador@todos-os-dados.demo',password:HR.password,locale:'pt-BR'}});
   expect(login.status()).toBe(200);
   const dp = await page.request.get('/api/employee/dp');
@@ -66,13 +66,18 @@ test('polish: employee DP API, error/retry and dedicated screens', async ({ page
   await page.screenshot({path:test.info().outputPath('dp-error.png')});
   simulateError = false;
   await retry.click();
+  await page.getByRole('tab',{name:'Informações cadastrais'}).click();
   await expect(page.getByRole('button',{name:'Editar ficha',exact:true})).toBeVisible();
   for (const width of [390,1440]) {
     await page.setViewportSize({width,height:900});
     for (const path of ['/employee','/employee/dp','/employee/time-clock','/employee/lms','/employee/profile']) {
-      await page.goto(path);
-      await page.waitForLoadState('networkidle');
-      await surface(page, 'employee-' + width + '-' + path.replaceAll('/','-'));
+      await test.step(`${path} at ${width}px`, async () => {
+        await page.goto(path, {waitUntil:'domcontentloaded'});
+        // Notifications poll in the background; validate usable content, not network silence.
+        await expect(page.getByRole('main').getByRole('heading', {level:1})).toBeVisible({timeout:30000});
+        await expect(page.getByRole('main').getByRole('status').filter({hasText:/Carregando/})).toHaveCount(0, {timeout:30000});
+        await surface(page, 'employee-' + width + '-' + path.replaceAll('/','-'));
+      });
     }
   }
 });

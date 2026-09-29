@@ -17,6 +17,7 @@ import { useAppFeedback } from './AppFeedback';
 import { useEmployeeNav } from './EmployeeNavContext';
 import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
 import { EmployeeLogoutButton } from './EmployeeLogoutButton';
+import { ProfileMenuTrigger, profileMenuPanelClass, profileMenuItemClass } from './ProfileUi';
 
 /**
  * Collaborator chrome — theme, locale, notifications, profile menu.
@@ -283,7 +284,7 @@ export function EmployeeTopBar({
             : t(locale, 'employeeHome.eyebrow')}
         </p>
 
-        <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-1.5">
+        <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-1.5 [&>label>span]:hidden sm:[&>label>span]:inline">
           <LanguageSelect locale={locale} onChange={persistLocale} compact />
           <DarkModeToggle />
 
@@ -366,37 +367,23 @@ export function EmployeeTopBar({
           </div>
 
           <div className="relative">
-            <button
-              type="button"
-              className={cn(
-                S.btnGhost,
-                'flex min-h-touch max-w-[168px] items-center gap-1.5 px-2 text-xs'
-              )}
-              aria-label={t(locale, 'employeeHome.profileMenuAria')}
-              aria-expanded={profileOpen}
-              aria-haspopup="true"
-              aria-controls="employee-profile-menu"
+            <ProfileMenuTrigger
+              label={displayName}
+              fallback={t(locale, 'dashboard.profile')}
+              open={profileOpen}
+              controls="employee-profile-menu"
+              ariaLabel={t(locale, 'dashboard.profileMenuAria')}
               onClick={() => {
                 const nextOpen = !profileOpen;
                 setProfileOpen(nextOpen);
                 setNotifOpen(false);
                 if (nextOpen) void loadCompanyChoices();
               }}
-            >
-              <Icon name="user" className="h-4 w-4 shrink-0 opacity-75" />
-              <span className="hidden truncate sm:inline">{displayName || t(locale, 'employeeHome.profile')}</span>
-              <Icon
-                name="chevronDown"
-                className={cn(
-                  'h-3.5 w-3.5 shrink-0 opacity-55 transition-transform',
-                  profileOpen && 'rotate-180'
-                )}
-              />
-            </button>
+            />
             {profileOpen ? (
               <div
                 id="employee-profile-menu"
-                className="absolute right-0 z-50 mt-1 w-60 rounded-control border border-ink/12 bg-surface p-1 shadow-card"
+                className={profileMenuPanelClass}
                 role="menu"
               >
                 {companyName ? (
@@ -436,16 +423,13 @@ export function EmployeeTopBar({
                 <Link
                   href="/employee/profile"
                   role="menuitem"
-                  className={cn(
-                    S.btnGhost,
-                    'flex min-h-touch w-full items-center justify-start gap-2.5 no-underline'
-                  )}
+                  className={cn(profileMenuItemClass, 'border-b border-ink/12')}
                   onClick={() => setProfileOpen(false)}
                 >
                   <Icon name="user" className="h-4 w-4 shrink-0 opacity-80" />
-                  <span>{t(locale, 'employeeHome.profile')}</span>
+                  <span>{t(locale, 'dashboard.profile')}</span>
                 </Link>
-                <EmployeeLogoutButton locale={locale} role="menuitem" onLoggedOut={() => setProfileOpen(false)} />
+                <EmployeeLogoutButton locale={locale} role="menuitem" className={cn(profileMenuItemClass, 'text-danger/75 rounded-none')} onLoggedOut={() => setProfileOpen(false)} />
               </div>
             ) : null}
           </div>

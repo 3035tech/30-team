@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { formatDisplayDate } from '../../../lib/format-display-date';
-import { S } from '../../dashboard/dashboard-shared';
+import { S, PanelSubNav } from '../../dashboard/dashboard-shared';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { EmptyState } from '../../_components/EmptyState';
 import { EmployeeDedicatedShell } from '../../_components/EmployeeDedicatedShell';
@@ -24,6 +24,7 @@ export function EmployeePdiClient({ locale = 'pt-BR' }) {
   const { toast } = useAppFeedback();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState('pending');
   const [data, setData] = useState(null);
   const [failed, setFailed] = useState(false);
 
@@ -79,14 +80,18 @@ export function EmployeePdiClient({ locale = 'pt-BR' }) {
   const plans = data.plans || [];
   const allItems = plans.flatMap((plan) => plan.items || []);
   const doneItems = allItems.filter((item) => item.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE).length;
-  const nextItem = allItems.find((item) => item.status !== DEVELOPMENT_PLAN_ITEM_STATUS.DONE);
+  const pendingItems = allItems.filter(item => item.status !== DEVELOPMENT_PLAN_ITEM_STATUS.DONE)
+    .sort((a, b) => String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999')));
+  const nextItem = pendingItems[0];
+  const visibleItem = item => filter === 'all' || (filter === 'done' ? item.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE : item.status !== DEVELOPMENT_PLAN_ITEM_STATUS.DONE);
+  const visiblePlans = plans.filter(plan => !plan.items?.length || plan.items.some(visibleItem));
   return (
     <ContentEnter animKey="employee-pdi">
       <EmployeeDedicatedShell
         locale={locale}
         title={t(locale, 'employeeHome.pdiPageTitle')}
         hint={t(locale, 'employeeHome.pdiPageHint')}
-        maxWidthClass="max-w-4xl"
+        maxWidthClass="max-w-6xl"
       >
         {plans.length === 0 ? (
           <EmptyState title={t(locale, 'employeeHome.pdiTitleEmpty')} message={t(locale, 'employeeHome.pdiEmptyHint')} />
@@ -103,12 +108,24 @@ export function EmployeePdiClient({ locale = 'pt-BR' }) {
                   <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.pdiSummaryDone')}</div>
                 </div>
                 <div className="rounded-control border border-brand-500/20 bg-brand-500/[0.045] px-3.5 py-3">
-                  <div className="truncate text-sm font-medium text-ink">{nextItem?.title || t(locale, 'employeeHome.pdiSummaryAllDone')}</div>
+                  <div className="break-words text-sm font-medium text-ink">{nextItem?.title || t(locale, 'employeeHome.pdiSummaryAllDone')}</div>
                   <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.pdiSummaryNext')}</div>
                 </div>
               </section>
             ) : null}
-            {plans.map((plan) => {
+            <PanelSubNav
+              ariaLabel={t(locale, 'employeeHome.pdiSummary')}
+              active={filter}
+              onChange={setFilter}
+              tabs={[
+                { id: 'pending', label: t(locale, 'employeeHome.pdiPending'), badge: pendingItems.length },
+                { id: 'done', label: t(locale, 'employeeHome.pdiSummaryDone'), badge: doneItems },
+                { id: 'all', label: t(locale, 'employeeHome.pdiAll'), badge: allItems.length },
+              ].map(tab => ({ ...tab, tabId: `pdi-filter-${tab.id}`, panelId: 'pdi-results' }))}
+            />
+            <div role="tabpanel" id="pdi-results" aria-labelledby={`pdi-filter-${filter}`} className="space-y-4">
+            {visiblePlans.length === 0 ? <EmptyState message={t(locale, 'employeeHome.pdiFilterEmpty')} /> : null}
+            {visiblePlans.map((plan) => {
               const items = plan.items || [];
               const done = items.filter((item) => item.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE).length;
               const pct = items.length ? Math.round((done / items.length) * 100) : 0;
@@ -127,13 +144,16 @@ export function EmployeePdiClient({ locale = 'pt-BR' }) {
                     <>
                       <MeterBar percent={pct} height={8} className="mt-4" toneClass={pct >= 100 ? 'bg-success' : 'bg-brand-500'} aria-label={`${plan.title}: ${pct}%`} />
                       <ul className="m-0 mt-4 flex list-none flex-col gap-2 p-0">
-                        {items.map((item) => (
+                        {items.filter(visibleItem).sort((a, b) => String(a.dueDate || '9999').localeCompare(String(b.dueDate || '9999'))).map((item) => (
                           <li key={item.id} className="flex flex-col gap-2 rounded-control border border-ink/12 bg-canvas/50 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
                               <p className={cn('m-0 break-words text-sm', item.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE ? 'text-ink-muted line-through' : 'text-ink')}>{item.title}</p>
                               <p className={cn(S.cardMuted, 'm-0 mt-1')}>
                                 {itemStatusLabel(locale, item.status)}
                                 {item.dueDate ? ` · ${formatDisplayDate(item.dueDate, locale)}` : ''}
+                                {item.status !== DEVELOPMENT_PLAN_ITEM_STATUS.DONE && item.dueDate && new Date(`${String(item.dueDate).slice(0, 10)}T23:59:59`) < new Date() ? (
+                                  <span className="ml-2 inline-flex"><StatusToneChip tone="danger">{t(locale, 'employeeHome.taskOverdue')}</StatusToneChip></span>
+                                ) : null}
                               </p>
                             </div>
                             <div className="flex flex-wrap gap-1.5 sm:shrink-0">
@@ -156,6 +176,7 @@ export function EmployeePdiClient({ locale = 'pt-BR' }) {
                 </section>
               );
             })}
+            </div>
           </div>
         )}
       </EmployeeDedicatedShell>

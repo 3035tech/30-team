@@ -68,9 +68,12 @@ function okrMeterTone(act) {
   return 'bg-warning';
 }
 
+function taskIsOverdue(task) {
+  return task.kind === 'lms_overdue' || Boolean(task.dueDate && new Date(`${String(task.dueDate).slice(0, 10)}T23:59:59`) < new Date());
+}
+
 function taskTone(task) {
-  if (task.kind === 'lms_overdue') return 'danger';
-  if (task.dueDate && new Date(`${String(task.dueDate).slice(0, 10)}T23:59:59`) < new Date()) return 'warning';
+  if (taskIsOverdue(task)) return 'danger';
   return 'info';
 }
 
@@ -143,11 +146,11 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const { toast, promptForm } = useAppFeedback();
   const [okrNotice, setOkrNotice] = useState('');
   const okrNumber = value => new Intl.NumberFormat(locale, {maximumFractionDigits:2}).format(value);
-  const { setNavMeta, setActiveSection, sectionFocus } = useEmployeeNav();
+  const { setNavMeta, setActiveSection, sectionFocus, focusSection } = useEmployeeNav();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [surveyMeta, setSurveyMeta] = useState({ openCount: 0, hasAny: true });
+  const [surveyMeta, setSurveyMeta] = useState({ openCount: null, hasAny: true });
   const [dpBadge, setDpBadge] = useState(0);
   const [timeClockBadge, setTimeClockBadge] = useState(0);
   const [variablePayBadge, setVariablePayBadge] = useState(0);
@@ -160,7 +163,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     const next = {};
     for (const k of SECTION_KEYS) {
       if (hasSaved) {
-        next[k] = saved[k] !== false;
+        next[k] = typeof saved[k] === 'boolean' ? saved[k] : k === 'tasks';
       } else {
         // B-RH2-01: first visit keeps pendencies (tasks) open; rest collapsed.
         next[k] = k === 'tasks';
@@ -252,6 +255,23 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
       cancelled = true;
     };
   }, []);
+
+  // The collapsed section is unmounted; its summary must not depend on opening it.
+  useEffect(() => {
+    if (!data || !employeeSectionAllowedByCompanyModules(data.companyModules, 'surveys')) return;
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const res = await fetch(`/api/employee/surveys?locale=${encodeURIComponent(locale)}`, { signal: controller.signal });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (controller.signal.aborted) return;
+        const openCount = (json.openClimate?.length || 0) + (json.openPulse?.length || 0);
+        setSurveyMeta({ openCount, hasAny: openCount > 0 || Boolean(json.history?.length) });
+      } catch { /* Keep the summary unknown; the section offers its own error state. */ }
+    })();
+    return () => controller.abort();
+  }, [Boolean(data), data?.companyModules, locale]);
 
   const toggleSection = (key) => {
     setOpenMap((prev) => {
@@ -508,7 +528,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const okrUrgentCount = okrActivities.filter(
     (a) => a.urgency === 'overdue' || a.urgency === 'critical'
   ).length;
-  const attentionCount = okrUrgentCount + lmsOverdueCount + dpBadge + timeClockBadge;
+  const attentionCount = (sectionOk('okr') ? okrUrgentCount : 0) + (sectionOk('lms') ? lmsOverdueCount : 0) + (sectionOk('dp') ? dpBadge : 0) + (sectionOk('timeClock') ? timeClockBadge : 0);
   const startHere =
     sectionOk('tasks') && tasks.length > 0
       ? { href: '#tasks', labelKey: countedMessageKey('startHereTasks', tasks.length), count: tasks.length }
@@ -534,7 +554,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
 
   return (
     <ContentEnter animKey="ready">
-      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8 lg:max-w-4xl">
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-6">
           <p className={cn(S.label, 'mb-2 mt-0')}>{t(locale, 'employeeHome.eyebrow')}</p>
           <h1 className={cn(S.pageTitle, 'm-0 font-ui text-2xl font-semibold tracking-tight')}>
@@ -542,17 +562,27 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           </h1>
           <p className={cn(S.muted, 'm-0 mt-2 max-w-[58ch]')}>{t(locale, 'employeeHome.hint')}</p>
           <section className="mt-5 grid grid-cols-1 gap-2.5 sm:grid-cols-3" aria-label={t(locale, 'employeeHome.todaySummary')}>
-            <div className="rounded-control border border-ink/12 bg-surface px-3 py-3">
+            <a href="#tasks" onClick={() => focusSection('tasks')} className="rounded-control border border-ink/12 bg-surface px-3 py-3 no-underline hover:border-brand-500/40 focus-visible:outline-brand-500">
               <div className="font-ui text-2xl font-semibold tabular-nums text-ink">{tasks.length}</div>
               <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummaryTasks')}</div>
-            </div>
-            <div className="rounded-control border border-ink/12 bg-surface px-3 py-3">
-              <div className="font-ui text-2xl font-semibold tabular-nums text-ink">{surveyMeta.openCount || 0}</div>
+            </a>
+            {sectionOk('surveys') ? <a href="#surveys" onClick={() => focusSection('surveys')} className="rounded-control border border-ink/12 bg-surface px-3 py-3 no-underline hover:border-brand-500/40 focus-visible:outline-brand-500">
+              <div className="font-ui text-2xl font-semibold tabular-nums text-ink">{surveyMeta.openCount ?? '—'}</div>
               <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummarySurveys')}</div>
-            </div>
+            </a> : null}
             <div className={cn('rounded-control border px-3 py-3', attentionCount > 0 ? 'border-warning/25 bg-warning/[0.045]' : 'border-success/20 bg-success/[0.04]')}>
               <div className="font-ui text-2xl font-semibold tabular-nums text-ink">{attentionCount}</div>
               <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummaryAttention')}</div>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                {[
+                  ['okr', okrUrgentCount, '#okr', 'employeeHome.okrTitle'],
+                  ['lms', lmsOverdueCount, '/employee/lms', 'employeeHome.lmsTitle'],
+                  ['dp', dpBadge, '/employee/dp', 'employeeHome.dpTitle'],
+                  ['timeClock', timeClockBadge, '/employee/time-clock', 'employeeHome.timeClockTitle'],
+                ].filter(([id, count]) => count > 0 && sectionOk(id)).map(([id, count, href, label]) => (
+                  <a key={id} href={href} onClick={() => { if (href.startsWith('#')) focusSection(id); }} className={S.cardLink}>{t(locale, label)}: {count}</a>
+                ))}
+              </div>
             </div>
           </section>
           <nav className="mt-3 flex flex-wrap gap-2" aria-label={t(locale, 'employeeHome.sectionNavAria')}>
@@ -571,11 +601,20 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               <span>
                 {t(locale, startHere.labelKey, { count: startHere.count })}
               </span>
-              <a href={startHere.href} className={cn(S.btnBrandSoft, 'min-h-touch no-underline')}>
+              <a href={startHere.href} onClick={() => { if (startHere.href.startsWith('#')) focusSection(startHere.href.slice(1)); }} className={cn(S.btnBrandSoft, 'min-h-touch no-underline')}>
                 {t(locale, 'employeeHome.startHereCta')}
               </a>
             </InlineCallout>
           ) : null}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/12 pb-2">
+          <h2 className="m-0 font-ui text-base font-semibold">{t(locale, 'employeeHome.sectionNavAria')}</h2>
+          <button type="button" className={S.btnGhost} onClick={() => {
+            const next = Object.fromEntries(SECTION_KEYS.map(key => [key, false]));
+            setOpenMap(next);
+            try { localStorage.setItem(COLLAPSE_STORAGE, JSON.stringify(next)); } catch { /* optional preference */ }
+          }}>{t(locale, 'employeeHome.collapseSections')}</button>
         </div>
 
         {sectionOk('tasks') ? (
@@ -608,14 +647,14 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className={S.cardBody}>{taskLabel(locale, task)}</div>
                     <StatusToneChip tone={taskTone(task)}>
-                      {task.kind === 'lms_overdue' ? t(locale, 'employeeHome.taskOverdue') : t(locale, 'employeeHome.taskOpen')}
+                      {taskIsOverdue(task) ? t(locale, 'employeeHome.taskOverdue') : t(locale, 'employeeHome.taskOpen')}
                     </StatusToneChip>
                   </div>
                   {task.dueDate ? (
                     <div
                       className={cn(
                         'mt-1 text-prose',
-                        task.kind === 'lms_overdue' ? 'text-red-800 dark:text-danger' : 'text-ink/75'
+                        taskIsOverdue(task) ? 'text-red-800 dark:text-danger' : 'text-ink/75'
                       )}
                     >
                       {t(locale, 'employeeHome.dueBy', {

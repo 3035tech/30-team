@@ -7,12 +7,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { errorMessage, t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
-import { S } from '../../dashboard/dashboard-shared';
+import { S, PanelSubNav } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { DateField } from '../../_components/DateField';
 import { FormField, formFieldGrowClass, formFieldRowClass } from '../../_components/FormField';
-import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
+import { profilePanelClass, profilePanelHeaderClass } from '../../_components/ProfileUi';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { EmptyState } from '../../_components/EmptyState';
@@ -25,6 +25,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
   const { toast } = useAppFeedback();
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [profileSection, setProfileSection] = useState('account');
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -235,22 +236,29 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
 
   return (
     <ContentEnter animKey="ready">
-      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-8 lg:max-w-4xl">
+      <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
         <Link href="/employee" className={cn(S.cardLink, 'inline-flex')}>
           ← {t(locale, 'employeeHome.backHome')}
         </Link>
         <h1 className={cn(S.pageTitle, 'mt-3 font-ui text-2xl font-semibold tracking-tight')}>{t(locale, 'employeeHome.profileTitle')}</h1>
-        <p className={cn(S.muted, 'mt-2')}>{t(locale, 'employeeHome.profileHint')}</p>
-
-        <div className="mt-6 flex flex-col gap-4">
-          <CollapsibleBlock
-            locale={locale}
-            title={t(locale, 'employeeHome.profileSectionContact')}
-            variant="card"
-            bordered={false}
-            defaultOpen
-            titleClassName="font-ui text-base font-semibold normal-case tracking-normal text-ink"
-          >
+        <div className={cn(S.card, 'mt-5 p-5 sm:p-7')}>
+          <p className="m-0 max-w-2xl text-prose leading-[1.55] text-ink-muted">{t(locale, 'employeeHome.profileHint')}</p>
+          <div className="mt-5">
+            <PanelSubNav
+              ariaLabel={t(locale, 'dashboard.profileSectionsAria')}
+              active={profileSection}
+              onChange={setProfileSection}
+              tabs={[
+                { id: 'account', label: t(locale, 'dashboard.profileSectionAccount') },
+                { id: 'security', label: t(locale, 'dashboard.profileSectionSecurity') },
+              ].map(tab => ({ ...tab, tabId: `employee-profile-tab-${tab.id}`, panelId: `employee-profile-panel-${tab.id}` }))}
+            />
+          </div>
+          <section hidden={profileSection !== 'account'} role="tabpanel" id="employee-profile-panel-account" aria-labelledby="employee-profile-tab-account" className={profilePanelClass}>
+            <div className={profilePanelHeaderClass}>
+              <h2 className="m-0 font-ui text-base font-semibold text-ink">{t(locale, 'dashboard.profileAccountTitle')}</h2>
+              <p className="mb-0 mt-1 text-sm leading-relaxed text-ink-muted">{t(locale, 'employeeHome.profileSectionContact')}</p>
+            </div>
             <form className="flex flex-col gap-3" onSubmit={saveProfile}>
               <div className={formFieldRowClass}>
                 <FormField
@@ -328,21 +336,19 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                   />
                 </FormField>
               </div>
-              <button type="submit" disabled={busy} className={cn(S.btnPrimary, 'min-h-touch justify-center')}>
-                {t(locale, 'employeeHome.saveProfile')}
-              </button>
+              <div className="mt-3 flex justify-end border-t border-ink/10 pt-4">
+                <button type="submit" disabled={busy} className={S.btnPrimary}>{t(locale, 'employeeHome.saveProfile')}</button>
+              </div>
             </form>
-          </CollapsibleBlock>
+          </section>
 
-          <CollapsibleBlock
-            locale={locale}
-            title={t(locale, 'employeeHome.changePasswordTitle')}
-            variant="card"
-            bordered={false}
-            defaultOpen={false}
-            titleClassName="font-ui text-base font-semibold normal-case tracking-normal text-ink"
-          >
-            <form className="flex flex-col gap-3" onSubmit={changePassword}>
+          <div hidden={profileSection !== 'security'} role="tabpanel" id="employee-profile-panel-security" aria-labelledby="employee-profile-tab-security">
+          <section className={profilePanelClass}>
+            <div className={profilePanelHeaderClass}>
+              <h2 className="m-0 font-ui text-base font-semibold text-ink">{t(locale, 'dashboard.profilePasswordSection')}</h2>
+              <p className="mb-0 mt-1 text-sm leading-relaxed text-ink-muted">{t(locale, 'dashboard.profilePasswordHint')}</p>
+            </div>
+            <form className="grid items-start gap-4 lg:grid-cols-3" onSubmit={changePassword}>
               <FormField label={t(locale, 'employeeHome.currentPasswordLabel')}>
                 <input
                   type="password"
@@ -376,25 +382,17 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                   required
                 />
               </FormField>
-              <button type="submit" disabled={busy} className={cn(S.btnBrandSoft, 'min-h-touch justify-center')}>
-                {t(locale, 'employeeHome.changePasswordSubmit')}
-              </button>
+              <div className="mt-2 flex justify-end border-t border-ink/10 pt-4 lg:col-span-3">
+                <button type="submit" disabled={busy || !pwd.current || !pwd.next || !pwd.confirm} className={S.btnPrimary}>{t(locale, 'dashboard.profilePasswordSave')}</button>
+              </div>
             </form>
-          </CollapsibleBlock>
+          </section>
 
-          <CollapsibleBlock
-            locale={locale}
-            title={t(locale, 'dashboard.profile2faSection')}
-            headerAside={
-              <StatusToneChip tone={twoFaEnabled ? 'success' : 'neutral'} bordered={false}>
-                {t(locale, 'dashboard.profile2faOptionalBadge')}
-              </StatusToneChip>
-            }
-            variant="card"
-            bordered={false}
-            defaultOpen={false}
-            titleClassName="font-ui text-base font-semibold normal-case tracking-normal text-ink"
-          >
+          <section className={cn(profilePanelClass, 'mt-4')}>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <h2 className="m-0 font-ui text-base font-semibold text-ink">{t(locale, 'dashboard.profile2faSection')}</h2>
+              <StatusToneChip tone={twoFaEnabled ? 'success' : 'neutral'} bordered={false}>{t(locale, 'dashboard.profile2faOptionalBadge')}</StatusToneChip>
+            </div>
             <InlineCallout tone="info" className="mb-3">
               {t(locale, 'dashboard.profile2faIntro')}
             </InlineCallout>
@@ -479,7 +477,8 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                 </button>
               </div>
             )}
-          </CollapsibleBlock>
+          </section>
+          </div>
         </div>
       </div>
     </ContentEnter>

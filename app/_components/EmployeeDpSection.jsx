@@ -6,7 +6,7 @@ import { dpUploadValidationKey, dpUploadResponseKey } from '../../lib/dp-upload-
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
-import { S } from '../dashboard/dashboard-shared';
+import { S, PanelSubNav } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
 import { AppLoading, ContentEnter } from './AppLoading';
 import { EmptyState } from './EmptyState';
@@ -110,6 +110,7 @@ function leaveStatusTone(status) {
  */
 export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true }) {
   const { toast, promptForm, confirm } = useAppFeedback();
+  const [activePanel, setActivePanel] = useState('documents');
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -566,9 +567,19 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
           </InlineCallout>
         ) : null}
 
-        <div className={cn(S.card, 'p-3')}>
+        <PanelSubNav
+          ariaLabel={t(locale, 'employeeHome.dpTitle')}
+          active={activePanel}
+          onChange={setActivePanel}
+          tabs={[
+            { id: 'documents', label: t(locale, 'panel.dp.docsTitle'), badge: pendingDocs || undefined },
+            { id: 'leave', label: t(locale, 'panel.dp.leaveTitle') },
+            { id: 'profile', label: t(locale, 'panel.dp.profileTitle') },
+          ].map(tab => ({ ...tab, tabId: `employee-dp-tab-${tab.id}`, panelId: `employee-dp-panel-${tab.id}` }))}
+        />
+        <div role="tabpanel" id="employee-dp-panel-profile" aria-labelledby="employee-dp-tab-profile" hidden={activePanel !== 'profile'} className={cn(S.card, 'p-4 sm:p-5')}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <h3 className={cn(S.cardSection, 'm-0')}>{t(locale, 'panel.dp.profileTitle')}</h3>
+            <h2 className={cn(S.cardSection, 'm-0')}>{t(locale, 'panel.dp.profileTitle')}</h2>
             <button
               type="button"
               disabled={busy}
@@ -620,8 +631,8 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
           </dl>
         </div>
 
-        <div className={cn(S.card, 'p-3')}>
-          <h3 className={cn(S.cardSection, 'mb-2 mt-0')}>{t(locale, 'panel.dp.docsTitle')}</h3>
+        <div role="tabpanel" id="employee-dp-panel-documents" aria-labelledby="employee-dp-tab-documents" hidden={activePanel !== 'documents'} className={cn(S.card, 'p-4 sm:p-5')}>
+          <h2 className={cn(S.cardSection, 'mb-2 mt-0')}>{t(locale, 'panel.dp.docsTitle')}</h2>
           <p className={cn(S.muted, 'mb-3 mt-0 text-xs')}>{t(locale, 'employeeHome.dpDocsUploadHint')}</p>
           <InlineCallout tone="info" className="mb-3">
             {t(locale, 'employeeHome.dpSignHint')}
@@ -831,9 +842,9 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
           )}
         </div>
 
-        <div className={cn(S.card, 'p-3')}>
+        <div role="tabpanel" id="employee-dp-panel-leave" aria-labelledby="employee-dp-tab-leave" hidden={activePanel !== 'leave'} className={cn(S.card, 'p-4 sm:p-5')}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <h3 className={cn(S.cardSection, 'm-0')}>{t(locale, 'panel.dp.leaveTitle')}</h3>
+            <h2 className={cn(S.cardSection, 'm-0')}>{t(locale, 'panel.dp.leaveTitle')}</h2>
             <button
               type="button"
               disabled={busy}
