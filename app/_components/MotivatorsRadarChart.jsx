@@ -213,7 +213,7 @@ export function MotivatorsRadarChart({
                 fill={fill}
                 fillOpacity={0.2}
                 strokeWidth={2}
-                dot={(dotProps) => <PeakDot {...dotProps} peakKeys={peakKeys} />}
+                dot={({ key, ...dotProps }) => <PeakDot key={key} {...dotProps} peakKeys={peakKeys} />}
                 activeDot={{ r: 4.5, fill, stroke, strokeWidth: 1 }}
                 isAnimationActive={!reduceMotion}
                 animationDuration={reduceMotion ? 0 : 380}

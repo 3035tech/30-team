@@ -1,6 +1,6 @@
 # Verificação do RH no navegador em 29 de setembro de 2026
 
-Resultado: revisão administrativa com pendências. A navegação principal e a abertura dos formulários estão disponíveis, mas foram reproduzidos dois problemas funcionais e encontradas lacunas de clareza. Esta rodada não aprova integralmente a definição de pronto do documento do RH.
+Resultado inicial: revisão administrativa com pendências. Os quatro grupos de achados abaixo receberam correções locais e validação de regressão, documentadas ao final. Isso não equivale à homologação integral do documento do RH nem à publicação das correções em produção.
 
 ## Base e ambiente
 
@@ -104,3 +104,25 @@ Não é evidência de falha da API: o catálogo está vazio e não houve erro ca
 ## Próxima validação necessária
 
 Corrigir primeiro a leitura dos pesos legados e o Escape da busca; depois repetir os dois cenários. Para fechar a definição de pronto do RH, usar ambiente de teste identificado e sessões dos perfis relevantes para executar upload JPG/JPEG/PDF, edição com persistência e recuperação de falha, ciclo formal completo, resultado para PDI e OKR com KR/medição/histórico/encerramento. A visão do colaborador exige sessão própria de teste.
+
+## Correções e regressão local — 29/09/2026
+
+Ambiente: `http://localhost:3014`, PostgreSQL DTOV em `127.0.0.1:55432`, Redis DTOV, conta sintética RH Todos os Dados. Nenhuma escrita de negócio em produção e nenhum deploy executado nesta rodada.
+
+| Achado | Correção | Prova nova |
+| --- | --- | --- |
+| RH-BROWSER-01 | Leitura e gravação aceitam chaves legadas `1`–`9` e retornam `T1`–`T9`, sem reescalonar os pesos. O cálculo de aderência aceita os dois formatos. | Cargo sintético #20 criado com `{1:2,3:2,5:3,6:1}`; editor mostra 2/2/3/1, total 8%. Salvar, recarregar e reabrir preservou os valores. Consulta ao banco confirmou `{T1:2,T3:2,T5:3,T6:1}`. Teste automatizado compara também a aderência e seu detalhamento. |
+| RH-BROWSER-02 | Escape é tratado pelo seletor antes do perfil/diálogo; resposta assíncrona não reabre a lista. Foco volta ao campo antes do fechamento. | Perfil Ana Clara Mendes continuou aberto após Escape no campo, na opção Bruno e imediatamente após digitar Carla. A lista permaneceu fechada após concluir a busca. Nenhum gestor alterado. |
+| RH-BROWSER-03 | Estado vazio com orientação e botão Ir para competências; a instrução também aparece no formulário de ciclo sem opções. | Botão abriu a aba Competências com ações Nova competência e Adicionar competências de exemplo. Novo ciclo exibiu a orientação. Nove competências sintéticas foram temporariamente desativadas, com IDs guardados, e todas restauradas ao estado ativo original. Nenhum ciclo criado. |
+| RH-BROWSER-04 | Registrar remuneração; textos de CPF/assinatura/IA/cidade simplificados em PT/EN; fonte do editor alinhada; breadcrumb de vagas em caixa normal; menu Avaliações unificado; resumo duplicado de motivadores removido. | Navegador confirmou ação de remuneração, ajuda do CPF, orientação de assinatura, editor do cargo, menu Avaliações e cinco motivadores sem o bloco Top motivadores (resumo). Alterações de traduções e componentes revisadas; testes de clareza/consistência passaram. |
+
+Validações executadas:
+
+- 38 testes focados: rubricas legadas, sugestão de rubrica por IA, clareza P2 e consistência P3. Incluem precedência de zero explícito, pesos independentes, idempotência e preservação da aderência.
+- 50 testes de segurança aprovados (`npm run test:security`).
+- Alerta do CI reproduzido: `fast-uri@3.1.6` com vulnerabilidade alta. Atualização transitiva para `3.1.8`, compatível com o intervalo do AJV; somente versão, URL e integridade dessa entrada mudaram no `package-lock.json`. `npm audit --omit=dev --audit-level=high` retornou **0 vulnerabilidades, exit 0**. Referências: [authority injection](https://github.com/advisories/GHSA-qw65-cvwx-89v3) e [host confusion](https://github.com/advisories/GHSA-58mr-gqgx-xq4g).
+- Harness DTOV: migrations conferidas e 16 probes do smoke aprovados, sem reset da base.
+- Build de produção com webpack aprovado; `git diff --check` sem erros.
+- Aviso adicional do React no gráfico de motivadores corrigido, separando `key` das propriedades espalhadas em `PeakDot`; nova abertura do gráfico sem repetição desse aviso. O navegador de desenvolvimento também registrou divergência de hidratação nos atributos `data-gr-*` injetados pela extensão Grammarly; não foi alterado o HTML da aplicação para ocultar o aviso da extensão.
+
+Capturas locais: `/private/tmp/rh-cargo-pesos-preservados.png` e `/private/tmp/rh-avaliacoes-catalogo-vazio.png`. O cargo sintético de regressão foi mantido para reprodução. Não houve migration de aplicação nem alteração em massa de pesos; o formato legado é tratado na fronteira de leitura/gravação. Os limites da auditoria inicial (demais fluxos completos, perfis e matriz responsiva) continuam explícitos acima.

@@ -132,8 +132,8 @@ export function EntitySearchSelect({
         if (event.key === 'Escape' && open) {
           event.preventDefault();
           event.stopPropagation();
-          setOpen(false);
           wrapRef.current?.querySelector('input')?.focus();
+          setOpen(false);
         }
       }}
     >
