@@ -31,7 +31,7 @@ Cada item só está concluído quando há prova do fluxo, estado de erro compree
 
 ### MVP-03 — Jornada principal ponta a ponta
 
-**Evidência atual (29/09/2026):** jornada completa validada pela interface no DTOV, de empresa/gestor novos até a mesma pessoa contratada na Equipe, incluindo inscrição pública, convite, 54 respostas, notas de decisão e persistência após recarregar. O spec `test/e2e/pilot-primary-journey.spec.js` agora reúne esse percurso; sua descoberta/compilação passou, mas a execução pelo runner Playwright ainda é gate para fechar o aceite automatizado. Ver [evidências e limites](validation/MVP-03-2026-09-29.md).
+**Evidência atual (29/09/2026):** jornada completa validada pela interface no DTOV, de empresa/gestor novos até a mesma pessoa contratada na Equipe, incluindo inscrição pública, convite, 54 respostas, notas de decisão e persistência após recarregar. O spec `test/e2e/pilot-primary-journey.spec.js` agora reúne esse percurso; sua descoberta/compilação passou e o runner foi executado, mas a última tentativa falhou na avaliação pública ao aguardar a questão 2 após recarregamento. Corrigir/investigar e obter uma execução completa verde permanece como gate do aceite automatizado. Ver [evidências e limites](validation/MVP-03-2026-09-29.md).
 
 **Objetivo:** provar o job central sem intervenção técnica.
 
