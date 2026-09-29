@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { t } from '../../../lib/i18n';
+import { t, normalizeLocale } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { FormField } from '../../_components/FormField';
@@ -29,7 +29,7 @@ export default function EmployeeEnterClient() {
   const [captchaConfigReady, setCaptchaConfigReady] = useState(false);
   const [awaitingCaptcha, setAwaitingCaptcha] = useState(false);
   const sessionStarted = useRef(false);
-  const locale = params.get('locale') === 'en' ? 'en' : 'pt-BR';
+  const locale = normalizeLocale(params.get('locale'));
   const magicToken = String(params.get('token') || '').trim();
 
   useEffect(() => {

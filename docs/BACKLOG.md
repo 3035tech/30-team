@@ -66,7 +66,9 @@ _(entregue — B-601–B-605 + polish: revisão retenção na UI, leitura hedged
 
 ## Aberto — qualidade / testes
 
-_(vazio — B-001–B-006 entregues)_
+- **B-I18N-01 · Revisão nativa fr-FR / de-DE.** Catálogos e landing gerados por `npm run i18n:translate`. Revisar termos de RH, tom formal (vous/Sie) e textos longos do Guia; corrigir direto em `lib/i18n/catalogs/fr-FR.js`, `de-DE.js` e `lib/i18n/landing/*`.
+- **B-I18N-02 · Conteúdo por idioma além de pt/en.** Perguntas/tipos/escala do Eneagrama (`lib/i18n-data.js`, `lib/data.js`, `lib/type-en.js`), banco e templates de Motivadores (`lib/ae/*`), prompts de IA e PDFs usam `contentLocale` (fr/de/es caem em inglês). Traduzir exige validação psicométrica das perguntas antes de trocar o texto.
+- **B-I18N-03 · Documentos legais em fr/de/es.** `lib/public-legal.js` só tem pt/en; tradução precisa de revisão jurídica.
 
 ---
 

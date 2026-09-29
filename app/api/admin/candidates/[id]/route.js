@@ -13,6 +13,7 @@ import { isRichTextEmpty, sanitizeRichTextHtml } from '../../../../../lib/saniti
 import { CAP, requireAnyCapability, canAccessCandidateRecord, isAdminRole } from '../../../../../lib/permissions';
 import { upsertDpProfile } from '../../../../../lib/people/employee-dp.js';
 import { listCandidateOverdueLms } from '../../../../../lib/lms.js';
+import { normalizeLocale } from '../../../../../lib/i18n.js';
 
 export async function GET(request, props) {
   const params = await props.params;
@@ -113,7 +114,7 @@ export async function GET(request, props) {
   });
 
   const { searchParams } = new URL(request.url);
-  const loc = searchParams.get('locale') === 'en' ? 'en' : 'pt-BR';
+  const loc = normalizeLocale(searchParams.get('locale'));
 
   const [timeline, people, lmsOverdue] = await Promise.all([
     buildCandidateTimeline(id).catch((e) => {

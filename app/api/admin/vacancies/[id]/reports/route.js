@@ -12,6 +12,7 @@ import { CAP, isAdminRole, requireCapability } from '../../../../../../lib/permi
 import { loadCompanyInternalNucleus } from '../../../../../../lib/people/company-nucleus.js';
 import { buildShortlistCompositionRisks } from '../../../../../../lib/shortlist-composition-risks.js';
 import { queryRead } from '../../../../../../lib/db.js';
+import { normalizeLocale } from '../../../../../../lib/i18n.js';
 
 
 function appOrigin(request) {
@@ -43,7 +44,7 @@ export async function GET(request, props) {
     if (searchParams.get('compositionRisks') === '1') {
       const source = await loadVacancyReportSource(vacancyId, { isAdmin, companyId });
       if (!source) return apiError(request, ERR.NOT_FOUND, 404);
-      const locale = searchParams.get('locale') === 'en' ? 'en' : 'pt-BR';
+      const locale = normalizeLocale(searchParams.get('locale'));
       const rawIds = String(searchParams.get('candidateIds') || '')
         .split(',')
         .map((x) => Number(x.trim()))

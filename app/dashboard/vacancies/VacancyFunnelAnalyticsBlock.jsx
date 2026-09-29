@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, contentLocale } from '../../../lib/i18n';
 import { S } from '../dashboard-shared';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { CopyableLink } from '../../_components/CopyableLink';
@@ -122,7 +122,7 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
               <tbody>
                 {data.stagePerformance.map((row) => (
                   <tr key={row.stageKey} className="border-t border-ink/10">
-                    <td className="px-3 py-2.5 font-ui text-ink">{locale === 'en' ? (row.labelEn || row.labelPt) : (row.labelPt || row.labelEn)}</td>
+                    <td className="px-3 py-2.5 font-ui text-ink">{contentLocale(locale) === 'en' ? (row.labelEn || row.labelPt) : (row.labelPt || row.labelEn)}</td>
                     <td className="px-3 py-2.5 text-ink-muted">{row.entered}</td>
                     <td className="px-3 py-2.5 text-ink-muted">{row.avgDays == null ? '–' : t(locale, 'recruiting.analyticsDays', { n: row.avgDays })}</td>
                     <td className="px-3 py-2.5 text-ink-muted">{row.conversionToNext == null ? '–' : `${Math.round(Number(row.conversionToNext) * 100)}%`}</td>
@@ -141,7 +141,7 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
           <ul className="m-0 space-y-2 pl-0">
             {data.bottlenecks.map((signal) => (
               <li key={`${signal.stageKey}-${signal.signal}`} className="list-none rounded-control border border-warning/20 bg-warning/[0.06] px-3 py-2 text-xs text-ink-muted">
-                <span className="font-ui font-semibold text-ink">{locale === 'en' ? (signal.labelEn || signal.labelPt) : (signal.labelPt || signal.labelEn)}</span>
+                <span className="font-ui font-semibold text-ink">{contentLocale(locale) === 'en' ? (signal.labelEn || signal.labelPt) : (signal.labelPt || signal.labelEn)}</span>
                 {': '}
                 {signal.signal === 'slow_stage'
                   ? t(locale, 'recruiting.analyticsSlowStage', { days: signal.avgDays, n: signal.entered })

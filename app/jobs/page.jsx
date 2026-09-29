@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { LOCALE_COOKIE, normalizeLocale, t } from '../../lib/i18n';
+import { LOCALE_COOKIE, normalizeLocale, t, localeHtmlLang } from '../../lib/i18n';
 import { normalizeEmploymentType } from '../../lib/vacancy-employment-type';
 import { normalizeWorkplaceModality } from '../../lib/vacancy-workplace';
 import {
@@ -37,7 +37,7 @@ export async function generateMetadata({ searchParams } = {}) {
       title,
       description,
       siteName: '30Grow',
-      locale: locale === 'en' ? 'en_US' : 'pt_BR',
+      locale: localeHtmlLang(locale).replace('-', '_'),
       images: ogImage ? [{ url: ogImage, width: 512, height: 512, alt: '30Grow' }] : undefined,
     },
     twitter: {

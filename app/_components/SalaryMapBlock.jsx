@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { t } from '../../lib/i18n';
+import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { formatSalaryDisplay } from '../../lib/br-masks';
 import {
@@ -67,7 +67,7 @@ export function SalaryMapBlock({ locale = 'pt-BR', companyId }) {
     const rows = [...items].sort((a, b) => {
       const hb = (Number(b.headcount) || 0) - (Number(a.headcount) || 0);
       if (hb !== 0) return hb;
-      return String(a.name || '').localeCompare(String(b.name || ''), locale === 'en' ? 'en' : 'pt');
+      return String(a.name || '').localeCompare(String(b.name || ''), localeHtmlLang(locale));
     });
     if (scope === 'all') return rows;
     return rows.filter((r) => (Number(r.headcount) || 0) > 0);

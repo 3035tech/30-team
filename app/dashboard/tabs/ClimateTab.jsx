@@ -21,7 +21,7 @@ import { SegmentedControl } from '../../_components/SegmentedControl';
 import { InlineCallout } from '../../_components/InlineCallout';
 
 function dateLocale(locale) {
-  return localeHtmlLang(locale) === 'en' ? 'en-US' : 'pt-BR';
+  return localeHtmlLang(locale);
 }
 
 function formatClimateDate(raw, locale) {

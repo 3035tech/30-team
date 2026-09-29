@@ -3,6 +3,9 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
 import { z } from 'zod';
+import { contentLocale, LOCALES, normalizeLocale } from '../../lib/locale-negotiation.js';
+
+const zLocale = z.enum(LOCALES);
 
 async function load(path, dependencies) {
   const context = vm.createContext({ console, URL, Buffer });
@@ -77,7 +80,7 @@ test('invalid answers do not write; completion is tenant-scoped and replay does 
 test('route requires session, consent and strict input; mutations run in a transaction', async () => {
   let session = null; let transactions = 0;
   const route = await load('../../app/api/mobile/v1/employee/motivators/route.js', {
-    z, NextResponse: { json: (body) => body }, apiError: (_r, code, status) => ({ code, status }), apiErrorFromResult: (_r, result) => result,
+    z, zLocale, normalizeLocale, NextResponse: { json: (body) => body }, apiError: (_r, code, status) => ({ code, status }), apiErrorFromResult: (_r, result) => result,
     ERR: { UNAUTHORIZED: 'UNAUTHORIZED', INVALID_DATA: 'INVALID_DATA', INTERNAL: 'INTERNAL', RATE_LIMIT: 'RATE_LIMIT' }, HTTP_STATUS: { UNAUTHORIZED: 401, BAD_REQUEST: 400, INTERNAL_SERVER_ERROR: 500, TOO_MANY_REQUESTS: 429 },
     authenticateMobileEmployee: async () => session, mobileEmployeeBearerToken: () => 'test', checkRateLimit: async () => ({ ok: true }), clientIpFromRequest: () => 'test',
     MotivatorsAction: { Start: 'start', Submit: 'submit' }, withTransaction: async (fn) => { transactions++; return fn({}); },
@@ -98,7 +101,7 @@ test('public web start and submit share the invite lock and reject a completed i
   for (const action of ['start', 'submit']) {
     const calls = [];
     const dependencies = {
-      NextResponse: { json: (body) => body }, apiError: (_request, code, status) => ({ code, status }),
+      NextResponse: { json: (body) => body }, apiError: (_request, code, status) => ({ code, status }), contentLocale,
       ERR: { INVITE_NOT_AVAILABLE: 'INVITE_NOT_AVAILABLE', SESSION_DONE: 'SESSION_DONE' },
       withTransaction: async (fn) => fn({ query: async (sql) => { calls.push(sql); return { rowCount: 1, rows: [{ status: 'completed', expiresAt: '2999-01-01', expired: false, inviteEmail: 'person@example.com' }] }; } }),
       checkRateLimit: async () => ({ ok: true }), clientIpFromRequest: () => 'test',

@@ -6,6 +6,7 @@ import { titleCasePersonName } from '../../../../lib/person-name';
 import { toPublicQuestions } from '../../../../lib/ae/to-public-questions';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit';
 import { apiError, ERR } from '../../../../lib/api-error';
+import { contentLocale } from '../../../../lib/i18n.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -27,7 +28,7 @@ export async function POST(request) {
     const email = normalizeEmail(body.email);
     const areaKey = String(body.areaKey || '').trim();
     const consent = body.consent === true;
-    const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+    const locale = contentLocale(body.locale);
 
     if (!inviteToken || !name || name.length > 200 || consent !== true) {
       return apiError(request, ERR.INVALID_DATA, 400);

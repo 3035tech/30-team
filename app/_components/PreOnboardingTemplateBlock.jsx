@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { t } from '../../lib/i18n';
+import { t, contentLocale } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S, AdminDeleteButton, AdminEditButton } from '../dashboard/dashboard-shared';
 import { AppLoading, ContentEnter } from './AppLoading';
@@ -206,7 +206,7 @@ export function PreOnboardingTemplateBlock({ locale = 'pt-BR', companyId }) {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5 font-ui text-sm text-ink">
                       <span>
-                        {locale === 'en' ? row.labelEn || row.labelPt : row.labelPt || row.labelEn}
+                        {contentLocale(locale) === 'en' ? row.labelEn || row.labelPt : row.labelPt || row.labelEn}
                       </span>
                       <StatusToneChip tone={OWNER_TONE[row.ownerRole] || 'neutral'}>
                         {t(locale, `panel.preOnboardingTpl.owner.${row.ownerRole}`)}

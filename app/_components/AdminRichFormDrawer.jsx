@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { t } from '../../lib/i18n';
+import { t, t as i18nT } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { UI_TYPE } from '../../lib/ui-typography';
 import {
@@ -91,8 +91,8 @@ export function AdminRichFormDrawer({
 
   if (!mounted || !open) return null;
 
-  const backLabel = backLabelOverride || (locale === 'en' ? 'Back to team' : 'Voltar para equipe');
-  const closeLabel = closeLabelOverride || (locale === 'en' ? 'Close profile' : 'Fechar perfil');
+  const backLabel = backLabelOverride || (i18nT(locale, 'ui.adminRichFormDrawer.backToTeam'));
+  const closeLabel = closeLabelOverride || (i18nT(locale, 'ui.adminRichFormDrawer.closeProfile'));
 
   const content = (
     <div
@@ -142,7 +142,7 @@ export function AdminRichFormDrawer({
             ) : null}
             <span className={UI_TYPE.label}>
               {eyebrow || (fullPage
-                ? (locale.startsWith('en') ? 'People / Team' : 'Pessoas / Equipe')
+                ? (i18nT(locale, 'ui.adminRichFormDrawer.peopleTeam'))
                 : '30Grow')}
             </span>
             <TitleTag

@@ -24,6 +24,7 @@ import {
   clientSortNextDir,
 } from '../dashboard-shared';
 import { LEARNING_RESOURCE_TYPE, LEARNING_RESOURCE_TYPES } from '../../../lib/domain-status';
+import { t as i18nT, contentLocale } from '../../../lib/i18n';
 
 export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId }) {
   const [resources, setResources] = useState([]);
@@ -47,108 +48,10 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId }) {
     return companyId ? { ...payload, companyId } : payload;
   }
 
-  function t(key) {
-    const messages = {
-      'pt-BR': {
-        title: 'Academy',
-        subtitle: 'Recursos de aprendizagem para vincular aos planos de desenvolvimento (PDI)',
-        create: 'Novo recurso',
-        noResources: 'Nenhum recurso cadastrado',
-        noResults: 'Nenhum recurso encontrado',
-        noResultsDesc: 'Ajuste a busca ou os filtros para encontrar outro recurso.',
-        searchNamePh: 'Buscar por título…',
-        noResourcesDesc: 'Cadastre cursos, artigos, vídeos ou outras ações para usar nos PDIs.',
-        needCompanyTitle: 'Selecione uma empresa',
-        needCompanyHint: 'Escolha a empresa no filtro do painel para gerenciar a Academy.',
-        ctaHelp: 'Ver Guia (PDI → Academy)',
-        ctaPdi: 'Abrir PDI da equipe',
-        filterTheme: 'Filtrar por tema',
-        allThemes: 'Todos os temas',
-        filterType: 'Filtrar por tipo',
-        allTypes: 'Todos os tipos',
-        title_col: 'Título',
-        theme_col: 'Temas',
-        type_col: 'Tipo',
-        duration_col: 'Duração',
-        actions_col: 'Ações',
-        edit: 'Editar',
-        view: 'Ver',
-        deactivate: 'Desativar',
-        confirmDeactivate: 'Desativar este recurso?',
-        course: 'Curso',
-        article: 'Artigo',
-        video: 'Vídeo',
-        book: 'Livro',
-        workshop: 'Workshop',
-        mentoring: 'Mentoria',
-        other: 'Outro',
-        hours: 'h',
-        formTitle: 'Recurso de Aprendizagem',
-        formTitleLabel: 'Título',
-        formDescLabel: 'Descrição',
-        formThemeLabel: 'Temas',
-        formThemeHelp: 'Digite e pressione Enter (ou vírgula). Cada tema vira uma tag removível.',
-        formThemePh: 'Ex.: Liderança',
-        formTypeLabel: 'Tipo',
-        formUrlLabel: 'URL (opcional)',
-        formDurationLabel: 'Duração (horas, opcional)',
-        created: 'Recurso criado',
-        updated: 'Recurso atualizado',
-        deactivated: 'Recurso desativado',
-        loadError: 'Erro ao carregar recursos',
-        saveError: 'Erro ao salvar',
-      },
-      en: {
-        title: 'Academy',
-        subtitle: 'Learning resources to link to individual development plans (IDPs)',
-        create: 'New resource',
-        noResources: 'No resources registered',
-        noResults: 'No resources found',
-        noResultsDesc: 'Adjust the search or filters to find another resource.',
-        searchNamePh: 'Search by title…',
-        noResourcesDesc: 'Add courses, articles, videos, or other actions to use in IDPs.',
-        needCompanyTitle: 'Select a company',
-        needCompanyHint: 'Choose a company in the panel filter to manage Academy.',
-        ctaHelp: 'Open Help (PDI → Academy)',
-        ctaPdi: 'Open team IDP',
-        filterTheme: 'Filter by theme',
-        allThemes: 'All themes',
-        filterType: 'Filter by type',
-        allTypes: 'All types',
-        title_col: 'Title',
-        theme_col: 'Themes',
-        type_col: 'Type',
-        duration_col: 'Duration',
-        actions_col: 'Actions',
-        edit: 'Edit',
-        view: 'View',
-        deactivate: 'Deactivate',
-        confirmDeactivate: 'Deactivate this resource?',
-        course: 'Course',
-        article: 'Article',
-        video: 'Video',
-        book: 'Book',
-        workshop: 'Workshop',
-        mentoring: 'Mentoring',
-        other: 'Other',
-        hours: 'h',
-        formTitle: 'Learning Resource',
-        formTitleLabel: 'Title',
-        formDescLabel: 'Description',
-        formThemeLabel: 'Themes',
-        formThemeHelp: 'Type and press Enter (or comma). Each theme becomes a removable tag.',
-        formThemePh: 'e.g. Leadership',
-        formTypeLabel: 'Type',
-        formUrlLabel: 'URL (optional)',
-        formDurationLabel: 'Duration (hours, optional)',
-        created: 'Resource created',
-        updated: 'Resource updated',
-        deactivated: 'Resource deactivated',
-        loadError: 'Failed to load resources',
-        saveError: 'Failed to save',
-      },
-    };
-    return messages[locale]?.[key] || messages['pt-BR'][key] || key;
+  function t(key, values = {}) {
+    const path = `adminModules.learningResources.${key}`;
+    const out = i18nT(locale, path, values);
+    return out === path ? key : out;
   }
 
   useEffect(() => {
@@ -335,7 +238,7 @@ export function LearningResourcesAdminTab({ locale = 'pt-BR', companyId }) {
       if (!q) return true;
       return String(row.title || '').toLowerCase().includes(q);
     });
-    const collator = locale === 'en' ? 'en' : 'pt-BR';
+    const collator = contentLocale(locale);
     rows.sort((a, b) => {
       if (sort === 'durationHours') {
         const an = Number(a.durationHours) || 0;

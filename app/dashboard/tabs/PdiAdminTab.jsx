@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, messageNode, localeHtmlLang } from '../../../lib/i18n';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { EmptyState } from '../../_components/EmptyState';
 import { SelectField } from '../../_components/SelectField';
@@ -18,85 +18,6 @@ import {
   S,
 } from '../dashboard-shared';
 
-const COPY = {
-  'pt-BR': {
-    title: 'PDI da equipe',
-    subtitle: 'Veja onde o desenvolvimento precisa de uma próxima ação.',
-    activePlans: 'PDIs ativos',
-    attention: 'Sinais de atenção',
-    noPlan: 'Pessoas sem PDI ativo',
-    completion: 'Itens concluídos',
-    search: 'Buscar colaborador',
-    searchPh: 'Nome do colaborador…',
-    viewLabel: 'Mostrar',
-    viewAttention: 'Atenção primeiro',
-    viewActive: 'PDIs ativos',
-    viewNoPlan: 'Sem plano',
-    viewAll: 'Toda a equipe',
-    people: 'pessoas',
-    noPlanTitle: 'Comece pelo próximo plano',
-    noPlanBody: 'Não há pessoas nesta visão. Quando alguém não tiver PDI ativo, aparecerá aqui.',
-    noPlanRowDetail: 'Crie um plano de desenvolvimento para esta pessoa.',
-    selectCompanyTitle: 'Selecione uma empresa',
-    selectCompanyBody: 'Escolha uma empresa para acompanhar os PDIs da equipe.',
-    unavailableTitle: 'PDI indisponível',
-    noDataTitle: 'Nenhum PDI encontrado',
-    noDataBody: 'Crie o primeiro plano na ficha da pessoa para começar o acompanhamento.',
-    open: 'Abrir PDI',
-    create: 'Criar PDI',
-    noPlanStatus: 'Sem PDI ativo',
-    overduePlan: 'Plano atrasado',
-    overdueItems: 'itens atrasados',
-    nextActions: 'Casos prioritários',
-    nextActionsBody: 'Prévia de até 4 casos. Itens e planos vencidos vêm primeiro; use a lista abaixo para percorrer e filtrar a equipe.',
-    overdueItem: 'Item atrasado',
-    overdueSince: 'Atrasado desde',
-    withoutOneOnOne: 'Sem 1:1 vinculado',
-    seePerson: 'Ver pessoa',
-    noItems: 'Sem itens ainda',
-    done: 'concluídos',
-    error: 'Não foi possível carregar o acompanhamento de PDI.',
-  },
-  en: {
-    title: 'Team development plans',
-    subtitle: 'See where development needs a next action.',
-    activePlans: 'Active plans',
-    attention: 'Attention signals',
-    noPlan: 'People without an active plan',
-    completion: 'Items completed',
-    search: 'Search employee',
-    searchPh: 'Employee name…',
-    viewLabel: 'Show',
-    viewAttention: 'Attention first',
-    viewActive: 'Active plans',
-    viewNoPlan: 'No plan',
-    viewAll: 'Entire team',
-    people: 'people',
-    noPlanTitle: 'Start with the next plan',
-    noPlanBody: 'No people match this view. Employees without an active plan will appear here.',
-    noPlanRowDetail: 'Create a development plan for this employee.',
-    selectCompanyTitle: 'Select a company',
-    selectCompanyBody: 'Choose a company to track team development plans.',
-    unavailableTitle: 'Development plans unavailable',
-    noDataTitle: 'No development plans found',
-    noDataBody: 'Create the first plan from a person’s profile to start tracking it.',
-    open: 'Open plan',
-    create: 'Create plan',
-    noPlanStatus: 'No active plan',
-    overduePlan: 'Plan overdue',
-    overdueItems: 'overdue items',
-    nextActions: 'Priority cases',
-    nextActionsBody: 'Preview of up to 4 cases. Overdue items and plans come first; use the list below to browse and filter the team.',
-    overdueItem: 'Overdue item',
-    overdueSince: 'Overdue since',
-    withoutOneOnOne: 'No 1:1 linked',
-    seePerson: 'View person',
-    noItems: 'No items yet',
-    done: 'complete',
-    error: 'Could not load development-plan tracking.',
-  },
-};
-
 function dateLabel(value, locale) {
   if (!value) return null;
   const raw = String(value).trim();
@@ -104,14 +25,14 @@ function dateLabel(value, locale) {
     ? new Date(`${raw}T12:00:00`)
     : new Date(raw);
   if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR', {
+  return date.toLocaleDateString(localeHtmlLang(locale), {
     day: '2-digit',
     month: 'short',
   });
 }
 
 export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, initialSearch = '' }) {
-  const copy = COPY[locale === 'en' ? 'en' : 'pt-BR'];
+  const copy = messageNode(locale, 'adminModules.pdiAdmin');
   const [view, setView] = useState('attention');
   const [qDraft, setQDraft] = useState(initialSearch);
   const [q, setQ] = useState(initialSearch);
@@ -215,9 +136,7 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                     <p className="m-0 mt-0.5 text-prose text-ink-muted">{copy.nextActionsBody}</p>
                   </div>
                   <span className="font-ui text-prose text-amber-800 dark:text-warning">
-                    {locale === 'en'
-                      ? `${priorityItems.length} ${priorityItems.length === 1 ? 'case' : 'cases'} shown`
-                      : `${priorityItems.length} ${priorityItems.length === 1 ? 'caso exibido' : 'casos exibidos'}`}
+                    {i18nT(locale, priorityItems.length === 1 ? 'ui.pdiAdminTab.casesShownOne' : 'ui.pdiAdminTab.casesShownOther', { count: priorityItems.length })}
                   </span>
                 </div>
                 <div className="divide-y divide-warning/15">

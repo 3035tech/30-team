@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { TYPE_DATA } from '../../../lib/data';
-import { t, localeHtmlLang } from '../../../lib/i18n';
+import { t, localeHtmlLang, contentLocale, t as i18nT } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { AdminListSearch, AdminCreateButton, PanelSubNav, S, TypeBadge } from '../dashboard-shared';
 import { AdminListFilters } from '../../_components/AdminListFilters';
@@ -534,7 +534,7 @@ export function TeamTab({
     setProfileEditing(false);
     setProfileMsg('');
     try {
-      const res = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}?locale=${encodeURIComponent(locale === 'en' ? 'en' : 'pt-BR')}`);
+      const res = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}?locale=${encodeURIComponent(contentLocale(locale))}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.team.loadDetailError'));
       setDetail(data);
@@ -852,10 +852,8 @@ export function TeamTab({
   const closePersonDetail = async () => {
     if (profileEditing || notesEditing) {
       const ok = await confirm({
-        message: locale === 'en'
-          ? 'You have unsaved changes. Leave this profile?'
-          : 'Existem alterações não salvas. Deseja sair deste perfil?',
-        confirmLabel: locale === 'en' ? 'Leave profile' : 'Sair do perfil',
+        message: i18nT(locale, 'ui.teamTab.youHaveUnsavedChangesLeave'),
+        confirmLabel: i18nT(locale, 'ui.teamTab.leaveProfile'),
       });
       if (!ok) return;
     }
@@ -913,8 +911,8 @@ export function TeamTab({
         type="button"
         onClick={() => navigateAdjacentPerson(-1)}
         disabled={currentPersonIndex <= 0}
-        aria-label={locale === 'en' ? 'Previous person' : 'Pessoa anterior'}
-        title={locale === 'en' ? 'Previous person' : 'Pessoa anterior'}
+        aria-label={i18nT(locale, 'ui.teamTab.previousPerson')}
+        title={i18nT(locale, 'ui.teamTab.previousPerson')}
         className="min-h-touch min-w-touch rounded-control border border-ink/12 bg-transparent px-2 text-lg text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink disabled:cursor-default disabled:opacity-35"
       >
         ←
@@ -923,8 +921,8 @@ export function TeamTab({
         type="button"
         onClick={() => navigateAdjacentPerson(1)}
         disabled={currentPersonIndex < 0 || currentPersonIndex >= personRows.length - 1}
-        aria-label={locale === 'en' ? 'Next person' : 'Próxima pessoa'}
-        title={locale === 'en' ? 'Next person' : 'Próxima pessoa'}
+        aria-label={i18nT(locale, 'ui.teamTab.nextPerson')}
+        title={i18nT(locale, 'ui.teamTab.nextPerson')}
         className="min-h-touch min-w-touch rounded-control border border-ink/12 bg-transparent px-2 text-lg text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink disabled:cursor-default disabled:opacity-35"
       >
         →
@@ -1649,7 +1647,7 @@ export function TeamTab({
                         c?.birthDate != null ? String(c.birthDate).slice(0, 10) : '';
                       const startIso =
                         c?.startDate != null ? String(c.startDate).slice(0, 10) : '';
-                      const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
+                      const dateLocale = localeHtmlLang(locale);
                       const fmtDate = (iso) => {
                         if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || null;
                         const d = new Date(`${iso}T12:00:00`);

@@ -6,6 +6,7 @@ import { S } from '../../dashboard-shared';
 import { InsightListItem } from '../../../_components/InsightListItem';
 import { StatusToneChip } from '../../../_components/StatusToneChip';
 import { AppLoading } from '../../../_components/AppLoading';
+import { t as i18nT } from '../../../../lib/i18n';
 
 export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
   const [data, setData] = useState(null);
@@ -13,65 +14,9 @@ export default function CultureInsightsCard({ locale = 'pt-BR', companyId }) {
   const [showFull, setShowFull] = useState(false);
 
   function t(key, values = {}) {
-    const messages = {
-      'pt-BR': {
-        title: 'Cultura Organizacional',
-        subtitle: 'Clima, mix T1–T9 e pulso',
-        noData: 'Dados insuficientes para leitura cultural',
-        noDataDesc: 'Execute pesquisas de clima, pulsos e tenha avaliações T1–T9',
-        overallHealth: 'Saúde geral',
-        dominantArchetype: 'Arquétipo dominante',
-        dominantArchetypeValue: '{type}: {pct}% do time',
-        positive: 'Positiva',
-        neutral: 'Neutra',
-        concern: 'Atenção',
-        unknown: 'Desconhecido',
-        viewFull: 'Ver insights completos',
-        viewSummary: 'Ver resumo',
-        insightsTitle: 'Insights',
-        climate: 'Clima',
-        typeMix: 'Mix T1–T9',
-        pulse: 'Pulso',
-        alignment: 'Alinhamento',
-        declaredTitle: 'Sobre / valores declarados',
-        declaredEmpty: 'Ainda sem texto em Sobre da empresa. Preencha no cadastro da empresa.',
-        ctaClimate: 'Abrir Clima',
-        ctaCompanies: 'Editar Sobre',
-        ctaTeam: 'Ver mix na Equipe',
-        viewLink: 'Ver →',
-      },
-      en: {
-        title: 'Organizational Culture',
-        subtitle: 'Climate, T1–T9 mix, and pulse',
-        noData: 'Insufficient data for culture reading',
-        noDataDesc: 'Run climate surveys, pulses, and have T1–T9 assessments',
-        overallHealth: 'Overall health',
-        dominantArchetype: 'Dominant archetype',
-        dominantArchetypeValue: '{type}: {pct}% of the team',
-        positive: 'Positive',
-        neutral: 'Neutral',
-        concern: 'Concern',
-        unknown: 'Unknown',
-        viewFull: 'View full insights',
-        viewSummary: 'View summary',
-        insightsTitle: 'Insights',
-        climate: 'Climate',
-        typeMix: 'T1–T9 Mix',
-        pulse: 'Pulse',
-        alignment: 'Alignment',
-        declaredTitle: 'About / declared values',
-        declaredEmpty: 'No company About text yet. Fill it in the company profile.',
-        ctaClimate: 'Open Climate',
-        ctaCompanies: 'Edit About',
-        ctaTeam: 'See mix on Team',
-        viewLink: 'View →',
-      },
-    };
-    let out = messages[locale]?.[key] || messages['pt-BR'][key] || key;
-    for (const [k, v] of Object.entries(values || {})) {
-      out = String(out).split(`{${k}}`).join(String(v));
-    }
-    return out;
+    const path = `adminModules.cultureInsights.${key}`;
+    const out = i18nT(locale, path, values);
+    return out === path ? key : out;
   }
 
   useEffect(() => {

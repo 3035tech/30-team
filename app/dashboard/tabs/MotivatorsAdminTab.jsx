@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, localeHtmlLang } from '../../../lib/i18n';
 import { C } from '../../../lib/theme';
 import { Bar, PanelSubNav, S, SortableTh, AdminListPager, AdminTableShell, AdminActionsCell, AdminActionsTh, AdminIconButton, AdminPageHeader, AdminCreateButton, AdminViewButton, AdminDeleteButton, clientSortNextDir } from '../dashboard-shared';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
@@ -20,7 +20,7 @@ import { AdminListFilters, AdminListFilterSelect } from '../../_components/Admin
 import { EmptyState } from '../../_components/EmptyState';
 
 function dateLocale(locale) {
-  return locale === 'en' ? 'en-US' : 'pt-BR';
+  return localeHtmlLang(locale);
 }
 
 function MotivatorsDimensionBars({ ranking }) {

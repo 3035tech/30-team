@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { t as i18nT } from '../../../lib/i18n';
+import { t as i18nT, contentLocale } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
@@ -61,119 +61,11 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
     return companyId ? { ...payload, companyId } : payload;
   }
 
-  const t = (key) => {
-    const messages = {
-      'pt-BR': {
-        title: 'Avaliações de Desempenho',
-        subtitle: 'Ciclos, metas e avaliação → PDI',
-        listEmpty: 'Nenhum ciclo cadastrado',
-        searchNamePh: 'Buscar por título…',
-        listEmptyDesc:
-          'Crie um ciclo com metas; outcomes “Desenvolver” geram itens no PDI e pedem 1:1 na Equipe.',
-        needCompanyTitle: 'Selecione uma empresa',
-        needCompanyHint: 'Escolha a empresa no filtro do painel para gerenciar ciclos.',
-        createCycleButton: 'Novo ciclo de avaliação',
-        editCycleTitle: 'Editar ciclo',
-        cycleTitle: 'Título do ciclo',
-        cycleTitlePlaceholder: 'Ex: Avaliação 2026 S1',
-        cycleDescription: 'Descrição',
-        periodStart: 'Início',
-        periodEnd: 'Fim',
-        status: 'Status',
-        statusDraft: 'Rascunho',
-        statusActive: 'Ativo',
-        statusClosed: 'Fechado',
-        filterAll: 'Todos',
-        reviewsCount: 'Avaliações',
-        submittedCount: 'submetidas',
-        createCycleSuccess: 'Ciclo criado com sucesso',
-        updateCycleSuccess: 'Ciclo atualizado',
-        errorCycleTitleRequired: 'Título do ciclo é obrigatório',
-        loadError: 'Erro ao carregar ciclos',
-        saveError: 'Erro ao salvar',
-        autoPdiNote: 'Outcome "Desenvolver" gera item PDI automaticamente para o colaborador',
-        continuousFeedbackNote:
-          'Entre ciclos, use 1:1 na Equipe para feedback contínuo. Metas “Desenvolver” também pedem conversa.',
-        continuousFeedbackCta: 'Abrir Equipe',
-        edit: 'Editar',
-        view: 'Ver',
-        delete: 'Excluir / encerrar',
-        confirmDelete:
-          'Rascunho sem avaliações será excluído. Ciclos com avaliações serão apenas encerrados. Continuar?',
-        deleteSuccess: 'Ciclo removido',
-        closeSuccess: 'Ciclo encerrado',
-        actions: 'Ações',
-        titleCol: 'Título',
-        allowSelfReview: 'Autoavaliação (180°)',
-        allowPeerReview: 'Avaliação de pares (360°)',
-        sideReviewButton: '180/360',
-        sideReviewTitle: 'Convites 180/360',
-        sideReviewCandidate: 'Colaborador',
-        sideReviewRole: 'Papel',
-        sideReviewRoleSelf: 'Autoavaliação',
-        sideReviewRolePeer: 'Par / colega',
-        sideReviewLabel: 'Nome do avaliador (opcional)',
-        sideReviewCreated: 'Convite criado',
-        sideReviewCapError: 'Limite de convites atingido para este colaborador',
-        sideReviewDisabled: 'Ative autoavaliação ou pares no ciclo primeiro',
-      },
-      en: {
-        title: 'Performance Reviews',
-        subtitle: 'Cycles, goals, and review → PDI',
-        listEmpty: 'No cycles registered',
-        searchNamePh: 'Search by title…',
-        listEmptyDesc:
-          'Create a cycle with goals; “Develop” outcomes seed PDI items and call for a 1:1 in Team.',
-        needCompanyTitle: 'Select a company',
-        needCompanyHint: 'Choose a company in the panel filter to manage review cycles.',
-        createCycleButton: 'New review cycle',
-        editCycleTitle: 'Edit cycle',
-        cycleTitle: 'Cycle title',
-        cycleTitlePlaceholder: 'E.g.: 2026 H1 Review',
-        cycleDescription: 'Description',
-        periodStart: 'Start',
-        periodEnd: 'End',
-        status: 'Status',
-        statusDraft: 'Draft',
-        statusActive: 'Active',
-        statusClosed: 'Closed',
-        filterAll: 'All',
-        reviewsCount: 'Reviews',
-        submittedCount: 'submitted',
-        createCycleSuccess: 'Cycle created successfully',
-        updateCycleSuccess: 'Cycle updated',
-        errorCycleTitleRequired: 'Cycle title is required',
-        loadError: 'Failed to load cycles',
-        saveError: 'Failed to save',
-        autoPdiNote: 'Outcome "Develop" automatically generates a PDI item for the employee',
-        continuousFeedbackNote:
-          'Between cycles, use Team 1:1s for continuous feedback. “Develop” goals also need a conversation.',
-        continuousFeedbackCta: 'Open Team',
-        edit: 'Edit',
-        view: 'View',
-        delete: 'Delete / close',
-        confirmDelete:
-          'Drafts with no reviews are deleted. Cycles with reviews are closed only. Continue?',
-        deleteSuccess: 'Cycle deleted',
-        closeSuccess: 'Cycle closed',
-        actions: 'Actions',
-        titleCol: 'Title',
-        allowSelfReview: 'Self-assessment (180°)',
-        allowPeerReview: 'Peer review (360°)',
-        sideReviewButton: '180/360',
-        sideReviewTitle: '180/360 invites',
-        sideReviewCandidate: 'Employee',
-        sideReviewRole: 'Role',
-        sideReviewRoleSelf: 'Self-assessment',
-        sideReviewRolePeer: 'Peer / colleague',
-        sideReviewLabel: 'Reviewer name (optional)',
-        sideReviewCreated: 'Invite created',
-        sideReviewCapError: 'Invite cap reached for this employee',
-        sideReviewDisabled: 'Enable self or peer review on the cycle first',
-      },
-    };
-    return messages[locale]?.[key] || messages['pt-BR'][key] || key;
-  };
+  function t(key, values = {}) {
+    const path = `adminModules.performanceReviews.${key}`;
+    const out = i18nT(locale, path, values);
+    return out === path ? key : out;
+  }
 
   useEffect(() => {
     loadCycles();
@@ -475,7 +367,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
 
   const sortedCycles = useMemo(() => {
     const dirMul = sortDir === 'asc' ? 1 : -1;
-    const collator = locale === 'en' ? 'en' : 'pt-BR';
+    const collator = contentLocale(locale);
     const q = String(nameQ || '').trim().toLowerCase();
     const rows = [...cycles].filter((row) => {
       if (statusFilter && row.status !== statusFilter) return false;
@@ -527,8 +419,8 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         className="[&>button]:min-w-0 [&>button]:flex-1 [&>button]:px-2"
         variant="pill"
         tabs={[
-          { id: 'formal', label: locale.startsWith('en') ? 'Reviews' : 'Avaliações' },
-          { id: 'catalog', label: locale.startsWith('en') ? 'Competencies' : 'Competências' },
+          { id: 'formal', label: i18nT(locale, 'ui.performanceReviewsAdminTab.reviews') },
+          { id: 'catalog', label: i18nT(locale, 'ui.performanceReviewsAdminTab.competencies') },
           { id: 'nine-box', label: '9-Box' },
         ]}
       />

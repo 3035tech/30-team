@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, localeHtmlLang } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import {
   PRODUCT_FEEDBACK_KINDS,
@@ -47,7 +47,7 @@ export function ProductFeedbackAdminTab({ locale = 'pt-BR', navigateDashboard })
   const { promptForm, toast } = useAppFeedback();
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
-  const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
+  const dateLocale = localeHtmlLang(locale);
 
   const filters = useMemo(() => {
     const status = (urlParams.get('fbStatus') || 'all').toLowerCase();

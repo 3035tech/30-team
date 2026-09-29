@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, contentLocale } from '../../../lib/i18n';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { EmptyState } from '../../_components/EmptyState';
 import { useAppFeedback } from '../../_components/AppFeedback';
@@ -159,7 +159,7 @@ export function PipelineTemplatesManager({ locale, companyId, templates, loading
     if (!template.isDefault && Number(template.vacancyCount || 0) === 0) warnings.push(t(locale, 'panel.pipelineTemplates.warningUnused'));
     const updatedAt = template.updatedAt ? new Date(template.updatedAt).getTime() : null;
     if (!template.isDefault && updatedAt && Date.now() - updatedAt > 180 * 86400000) warnings.push(t(locale, 'panel.pipelineTemplates.warningStale'));
-    const labels = (template.stages || []).map((stage) => String(locale === 'en' ? (stage.labelEn || stage.labelPt) : (stage.labelPt || stage.labelEn)).trim().toLocaleLowerCase(locale));
+    const labels = (template.stages || []).map((stage) => String(contentLocale(locale) === 'en' ? (stage.labelEn || stage.labelPt) : (stage.labelPt || stage.labelEn)).trim().toLocaleLowerCase(locale));
     if (new Set(labels).size !== labels.length) warnings.push(t(locale, 'panel.pipelineTemplates.warningDuplicateStages'));
     return warnings;
   };

@@ -1,6 +1,6 @@
 'use client';
 
-import { t } from '../../lib/i18n';
+import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { printDecisionBrief } from '../../lib/people/brief-print';
 import { useAppFeedbackOptional } from './AppFeedback';
@@ -109,7 +109,7 @@ export function HrActionBrief({
         synthesisPdiIdeas: t(locale, 'panel.team.synthesisPdiIdeas'),
         footer: t(locale, 'panel.team.briefPrintFooter'),
         generatedAt: t(locale, 'panel.team.briefPrintGenerated', {
-          date: new Date().toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
+          date: new Date().toLocaleString(localeHtmlLang(locale)),
         }),
       },
     });

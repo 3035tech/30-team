@@ -5,7 +5,7 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading } from '../../_components/AppLoading';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, localeHtmlLang } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { PIPELINE_STAGES } from '../../../lib/pipeline';
 import {
@@ -235,7 +235,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
   const formatDate = (iso) => {
     if (!iso) return '—';
     try {
-      return new Date(iso).toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR', {
+      return new Date(iso).toLocaleString(localeHtmlLang(locale), {
         dateStyle: 'short',
         timeStyle: 'short',
       });

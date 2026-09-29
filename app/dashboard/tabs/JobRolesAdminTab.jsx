@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { t } from '../../../lib/i18n';
+import { t, contentLocale } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import {
@@ -355,7 +355,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
 
   const sortedRoles = useMemo(() => {
     const dirMul = sortDir === 'asc' ? 1 : -1;
-    const collator = locale === 'en' ? 'en' : 'pt-BR';
+    const collator = contentLocale(locale);
     const q = String(nameQ || '').trim().toLowerCase();
     const rows = [...roles].filter((r) => {
       if (activeFilter === 'active' && !r.active) return false;

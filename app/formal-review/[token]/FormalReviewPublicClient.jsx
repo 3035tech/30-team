@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { t } from '../../../lib/i18n';
+import { t, t as i18nT } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
@@ -157,8 +157,8 @@ export default function FormalReviewPublicClient({ token }) {
         <p className={cn(S.faint, 'm-0 text-xs')}>{t(locale, 'performanceReviews.formal.publicHint')}</p>
         {meta?.instructions ? <p className="m-0 whitespace-pre-wrap text-sm">{meta.instructions}</p> : null}
         <p className={S.faint}>{meta?.responseScale === 'frequency'
-          ? (locale.startsWith('en') ? '1 Never · 2 Rarely · 3 Sometimes · 4 Often · 5 Always' : '1 Nunca · 2 Raramente · 3 Às vezes · 4 Frequentemente · 5 Sempre')
-          : (locale.startsWith('en') ? '1 Strongly disagree · 2 Disagree · 3 Neutral · 4 Agree · 5 Strongly agree' : '1 Discordo totalmente · 2 Discordo · 3 Neutro · 4 Concordo · 5 Concordo totalmente')}</p>
+          ? (i18nT(locale, 'ui.formalReviewPublicClient.n1Never2Rarely3'))
+          : (i18nT(locale, 'ui.formalReviewPublicClient.n1StronglyDisagree2Disagree'))}</p>
         {(meta?.items || []).map((item) => (
           <div key={item.id} className={S.stack}>
             <div className="text-sm font-medium text-ink">{item.label}</div>

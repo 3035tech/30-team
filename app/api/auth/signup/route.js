@@ -14,6 +14,7 @@ import {
   SELF_SERVICE_COMPANY_ACTION,
 } from '../../../../lib/self-service-signup.js';
 import { normalizeSignupJobTitle } from '../../../../lib/signup-job-titles.js';
+import { contentLocale, t as i18nT } from '../../../../lib/i18n.js';
 
 /**
  * Self-service signup: cria user pendente + company (ou associa a existente).
@@ -103,16 +104,12 @@ export async function POST(request) {
       if (!user.deleted && user.active && !user.signup_pending) {
         // Anti-enum: mesma forma de sucesso; e-mail de lembrete (já tem conta).
         if (isMailConfigured()) {
-          const loc = locale === 'en' ? 'en' : 'pt-BR';
+          const loc = contentLocale(locale);
           const loginUrl = `${appUrl}/login`;
           const subject =
-            loc === 'en'
-              ? 'You already have a 30Grow account'
-              : 'Você já tem uma conta no 30Grow';
+            i18nT(loc, 'ui.signupRoute.youAlreadyHaveA30grow');
           const text =
-            loc === 'en'
-              ? `Someone tried to sign up with this email. You already have an account. Sign in: ${loginUrl}\n`
-              : `Alguém tentou se cadastrar com este e-mail. Você já tem conta. Entre em: ${loginUrl}\n`;
+            i18nT(loc, 'ui.signupRoute.someoneTriedToSignUp', { loginUrl });
           enqueueTransactionalMail({
             to: emailClean,
             subject,

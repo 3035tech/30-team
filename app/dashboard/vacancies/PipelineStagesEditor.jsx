@@ -4,7 +4,7 @@ import { SelectField } from '../../_components/SelectField';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, contentLocale } from '../../../lib/i18n';
 import { PIPELINE_STAGE } from '../../../lib/pipeline';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { EmptyState } from '../../_components/EmptyState';
@@ -339,7 +339,7 @@ export function PipelineStagesEditor({ locale, onChange, vacancyId = null, templ
                       <div className="flex cursor-grab items-start gap-2 active:cursor-grabbing">
                         <span className="mt-0.5 select-none font-mono text-sm leading-none text-ink-faint" aria-hidden>⠿</span>
                         <span className="min-w-0 flex-1 font-ui text-sm font-semibold text-ink">
-                          {locale === 'en' ? (s.labelEn || s.labelPt) : (s.labelPt || s.labelEn)}
+                          {contentLocale(locale) === 'en' ? (s.labelEn || s.labelPt) : (s.labelPt || s.labelEn)}
                         </span>
                         <span className="rounded-full bg-ink/[0.07] px-2 py-0.5 font-mono text-2xs text-ink-muted">
                           {s.count || 0}

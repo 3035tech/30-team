@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, contentLocale } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
@@ -845,7 +845,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
         return (Number(Boolean(a.active)) - Number(Boolean(b.active))) * dirMul;
       }
       return (
-        String(a.title || '').localeCompare(String(b.title || ''), locale === 'en' ? 'en' : 'pt-BR') *
+        String(a.title || '').localeCompare(String(b.title || ''), contentLocale(locale)) *
         dirMul
       );
     });

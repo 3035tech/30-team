@@ -3,7 +3,7 @@
 import { SelectField } from './SelectField';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { t } from '../../lib/i18n';
+import { t, t as i18nT } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import {
   S,
@@ -584,7 +584,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
       ) : loadError ? (
         <InlineCallout tone="danger" role="alert">
           <p className="m-0 mb-2">{t(locale, 'panel.okr.loadError')}</p>
-          <button type="button" className={S.btnGhost} onClick={() => void load()}>{locale.startsWith('en') ? 'Try again' : 'Tentar novamente'}</button>
+          <button type="button" className={S.btnGhost} onClick={() => void load()}>{i18nT(locale, 'ui.okrBlock.tryAgain')}</button>
         </InlineCallout>
       ) : (
         <ContentEnter animKey={`okr|${cycles.length}|${activeCycleId || 0}`}>
@@ -641,7 +641,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                   </div>
                 </div>
                 <p className="mb-0 mt-2 text-sm text-ink-muted">
-                  {locale.startsWith('en') ? 'Period: ' : 'Período: '}
+                  {i18nT(locale, 'ui.okrBlock.period')}
                   {formatDisplayDate(cycle.startsOn, locale)}
                   {'–'}
                   {formatDisplayDate(cycle.endsOn, locale)}
@@ -728,7 +728,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                         </p>
                       ) : (
                         <details open className="mt-3">
-                        <summary className="min-h-touch cursor-pointer rounded-control py-2 text-sm font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">{locale.startsWith('en') ? 'Activities' : 'Atividades'} ({area.activities.length})</summary>
+                        <summary className="min-h-touch cursor-pointer rounded-control py-2 text-sm font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">{i18nT(locale, 'ui.okrBlock.activities')} ({area.activities.length})</summary>
                         <ul className="m-0 flex list-none flex-col gap-2 p-0">
                           {(area.activities || []).map((act) => (
                             <li
@@ -803,8 +803,8 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                                       toneClass={meterToneForActivity(act)}
                                     />
                                   </div>
-                                  <p className="mb-1 mt-3 text-sm font-medium text-ink">{locale.startsWith('en') ? 'Responsible people' : 'Responsáveis'}</p>
-                                  {!(act.assignees || []).length ? <p className="m-0 text-sm text-ink-muted">{locale.startsWith('en') ? 'Not assigned yet.' : 'Nenhum responsável definido.'}</p> : null}
+                                  <p className="mb-1 mt-3 text-sm font-medium text-ink">{i18nT(locale, 'ui.okrBlock.responsiblePeople')}</p>
+                                  {!(act.assignees || []).length ? <p className="m-0 text-sm text-ink-muted">{i18nT(locale, 'ui.okrBlock.notAssignedYet')}</p> : null}
                                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                     {(act.assignees || []).map((person) => (
                                       <span

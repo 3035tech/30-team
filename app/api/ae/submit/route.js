@@ -10,6 +10,7 @@ import { formatScoringFailure, summarizeScoringInput } from '../../../../lib/ae/
 import { apiError, ERR } from '../../../../lib/api-error';
 import { notifyCompanyManagers, NOTIF } from '../../../../lib/manager-notifications';
 import { buildManagementHypotheses } from '../../../../lib/people/management-hypotheses';
+import { contentLocale } from '../../../../lib/i18n.js';
 
 /**
  * POST /api/ae/submit
@@ -27,7 +28,7 @@ export async function POST(request) {
     const attemptId = Number(body.attemptId);
     const inviteToken = String(body.inviteToken || '').trim();
     const answers = body.answers;
-    const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+    const locale = contentLocale(body.locale);
 
     if (!Number.isFinite(attemptId) || !Array.isArray(answers) || !inviteToken) {
       return apiError(request, ERR.INVALID_DATA, 400);

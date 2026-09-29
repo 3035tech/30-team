@@ -933,6 +933,14 @@ function DashboardClientContent({
         >
           <SidebarRail
             ariaLabel={t(locale, 'dashboard.sectionsNavAria')}
+            toggle={
+              <SidebarRailButton
+                icon={navCollapsed ? 'expand' : 'collapse'}
+                label={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
+                className="db-sidebar-collapse-toggle"
+                onClick={toggleSidebarCollapsed}
+              />
+            }
             brand={
               <BrandMark
                 size={26}
@@ -968,12 +976,6 @@ function DashboardClientContent({
                   label={t(locale, 'dashboard.logout')}
                   disabled={loggingOut}
                   onClick={() => void logout()}
-                />
-                <SidebarRailButton
-                  icon={navCollapsed ? 'expand' : 'collapse'}
-                  label={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
-                  className="db-sidebar-collapse-toggle"
-                  onClick={toggleSidebarCollapsed}
                 />
               </>
             }

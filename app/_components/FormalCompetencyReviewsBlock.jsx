@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { errorMessage, t } from '../../lib/i18n';
+import { errorMessage, t, t as i18nT } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { formatDisplayDate } from '../../lib/format-display-date';
 import { suggestSelfAssessment } from '../../lib/people/self-assessment-suggestion';
@@ -66,7 +66,7 @@ function cycleStatusTone(status) {
 }
 
 function cycleStatusLabel(locale, status) {
-  if (status === 'scheduled') return locale.startsWith('en') ? 'Scheduled' : 'Agendado';
+  if (status === 'scheduled') return i18nT(locale, 'ui.formalCompetencyReviewsBlock.scheduled');
   if (status === FORMAL_REVIEW_CYCLE_STATUS.OPEN) return tf(locale, 'statusOpen');
   if (status === FORMAL_REVIEW_CYCLE_STATUS.CLOSED) return tf(locale, 'statusClosed');
   return tf(locale, 'statusDraft');
@@ -266,7 +266,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
     if (!draft?.id) draft = null;
     const choices = [...competencies, ...(draft?.questionnaire || []).filter(item => !competencies.some(c => String(c.id) === String(item.competencyId))).map(item => ({ id: item.competencyId, name: item.label, description: item.description, selfDescription: item.selfDescription }))];
     const values = await promptForm({
-      title: draft ? (locale.startsWith('en') ? 'Edit draft' : 'Editar rascunho') : tf(locale, 'createCycle'),
+      title: draft ? (i18nT(locale, 'ui.formalCompetencyReviewsBlock.editDraft')) : tf(locale, 'createCycle'),
       message: choices.length === 0 ? tf(locale, 'catalogEmptyHint') : undefined,
       fields: [
         { name: 'title', label: t(locale, 'performanceReviews.cycleTitle'), type: 'text', required: true, defaultValue: draft?.title || '' },
@@ -292,12 +292,12 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
         { name: 'periodStart', label: t(locale, 'performanceReviews.periodStart'), type: 'date', defaultValue: draft?.periodStart?.slice(0, 10) || '' },
         { name: 'periodEnd', label: t(locale, 'performanceReviews.periodEnd'), type: 'date', defaultValue: draft?.periodEnd?.slice(0, 10) || '' },
         { key: 'competencyIds', label: tf(locale, 'competenciesTitle'), type: 'checkboxGroup', defaultValue: (draft?.questionnaire || []).map(item => String(item.competencyId)), options: choices.map(item => ({ value: String(item.id), label: item.name })) },
-        { key: 'instructions', label: locale.startsWith('en') ? 'Instructions' : 'Instruções', type: 'textarea', maxLength: 4000, defaultValue: draft?.instructions || '' },
-        { key: 'responseScale', label: locale.startsWith('en') ? 'Response scale' : 'Escala de resposta', type: 'select', defaultValue: draft?.responseScale || 'agreement', options: [
-          { value: 'agreement', label: locale.startsWith('en') ? '1–5: strongly disagree → strongly agree' : '1–5: discordo totalmente → concordo totalmente' },
-          { value: 'frequency', label: locale.startsWith('en') ? '1–5: never → always' : '1–5: nunca → sempre' },
+        { key: 'instructions', label: i18nT(locale, 'ui.formalCompetencyReviewsBlock.instructions'), type: 'textarea', maxLength: 4000, defaultValue: draft?.instructions || '' },
+        { key: 'responseScale', label: i18nT(locale, 'ui.formalCompetencyReviewsBlock.responseScale'), type: 'select', defaultValue: draft?.responseScale || 'agreement', options: [
+          { value: 'agreement', label: i18nT(locale, 'ui.formalCompetencyReviewsBlock.n15StronglyDisagreeStrongly') },
+          { value: 'frequency', label: i18nT(locale, 'ui.formalCompetencyReviewsBlock.n15NeverAlways') },
         ] },
-        { key: 'openQuestionsText', label: locale.startsWith('en') ? 'Optional open questions (one per line, up to 10)' : 'Perguntas dissertativas opcionais (uma por linha, até 10)', type: 'textarea', defaultValue: (draft?.openQuestions || []).map(q => q.prompt).join('\n'), maxLength: 10000 },
+        { key: 'openQuestionsText', label: i18nT(locale, 'ui.formalCompetencyReviewsBlock.optionalOpenQuestionsOnePer'), type: 'textarea', defaultValue: (draft?.openQuestions || []).map(q => q.prompt).join('\n'), maxLength: 10000 },
       ],
     });
     if (!values) return;
@@ -312,15 +312,15 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
       });
       if (values.includeSelf && questionnaire.length) {
         const wording = await promptForm({
-          title: locale.startsWith('en') ? 'Review self-assessment wording' : 'Revisar textos da autoavaliação',
+          title: i18nT(locale, 'ui.formalCompetencyReviewsBlock.reviewSelfAssessmentWording'),
           fields: [...questionnaire.map(item => {
             const catalog = choices.find(c => Number(c.id) === item.competencyId);
             return { key: `self_${item.competencyId}`, label: catalog?.name || String(item.competencyId), type: 'textarea', required: true, maxLength: 4000, defaultValue: item.selfDescription || suggestSelfAssessment(catalog?.description, catalog?.name, locale),
               help: catalog?.description || '' };
-          }), { key: 'reviewed', type: 'boolean', defaultValue: false, label: locale.startsWith('en') ? 'I reviewed the wording and confirm its meaning matches the original competencies.' : 'Revisei os textos e confirmo que preservam o significado das competências originais.' }],
+          }), { key: 'reviewed', type: 'boolean', defaultValue: false, label: i18nT(locale, 'ui.formalCompetencyReviewsBlock.iReviewedTheWordingAnd') }],
         });
         if (!wording) return;
-        if (!wording.reviewed) { toast(locale.startsWith('en') ? 'Review and confirm the wording before saving.' : 'Revise e confirme os textos antes de salvar.', 'error'); return; }
+        if (!wording.reviewed) { toast(i18nT(locale, 'ui.formalCompetencyReviewsBlock.reviewAndConfirmTheWording'), 'error'); return; }
         questionnaire = questionnaire.map(item => ({ ...item, selfDescription: wording[`self_${item.competencyId}`] }));
       }
     }
@@ -334,7 +334,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(apiToastError(locale, json, 'saveError'));
-      toast(draft ? (locale.startsWith('en') ? 'Draft updated.' : 'Rascunho atualizado.') : tf(locale, 'cycleCreated'), 'ok');
+      toast(draft ? (i18nT(locale, 'ui.formalCompetencyReviewsBlock.draftUpdated')) : tf(locale, 'cycleCreated'), 'ok');
       await loadCatalogAndCycles();
       if (draft) { setSelectedCycle(json.cycle); await loadReviews(draft.id); }
     } catch (err) {
@@ -378,14 +378,14 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
         const response = await fetch(`/api/admin/formal-reviews/${review.id}${companyQs()}`);
         const data = await response.json();
         if (!response.ok) throw new Error(apiToastError(locale, data, 'loadError'));
-        const r = data.review, manager = r.managerName || (locale.startsWith('en') ? 'MISSING MANAGER' : 'GESTOR NÃO DEFINIDO');
+        const r = data.review, manager = r.managerName || (i18nT(locale, 'ui.formalCompetencyReviewsBlock.missingManager'));
         const rows = [`${manager} → ${r.subjectName}`];
         if (r.model !== '90') rows.push(`${r.subjectName} → ${manager}`);
         if (r.includeSelf) rows.push(`${r.subjectName} → ${r.subjectName}`);
         if (r.model === '360') rows.push(`${r.raters.find(item => item.role === 'external')?.externalName || '—'} → ${r.subjectName}`);
         return rows.join('; ');
       }));
-      if (!await confirm({ title: locale.startsWith('en') ? 'Confirm respondents and publish cycle?' : 'Confirmar respondentes e publicar ciclo?', message: matrix.join('\n') })) return;
+      if (!await confirm({ title: i18nT(locale, 'ui.formalCompetencyReviewsBlock.confirmRespondentsAndPublishCycle'), message: matrix.join('\n') })) return;
       const response = await fetch(`/api/admin/formal-review-cycles/${selectedCycle.id}/publish`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(withCompany({})) });
       const data = await response.json();
       if (!response.ok) throw new Error(apiToastError(locale, data, 'saveError'));
@@ -594,19 +594,19 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
 
           {selectedReview.status === FORMAL_REVIEW_STATUS.DRAFT && selectedReview.cycleStatus !== 'closed' ? (
             <section className={S.stack}>
-            <h3 className={S.cardSection}>{locale.startsWith('en') ? 'Who reviews whom' : 'Quem avalia quem'}</h3>
+            <h3 className={S.cardSection}>{i18nT(locale, 'ui.formalCompetencyReviewsBlock.whoReviewsWhom')}</h3>
             <ul className="m-0 list-disc pl-5 text-sm">
-              <li>{selectedReview.managerName || (locale.startsWith('en') ? 'Manager not assigned' : 'Gestor não definido')} → {selectedReview.subjectName}</li>
-              {selectedReview.model !== '90' ? <li>{selectedReview.subjectName} → {selectedReview.managerName || (locale.startsWith('en') ? 'Manager not assigned' : 'Gestor não definido')}</li> : null}
+              <li>{selectedReview.managerName || (i18nT(locale, 'ui.formalCompetencyReviewsBlock.managerNotAssigned'))} → {selectedReview.subjectName}</li>
+              {selectedReview.model !== '90' ? <li>{selectedReview.subjectName} → {selectedReview.managerName || (i18nT(locale, 'ui.formalCompetencyReviewsBlock.managerNotAssigned'))}</li> : null}
               {selectedReview.model === '360' ? <li>{selectedReview.raters?.find(r => r.role === FORMAL_RATER_ROLE.EXTERNAL)?.externalName || '—'} → {selectedReview.subjectName}</li> : null}
               {selectedReview.includeSelf ? <li>{selectedReview.subjectName} → {selectedReview.subjectName} ({tf(locale, 'roleSelf')})</li> : null}
             </ul>
-            {selectedReview.includeSelf && selectedReview.items?.some(item => !item.selfDescription?.trim()) ? <p role="alert">{locale.startsWith('en') ? 'Return to the cycle and edit the draft to review first-person wording before publishing.' : 'Volte ao ciclo e edite o rascunho para revisar os textos em primeira pessoa antes de publicar.'}</p> : null}
+            {selectedReview.includeSelf && selectedReview.items?.some(item => !item.selfDescription?.trim()) ? <p role="alert">{i18nT(locale, 'ui.formalCompetencyReviewsBlock.returnToTheCycleAnd')}</p> : null}
             <button
               type="button"
               className={S.btnPrimary}
               disabled={busy || !(selectedReview.items || []).length}
-              onClick={async () => { if (await confirm({ title: tf(locale, 'openCollect'), message: locale.startsWith('en') ? 'Confirm the respondent matrix and publish this questionnaire?' : 'Confirmar a matriz de respondentes e publicar este questionário?' })) await postAction('open', 'opened'); }}
+              onClick={async () => { if (await confirm({ title: tf(locale, 'openCollect'), message: i18nT(locale, 'ui.formalCompetencyReviewsBlock.confirmTheRespondentMatrixAnd') })) await postAction('open', 'opened'); }}
             >
               {tf(locale, 'openCollect')}
             </button>
@@ -753,8 +753,8 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
                 <StatusToneChip tone={cycleStatusTone(selectedCycle.status)}>
                   {cycleStatusLabel(locale, selectedCycle.displayStatus || selectedCycle.status)}
                 </StatusToneChip>
-                {selectedCycle.status === FORMAL_REVIEW_CYCLE_STATUS.DRAFT ? <button type="button" className={S.btnGhost} disabled={busy} onClick={() => createCycle(selectedCycle)}>{locale.startsWith('en') ? 'Edit draft' : 'Editar rascunho'}</button> : null}
-                {selectedCycle.status === FORMAL_REVIEW_CYCLE_STATUS.DRAFT ? <button type="button" className={S.btnPrimary} disabled={busy || !reviews.length || !selectedCycle.questionnaire?.length} onClick={publishCycle}>{locale.startsWith('en') ? 'Publish cycle' : 'Publicar ciclo'}</button> : null}
+                {selectedCycle.status === FORMAL_REVIEW_CYCLE_STATUS.DRAFT ? <button type="button" className={S.btnGhost} disabled={busy} onClick={() => createCycle(selectedCycle)}>{i18nT(locale, 'ui.formalCompetencyReviewsBlock.editDraft')}</button> : null}
+                {selectedCycle.status === FORMAL_REVIEW_CYCLE_STATUS.DRAFT ? <button type="button" className={S.btnPrimary} disabled={busy || !reviews.length || !selectedCycle.questionnaire?.length} onClick={publishCycle}>{i18nT(locale, 'ui.formalCompetencyReviewsBlock.publishCycle')}</button> : null}
                 {selectedCycle.status !== FORMAL_REVIEW_CYCLE_STATUS.CLOSED ? (
                   <AdminCreateButton variant="secondary" label={tf(locale, 'addPerson')} onClick={addPerson} disabled={busy} />
                 ) : null}
@@ -764,28 +764,28 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
           {selectedCycle.includeSelf ? (
             <InlineCallout tone="info">{tf(locale, 'includeSelfHint')}</InlineCallout>
           ) : null}
-          <section className={`${S.card} ${S.stack}`} aria-label={locale.startsWith('en') ? 'Cycle configuration' : 'Configuração do ciclo'}>
-            <h3 className={`m-0 ${S.cardTitle}`}>{locale.startsWith('en') ? 'Cycle configuration' : 'Configuração do ciclo'}</h3>
+          <section className={`${S.card} ${S.stack}`} aria-label={i18nT(locale, 'ui.formalCompetencyReviewsBlock.cycleConfiguration')}>
+            <h3 className={`m-0 ${S.cardTitle}`}>{i18nT(locale, 'ui.formalCompetencyReviewsBlock.cycleConfiguration')}</h3>
             <dl className="m-0 grid gap-4 sm:grid-cols-2">
               <div>
-                <dt className={S.cardMuted}>{locale.startsWith('en') ? 'Review period' : 'Período de avaliação'}</dt>
+                <dt className={S.cardMuted}>{i18nT(locale, 'ui.formalCompetencyReviewsBlock.reviewPeriod')}</dt>
                 <dd className={`m-0 mt-1 ${S.cardBody}`}>{formatDisplayDate(selectedCycle.periodStart, locale)} — {formatDisplayDate(selectedCycle.periodEnd, locale)}</dd>
               </div>
               <div>
-                <dt className={S.cardMuted}>{locale.startsWith('en') ? 'Response scale' : 'Escala de resposta'}</dt>
-                <dd className={`m-0 mt-1 ${S.cardBody}`}>{selectedCycle.responseScale === 'frequency' ? (locale.startsWith('en') ? '1 Never — 5 Always' : '1 Nunca — 5 Sempre') : (locale.startsWith('en') ? '1 Strongly disagree — 5 Strongly agree' : '1 Discordo totalmente — 5 Concordo totalmente')}</dd>
+                <dt className={S.cardMuted}>{i18nT(locale, 'ui.formalCompetencyReviewsBlock.responseScale')}</dt>
+                <dd className={`m-0 mt-1 ${S.cardBody}`}>{selectedCycle.responseScale === 'frequency' ? (i18nT(locale, 'ui.formalCompetencyReviewsBlock.n1Never5Always')) : (i18nT(locale, 'ui.formalCompetencyReviewsBlock.n1StronglyDisagree5Strongly'))}</dd>
               </div>
             </dl>
             {selectedCycle.instructions ? <div>
-              <h4 className={`m-0 ${S.cardTitle}`}>{locale.startsWith('en') ? 'Instructions' : 'Instruções'}</h4>
+              <h4 className={`m-0 ${S.cardTitle}`}>{i18nT(locale, 'ui.formalCompetencyReviewsBlock.instructions')}</h4>
               <p className={`mb-0 mt-1 whitespace-pre-wrap break-words ${S.muted}`}>{selectedCycle.instructions}</p>
             </div> : null}
             <div>
-              <h4 className={`m-0 ${S.cardTitle}`}>{locale.startsWith('en') ? 'Competencies' : 'Competências'} ({selectedCycle.questionnaire?.length || 0})</h4>
-              {selectedCycle.questionnaire?.length ? <ul className={`mb-0 mt-2 list-disc space-y-1 pl-5 ${S.cardBody}`}>{selectedCycle.questionnaire.map(item => <li className="break-words" key={item.competencyId}>{item.label}</li>)}</ul> : <p className={`mb-0 mt-1 ${S.muted}`}>{locale.startsWith('en') ? 'No competencies selected.' : 'Nenhuma competência selecionada.'}</p>}
+              <h4 className={`m-0 ${S.cardTitle}`}>{i18nT(locale, 'ui.formalCompetencyReviewsBlock.competencies')} ({selectedCycle.questionnaire?.length || 0})</h4>
+              {selectedCycle.questionnaire?.length ? <ul className={`mb-0 mt-2 list-disc space-y-1 pl-5 ${S.cardBody}`}>{selectedCycle.questionnaire.map(item => <li className="break-words" key={item.competencyId}>{item.label}</li>)}</ul> : <p className={`mb-0 mt-1 ${S.muted}`}>{i18nT(locale, 'ui.formalCompetencyReviewsBlock.noCompetenciesSelected')}</p>}
             </div>
             {selectedCycle.openQuestions?.length ? <div>
-              <h4 className={`m-0 ${S.cardTitle}`}>{locale.startsWith('en') ? 'Open-ended questions' : 'Perguntas abertas'}</h4>
+              <h4 className={`m-0 ${S.cardTitle}`}>{i18nT(locale, 'ui.formalCompetencyReviewsBlock.openEndedQuestions')}</h4>
               <ol className={`mb-0 mt-2 list-decimal space-y-2 pl-5 ${S.cardBody}`}>{selectedCycle.openQuestions.map(question => <li className="whitespace-pre-wrap break-words" key={question.id}>{question.prompt}</li>)}</ol>
             </div> : null}
           </section>
@@ -808,7 +808,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
                       <StatusToneChip tone={reviewStatusTone(r.status)}>
                         {reviewStatusLabel(locale, r.status)}
                       </StatusToneChip>
-                      <p className="m-0 mt-1 text-prose text-ink-muted">{r.submittedCount || 0}/{r.responseCount || 0} {locale.startsWith('en') ? 'responses completed' : 'respostas concluídas'}</p>
+                      <p className="m-0 mt-1 text-prose text-ink-muted">{r.submittedCount || 0}/{r.responseCount || 0} {i18nT(locale, 'ui.formalCompetencyReviewsBlock.responsesCompleted')}</p>
                     </td>
                     <td className="px-3 py-2">
                       <AdminActionsCell>

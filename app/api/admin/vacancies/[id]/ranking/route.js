@@ -7,6 +7,7 @@ import {
   requireCapability,
 } from '../../../../../../lib/ae/require-admin.js';
 import { getVacancyRanking } from '../../../../../../lib/vacancy-ranking.js';
+import { contentLocale } from '../../../../../../lib/i18n.js';
 
 /** GET /api/admin/vacancies/[id]/ranking — fit ranking for vacancy pipeline. */
 export async function GET(request, props) {
@@ -22,7 +23,7 @@ export async function GET(request, props) {
 
     const url = new URL(request.url);
     const qLocale = url.searchParams.get('locale');
-    const locale = qLocale === 'en' || qLocale === 'pt-BR' ? qLocale : 'pt-BR';
+    const locale = contentLocale(qLocale);
 
     const result = await getVacancyRanking({
       vacancyId,

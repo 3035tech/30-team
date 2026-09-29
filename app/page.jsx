@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { LOCALE_COOKIE, normalizeLocale } from '../lib/i18n';
+import { LOCALE_COOKIE, LOCALES, normalizeLocale } from '../lib/i18n';
 import {
   buildProductLandingJsonLd,
   buildProductLandingMetadata,
@@ -16,13 +16,7 @@ export async function generateMetadata() {
 
 export default async function HomePage() {
   const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
-  const copyByLocale = {
-    'pt-BR': getProductLandingCopy('pt-BR'),
-    'pt-PT': getProductLandingCopy('pt-PT'),
-    en: getProductLandingCopy('en'),
-    'es-419': getProductLandingCopy('es-419'),
-    'es-ES': getProductLandingCopy('es-ES'),
-  };
+  const copyByLocale = Object.fromEntries(LOCALES.map((loc) => [loc, getProductLandingCopy(loc)]));
   const jsonLd = buildProductLandingJsonLd(locale);
 
   return (

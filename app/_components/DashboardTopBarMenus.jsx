@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { t } from '../../lib/i18n';
+import { t, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { redirectManagerIfUnauthorized } from '../../lib/manager-client-session';
 import { notificationCopySpec, notificationVisual, NOTIF } from '../../lib/manager-notification-catalog';
@@ -16,7 +16,7 @@ import { ProfileMenuTrigger, profileMenuPanelClass, profileMenuItemClass } from 
 function formatWhen(iso, locale) {
   if (!iso) return '';
   try {
-    return new Date(iso).toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR', {
+    return new Date(iso).toLocaleString(localeHtmlLang(locale), {
       day: '2-digit',
       month: 'short',
       hour: '2-digit',

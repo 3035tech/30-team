@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from 'recharts';
-import { t } from '../../lib/i18n';
+import { t, t as i18nT } from '../../lib/i18n';
 import { LOGO } from '../../lib/brand';
 import { C } from '../../lib/theme';
 import { cn } from '../../lib/cn';
@@ -219,8 +219,8 @@ export function MotivatorsRadarChart({
       </div>
 
       {showPeaks && peaks.length > 0 ? (
-        <section className="mt-4" aria-label={locale.startsWith('en') ? 'Main motivators' : 'Principais motivadores'}>
-          <h4 className={`m-0 mb-2 ${S.cardTitle}`}>{locale.startsWith('en') ? 'Main motivators' : 'Principais motivadores'}</h4>
+        <section className="mt-4" aria-label={i18nT(locale, 'ui.motivatorsRadarChart.mainMotivators')}>
+          <h4 className={`m-0 mb-2 ${S.cardTitle}`}>{i18nT(locale, 'ui.motivatorsRadarChart.mainMotivators')}</h4>
           <ol className="m-0 list-none divide-y divide-ink/10 p-0">
             {peaks.map((d) => (
               <li key={d.key} className="py-3 first:pt-0">
@@ -233,8 +233,8 @@ export function MotivatorsRadarChart({
             ))}
           </ol>
           <details className="text-prose text-ink-muted">
-            <summary className="min-h-touch cursor-pointer rounded-control py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">{locale.startsWith('en') ? 'About this ranking' : 'Sobre esta ordem'}</summary>
-            <p className="mt-0">{locale.startsWith('en') ? 'Up to five positive scores, highest first. Ties follow alphabetical order of the motivator identifiers in Portuguese. These are prompts for conversation, not fixed labels.' : 'Até cinco pontuações positivas, da maior para a menor. Empates seguem a ordem alfabética dos identificadores dos motivadores em português. Use como ponto de partida para uma conversa, não como rótulo fixo.'}</p>
+            <summary className="min-h-touch cursor-pointer rounded-control py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">{i18nT(locale, 'ui.motivatorsRadarChart.aboutThisRanking')}</summary>
+            <p className="mt-0">{i18nT(locale, 'ui.motivatorsRadarChart.upToFivePositiveScores')}</p>
           </details>
         </section>
       ) : null}

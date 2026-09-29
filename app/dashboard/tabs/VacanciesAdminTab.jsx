@@ -5,7 +5,7 @@ import { SelectField } from '../../_components/SelectField';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, t as i18nT, localeHtmlLang, contentLocale } from '../../../lib/i18n';
 import {
   PAGE_SIZE_OPTIONS,
   parseVacanciesPagination,
@@ -101,8 +101,8 @@ function getVacancyLinkState(expiresAt, locale) {
     date: Number.isFinite(timestamp) ? date : null,
     expired,
     label: expired
-      ? (locale === 'en' ? 'Expired' : 'Expirado')
-      : (locale === 'en' ? 'Active' : 'Ativo'),
+      ? (i18nT(locale, 'ui.vacanciesAdminTab.expired'))
+      : (i18nT(locale, 'ui.vacanciesAdminTab.active')),
   };
 }
 
@@ -901,7 +901,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   {selectedTemplate.stages.map((stage, index) => (
                     <span key={stage.id || stage.stageKey} className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-canvas px-2 py-1 font-ui text-prose text-ink-muted">
                       <span className="font-ui text-prose text-ink/75">{index + 1}</span>
-                      {locale === 'en' ? (stage.labelEn || stage.labelPt) : (stage.labelPt || stage.labelEn)}
+                      {contentLocale(locale) === 'en' ? (stage.labelEn || stage.labelPt) : (stage.labelPt || stage.labelEn)}
                     </span>
                   ))}
                 </div>
@@ -1069,9 +1069,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         title={t(locale, 'recruiting.editVacancyDrawerTitle')}
         locale={locale}
         fullPage={Boolean(editingVacancy)}
-        backLabel={locale === 'en' ? 'Back to vacancies' : 'Voltar para vagas'}
-        closeLabel={locale === 'en' ? 'Close vacancy editor' : 'Fechar editor da vaga'}
-        eyebrow={locale === 'en' ? 'Recruitment / Vacancies' : 'Recrutamento / Vagas'}
+        backLabel={i18nT(locale, 'ui.vacanciesAdminTab.backToVacancies')}
+        closeLabel={i18nT(locale, 'ui.vacanciesAdminTab.closeVacancyEditor')}
+        eyebrow={i18nT(locale, 'ui.vacanciesAdminTab.recruitmentVacancies')}
         onClose={() => void closeVacancyEditor()}
         footer={(
           <>
@@ -1204,7 +1204,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     ))}
                   </SelectField>
                 </FormField>
-                <FormField label={locale === 'en' ? 'Minimum salary' : 'Salário mínimo'}>
+                <FormField label={i18nT(locale, 'ui.vacanciesAdminTab.minimumSalary')}>
                   <input
                     value={formatSalaryBr(editingVacancy.salaryMin)}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMin: digitsOnly(e.target.value).slice(0, 15) }))}
@@ -1214,7 +1214,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     className={cn(FIELD, 'px-2.5 py-2 text-prose')}
                   />
                 </FormField>
-                <FormField label={locale === 'en' ? 'Maximum salary' : 'Salário máximo'}>
+                <FormField label={i18nT(locale, 'ui.vacanciesAdminTab.maximumSalary')}>
                   <input
                     value={formatSalaryBr(editingVacancy.salaryMax)}
                     onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMax: digitsOnly(e.target.value).slice(0, 15) }))}
@@ -1352,7 +1352,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-2.5">
                     <h2 className="m-0 text-xl font-bold text-ink">{v.title}</h2>
-                    <span className="font-ui text-prose text-ink/75">{locale === 'en' ? 'Vacancy' : 'Vaga'}:</span>
+                    <span className="font-ui text-prose text-ink/75">{i18nT(locale, 'ui.vacanciesAdminTab.vacancy')}:</span>
                     <span
                       className={cn(
                         'rounded-full border px-2 py-0.5 font-ui text-prose',
@@ -1372,13 +1372,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                   <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
                     {v.positionsCount != null && v.positionsCount > 0 && (
                       <VacancyMetaItem
-                        label={locale === 'en' ? 'Openings' : 'Vagas'}
+                        label={i18nT(locale, 'ui.vacanciesAdminTab.openings')}
                         value={t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
                       />
                     )}
                     {v.targetDate && formatPublicVacancyDate(v.targetDate, locale) ? (
                       <VacancyMetaItem
-                        label={locale === 'en' ? 'Deadline' : 'Prazo'}
+                        label={i18nT(locale, 'ui.vacanciesAdminTab.deadline')}
                         value={t(locale, 'recruiting.targetDate', {
                           date: formatPublicVacancyDate(v.targetDate, locale),
                         })}
@@ -1386,18 +1386,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     ) : null}
                     {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
                       <VacancyMetaItem
-                        label={locale === 'en' ? 'Salary range' : 'Faixa salarial'}
+                        label={i18nT(locale, 'ui.vacanciesAdminTab.salaryRange')}
                         value={formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
                       />
                     ) : null}
                     <VacancyMetaItem
-                      label={locale === 'en' ? 'Owner' : 'Responsável'}
-                      value={v.ownerName || (locale === 'en' ? 'Not assigned' : 'Não definido')}
+                      label={i18nT(locale, 'ui.vacanciesAdminTab.owner')}
+                      value={v.ownerName || (i18nT(locale, 'ui.vacanciesAdminTab.notAssigned'))}
                       warning={!v.ownerName}
                     />
                     {employmentTypeLabelKey(v.employmentType) ? (
                       <VacancyMetaItem
-                        label={locale === 'en' ? 'Employment' : 'Contratação'}
+                        label={i18nT(locale, 'ui.vacanciesAdminTab.employment')}
                         value={t(locale, employmentTypeLabelKey(v.employmentType))}
                       />
                     ) : null}
@@ -1411,7 +1411,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       t
                     ) ? (
                       <VacancyMetaItem
-                        label={locale === 'en' ? 'Workplace' : 'Local de trabalho'}
+                        label={i18nT(locale, 'ui.vacanciesAdminTab.workplace')}
                         value={formatWorkplaceLabel(
                           {
                             workplaceModality: v.workplaceModality,
@@ -1537,7 +1537,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                           className={cn(BTN_GHOST, loading && 'opacity-60')}
                             >
                               {linkState.expired
-                                ? (locale === 'en' ? 'Renew link' : 'Renovar link')
+                                ? (i18nT(locale, 'ui.vacanciesAdminTab.renewLink'))
                                 : t(locale, 'recruiting.rotateLink')}
                         </button>
                         <button
@@ -1563,25 +1563,21 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       {exp ? (
                         <span className={cn(META_FAINT, 'mt-2 block', linkState.expired && 'text-amber-800 dark:text-warning')}>
                           {linkState.expired
-                            ? (locale === 'en' ? `Expired on ${exp.toLocaleString('en-US')}` : `Expirou em ${exp.toLocaleString('pt-BR')}`)
+                            ? i18nT(locale, 'ui.vacanciesAdminTab.expiredOn', { when: exp.toLocaleString(localeHtmlLang(locale)) })
                             : t(locale, 'recruiting.expiresAt', {
-                                when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
+                                when: exp.toLocaleString(localeHtmlLang(locale)),
                               })}
                         </span>
                       ) : null}
                       <p className="m-0 mt-2 font-ui text-prose text-ink/75">
-                        {locale === 'en'
-                          ? 'Vacancy status describes recruiting; this link has its own expiry.'
-                          : 'A situação da vaga descreve o recrutamento; este link tem validade própria.'}
+                        {i18nT(locale, 'ui.vacanciesAdminTab.vacancyStatusDescribesRecruitingThis')}
                       </p>
                     </>
                   ) : (
                     <div>
                       <span className={META_FAINT}>{t(locale, 'recruiting.noActiveLink')}</span>
                       <p className="m-0 mt-2 font-ui text-prose text-ink/75">
-                        {locale === 'en'
-                          ? 'Vacancy status describes recruiting; this link has its own expiry.'
-                          : 'A situação da vaga descreve o recrutamento; este link tem validade própria.'}
+                        {i18nT(locale, 'ui.vacanciesAdminTab.vacancyStatusDescribesRecruitingThis')}
                       </p>
                     </div>
                   )}
@@ -1635,7 +1631,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-3">
                       <span className={cn(META_FAINT, 'block flex-1')}>{t(locale, 'recruiting.publicPageLinkDisabledHint')}</span>
                       <button type="button" onClick={() => editVacancy(v)} disabled={loading} className={BTN_BRAND_SOFT}>
-                        {locale === 'en' ? 'Activate page' : 'Ativar página'}
+                        {i18nT(locale, 'ui.vacanciesAdminTab.activatePage')}
                       </button>
                     </div>
                   ) : null}
@@ -1683,12 +1679,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 <div className="space-y-4">
                   <div className="rounded-control border border-brand-500/20 bg-brand-500/[0.045] px-4 py-3">
                     <h3 className="m-0 font-ui text-sm font-semibold text-ink">
-                      {locale === 'en' ? 'Candidate intake' : 'Entrada de candidatos'}
+                      {i18nT(locale, 'ui.vacanciesAdminTab.candidateIntake')}
                     </h3>
                     <p className="mb-0 mt-1 text-prose leading-[1.5] text-ink-muted">
-                      {locale === 'en'
-                        ? 'Register interview details first, then send assessments and follow invitations below.'
-                        : 'Cadastre os dados da entrevista primeiro. Depois envie avaliações e acompanhe os convites abaixo.'}
+                      {i18nT(locale, 'ui.vacanciesAdminTab.registerInterviewDetailsFirstThen')}
                     </p>
                   </div>
                   <VacancyInterviewCandidates
@@ -1716,13 +1710,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     </section>
                     <section className="flex flex-col">
                       <h3 className="mb-2 font-ui text-sm font-semibold text-ink">
-                        {locale === 'en' ? 'Next step' : 'Próximo passo'}
+                        {i18nT(locale, 'ui.vacanciesAdminTab.nextStep')}
                       </h3>
                       <div className="flex-1 rounded-control border border-ink/10 bg-ink/[0.02] p-4">
                         <p className="m-0 text-prose leading-[1.55] text-ink-muted">
-                          {locale === 'en'
-                            ? 'Use the pipeline tab to move candidates through the hiring stages and compare fit when results arrive.'
-                            : 'Use a aba Pipeline para mover candidatos pelas etapas e comparar aderência quando os resultados chegarem.'}
+                          {i18nT(locale, 'ui.vacanciesAdminTab.useThePipelineTabTo')}
                         </p>
                       </div>
                     </section>
@@ -1987,7 +1979,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-ink">
                       <span className="font-mono text-prose text-ink/75">#{v.id}</span>
                       <strong className="font-medium">{v.title}</strong>
-                      <span className="font-ui text-prose text-ink/75">{locale === 'en' ? 'Vacancy:' : 'Vaga:'}</span>
+                      <span className="font-ui text-prose text-ink/75">{i18nT(locale, 'ui.vacanciesAdminTab.vacancy2')}</span>
                       <span
                         className={cn(
                           'rounded-lg border px-2 py-0.5 font-ui text-prose',
@@ -2008,13 +2000,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
                       {v.positionsCount != null && v.positionsCount > 0 ? (
                         <VacancyMetaItem
-                          label={locale === 'en' ? 'Openings' : 'Vagas'}
+                          label={i18nT(locale, 'ui.vacanciesAdminTab.openings')}
                           value={t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
                         />
                       ) : null}
                       {v.targetDate && formatPublicVacancyDate(v.targetDate, locale) ? (
                         <VacancyMetaItem
-                          label={locale === 'en' ? 'Deadline' : 'Prazo'}
+                          label={i18nT(locale, 'ui.vacanciesAdminTab.deadline')}
                           value={t(locale, 'recruiting.targetDate', {
                             date: formatPublicVacancyDate(v.targetDate, locale),
                           })}
@@ -2022,13 +2014,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                       ) : null}
                       {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
                         <VacancyMetaItem
-                          label={locale === 'en' ? 'Salary range' : 'Faixa salarial'}
+                          label={i18nT(locale, 'ui.vacanciesAdminTab.salaryRange')}
                           value={formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
                         />
                       ) : null}
                       <VacancyMetaItem
-                        label={locale === 'en' ? 'Owner' : 'Responsável'}
-                        value={v.ownerName || (locale === 'en' ? 'Not assigned' : 'Não definido')}
+                        label={i18nT(locale, 'ui.vacanciesAdminTab.owner')}
+                        value={v.ownerName || (i18nT(locale, 'ui.vacanciesAdminTab.notAssigned'))}
                         warning={!v.ownerName}
                       />
                     </div>
@@ -2036,7 +2028,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     {token ? (
                       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-3">
                         <span className="font-ui text-prose text-ink-muted">
-                          {locale === 'en' ? 'Candidate link · availability:' : 'Link para candidatos · disponibilidade:'}
+                          {i18nT(locale, 'ui.vacanciesAdminTab.candidateLinkAvailability')}
                         </span>
                         <span className={cn(
                           'rounded-full border px-2 py-0.5 font-ui text-prose',
@@ -2057,9 +2049,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                         {exp ? (
                           <span className={cn('font-ui text-prose text-ink/75', linkState.expired && 'text-amber-800 dark:text-warning')}>
                             {linkState.expired
-                              ? (locale === 'en' ? `Expired on ${exp.toLocaleString('en-US')}` : `Expirou em ${exp.toLocaleString('pt-BR')}`)
+                              ? i18nT(locale, 'ui.vacanciesAdminTab.expiredOn', { when: exp.toLocaleString(localeHtmlLang(locale)) })
                               : t(locale, 'recruiting.expiresAt', {
-                                  when: exp.toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
+                                  when: exp.toLocaleString(localeHtmlLang(locale)),
                                 })}
                           </span>
                         ) : null}
@@ -2070,29 +2062,23 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                             disabled={loading}
                             className={cn(BTN_BRAND_SOFT, 'ml-auto', loading && 'opacity-60')}
                           >
-                            {locale === 'en' ? 'Renew link' : 'Renovar link'}
+                            {i18nT(locale, 'ui.vacanciesAdminTab.renewLink')}
                           </button>
                         ) : null}
                         {linkState.expired && v.status === VACANCY_STATUS.OPEN ? (
                           <p className="basis-full m-0 rounded-control border border-warning/25 bg-warning/[0.06] px-3 py-2 text-prose text-amber-800 dark:text-warning" role="status">
-                            {locale === 'en'
-                              ? 'This vacancy is open, but its candidate link has expired. Renew the link to receive applications through it again.'
-                              : 'Esta vaga está aberta, mas o link para candidatos expirou. Renove-o para voltar a receber candidaturas por este link.'}
+                            {i18nT(locale, 'ui.vacanciesAdminTab.thisVacancyIsOpenBut')}
                           </p>
                         ) : null}
                         <span className="basis-full font-ui text-prose text-ink/75">
-                          {locale === 'en'
-                            ? 'Open/closed describes recruiting; active/expired describes this link’s validity.'
-                            : 'Aberta/fechada descreve o recrutamento; ativo/expirado indica a validade deste link.'}
+                          {i18nT(locale, 'ui.vacanciesAdminTab.openClosedDescribesRecruitingActive')}
                         </span>
                       </div>
                     ) : (
                       <div className="mt-3 border-t border-ink/8 pt-3 font-ui text-prose text-ink/75">
                         {t(locale, 'recruiting.noActiveLink')}
                         <span className="ml-1">
-                          {locale === 'en'
-                            ? '(separate from recruiting status)'
-                            : '(separado da situação do recrutamento)'}
+                          {i18nT(locale, 'ui.vacanciesAdminTab.separateFromRecruitingStatus')}
                         </span>
                       </div>
                     )}

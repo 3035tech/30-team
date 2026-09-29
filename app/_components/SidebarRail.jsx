@@ -10,10 +10,12 @@ import { IconActionTip } from './IconActionTip';
  * The light panel next to it lists the pages of the selected section.
  * Colors come from the `.db-rail` contrast context in globals.css.
  */
-export function SidebarRail({ brand, children, footer, ariaLabel }) {
+export function SidebarRail({ brand, toggle, children, footer, ariaLabel }) {
   return (
     <div className="db-rail flex w-16 flex-shrink-0 flex-col items-center gap-1.5 px-2 pb-4 pt-4">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center">{brand}</div>
+      <div className="flex h-10 w-10 items-center justify-center">{brand}</div>
+      {toggle}
+      <div className="mx-auto my-1.5 h-px w-8 bg-ink/15" aria-hidden />
       <nav aria-label={ariaLabel} className="flex min-h-0 flex-1 flex-col items-center gap-1.5 overflow-y-auto">
         {children}
       </nav>

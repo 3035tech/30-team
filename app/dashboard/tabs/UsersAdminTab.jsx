@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, localeHtmlLang } from '../../../lib/i18n';
 import { parseUsersPagination, parseUsersSort } from '../../../lib/assessment-filters';
 import { ASSIGNABLE_MODULE_CAPS, ASSIGNABLE_MODULE_I18N } from '../../../lib/permissions';
 import { clientSortNextDir, S, SortableTh, AdminListPager, AdminListSearch, AdminTableShell, AdminTh, AdminCreateButton, AdminEditButton, AdminDeleteButton, AdminActionsCell, AdminActionsTh, AdminViewButton, AdminIconButton, AdminPageHeader } from '../dashboard-shared';
@@ -44,7 +44,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
   const { promptForm, notice } = useAppFeedback();
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
-  const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
+  const dateLocale = localeHtmlLang(locale);
 
   const sp = useMemo(() => Object.fromEntries(urlParams.entries()), [spKey]);
   const { page: usersPage, pageSize: usersPageSize } = parseUsersPagination(sp);

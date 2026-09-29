@@ -92,6 +92,8 @@ Detalhe operacional da jornada colaborador: [`employee-onboarding-journey.md`](.
 
 Performance (ops): [`performance-hotpaths.md`](./performance-hotpaths.md) — `LOG_SLOW_MS`, `npm run dtov:explain`.
 
+**Idiomas:** a seção `languages` do Guia (`panel.help.languagesTitle/Body`) cobre troca de idioma, detecção pelo navegador e o fallback para inglês em conteúdo só pt/en. Ao criar chave nova em `panel.help.*`, escreva pt-BR e en; `npm run i18n:translate` gera fr-FR/de-DE depois.
+
 ## Manutenção do prompt de produto
 
 Atualize [`PRODUCT-FEATURES-PROMPT.md`](./PRODUCT-FEATURES-PROMPT.md) quando um epic relevante fechar — útil para agentes externos; o assistente in-app usa o Guia, não esse arquivo.

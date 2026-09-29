@@ -285,8 +285,9 @@ describe('module hardening', () => {
     assert.match(academy, /loading && resources\.length === 0/);
     assert.match(academy, /sortedResources\.length === 0/);
     assert.match(academy, /const hasActiveFilters = Boolean/);
-    assert.match(reviews, /Novo ciclo de avaliação/);
-    assert.match(reviews, /New review cycle/);
+    assert.match(reviews, /adminModules\.performanceReviews\./);
+    assert.match(messages, /Novo ciclo de avaliação/);
+    assert.match(messages, /New review cycle/);
     assert.match(messages, /Novo ciclo de OKRs/);
     assert.match(messages, /New OKR cycle/);
   });

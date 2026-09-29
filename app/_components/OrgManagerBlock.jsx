@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { t } from '../../lib/i18n';
+import { t, t as i18nT } from '../../lib/i18n';
 import { AppLoading, ContentEnter } from './AppLoading';
 import { FormField } from './FormField';
 import { EntitySearchSelect } from './EntitySearchSelect';
@@ -128,7 +128,7 @@ export function OrgManagerBlock({
             />
           </FormField>
           {managerId ? <button type="button" className={S.btnGhost} disabled={busy} onClick={() => void save(null)}>{t(locale, 'panel.orgChart.removeManager')}</button> : null}
-          {onCreateManager ? <button type="button" className={S.btnGhost} disabled={busy} onClick={onCreateManager}>{locale.startsWith('en') ? 'Create manager' : 'Cadastrar gestor'}</button> : null}
+          {onCreateManager ? <button type="button" className={S.btnGhost} disabled={busy} onClick={onCreateManager}>{i18nT(locale, 'ui.orgManagerBlock.createManager')}</button> : null}
         </ContentEnter>
       )}
     </CollapsibleBlock>

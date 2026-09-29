@@ -6,7 +6,7 @@ import LanguageSelect from './LanguageSelect';
 import { Icon } from './Icon';
 import { PRODUCT_LANDING_CONTACT_EMAIL } from '../../lib/product-landing-seo';
 import { useLocale } from '../../lib/useLocale';
-import { localeHtmlLang } from '../../lib/i18n';
+import { localeHtmlLang, normalizeLocale } from '../../lib/i18n';
 import LandingAnalytics from './LandingAnalytics';
 import { ContentEnter } from './AppLoading';
 
@@ -19,14 +19,6 @@ function SectionHeading({ label, title, body, id }) {
 
 function PrimaryCta({ copy, compact = false }) {
   return <Link href="/signup" className={`inline-flex min-h-touch items-center justify-center rounded-control bg-action font-ui font-semibold text-action-ink no-underline transition-colors hover:bg-action-hover ${compact ? 'px-3 py-2 text-xs sm:px-4 sm:py-2.5 sm:text-sm' : 'px-6 py-3.5 text-base'}`}>{compact ? copy.navEarly : copy.ctaEarly}</Link>;
-}
-
-function landingCopyKey(locale) {
-  if (locale === 'en') return 'en';
-  if (locale === 'pt-PT') return 'pt-PT';
-  if (locale === 'es-ES') return 'es-ES';
-  if (locale === 'es-419') return 'es-419';
-  return 'pt-BR';
 }
 
 function ProductPreview({ copy }) {
@@ -111,7 +103,7 @@ function HrReportsPreview({ copy }) {
 
 export default function ProductLandingClient({ copyByLocale, locale: initialLocale }) {
   const [locale, setLocale] = useLocale(initialLocale);
-  const copy = copyByLocale[landingCopyKey(locale)] || copyByLocale['pt-BR'];
+  const copy = copyByLocale[normalizeLocale(locale)] || copyByLocale['pt-BR'];
   const u = copy.ui;
 
   return (

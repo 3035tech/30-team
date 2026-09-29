@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { t } from '../../../lib/i18n';
+import { t, t as i18nT } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S } from '../dashboard-shared';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
@@ -91,7 +91,7 @@ export function NineBoxBlock({ locale = 'pt-BR', companyId = null }) {
               </div>
             ) : null}
             <div className="mt-4">
-              <p className="mb-2 font-ui text-sm font-semibold text-ink">{locale.startsWith('en') ? 'Potential ↑ Low to high, bottom to top' : 'Potencial ↑ Do baixo ao alto, de baixo para cima'}</p>
+              <p className="mb-2 font-ui text-sm font-semibold text-ink">{i18nT(locale, 'ui.nineBoxBlock.potentialLowToHighBottom')}</p>
               <div
                 className="space-y-2"
                 role="grid"
@@ -143,10 +143,10 @@ export function NineBoxBlock({ locale = 'pt-BR', companyId = null }) {
                   );
                 })}</div>)}
               </div>
-              <p className="mb-0 mt-2 text-center font-ui text-sm font-semibold text-ink">{locale.startsWith('en') ? 'Performance → Low · Medium · High' : 'Desempenho → Baixo · Médio · Alto'}</p>
+              <p className="mb-0 mt-2 text-center font-ui text-sm font-semibold text-ink">{i18nT(locale, 'ui.nineBoxBlock.performanceLowMediumHigh')}</p>
               <details className="mt-3 text-sm text-ink-muted">
-                <summary className="min-h-touch cursor-pointer rounded-control py-2 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">{locale.startsWith('en') ? 'How to read the matrix' : 'Como interpretar a matriz'}</summary>
-                <p className="mt-1">{locale.startsWith('en') ? 'Performance refers to observed results and delivery. Potential is an estimate of capacity to take on greater complexity in the future. This view supports discussion, not automatic promotion or dismissal decisions.' : 'Desempenho representa resultados e entregas observadas. Potencial é uma estimativa da capacidade de assumir maior complexidade no futuro. A matriz apoia conversas, não decisões automáticas de promoção ou desligamento.'}</p>
+                <summary className="min-h-touch cursor-pointer rounded-control py-2 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">{i18nT(locale, 'ui.nineBoxBlock.howToReadTheMatrix')}</summary>
+                <p className="mt-1">{i18nT(locale, 'ui.nineBoxBlock.performanceRefersToObservedResults')}</p>
               </details>
             </div>
 

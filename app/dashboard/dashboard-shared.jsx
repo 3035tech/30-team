@@ -6,7 +6,7 @@ import { SelectField } from '../_components/SelectField';
 import Link from 'next/link';
 import { createContext, useContext, useEffect, useRef } from 'react';
 import { TYPE_DATA } from '../../lib/data';
-import { t } from '../../lib/i18n';
+import { t, contentLocale } from '../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../lib/assessment-filters';
 import { buildAdminPagerPages } from '../../lib/admin-list-pager.js';
 import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
@@ -366,7 +366,7 @@ function getKanbanStages(locale = 'pt-BR', { isDark = false, companyStages = nul
       const paletteKey = s.canonicalKey || s.id || PIPELINE_STAGE.SCREENING;
       const baseColor = PIPELINE_STAGE_COLORS[paletteKey] || PIPELINE_STAGE_COLORS.screening;
       const darkColor = PIPELINE_STAGE_COLORS_DARK[paletteKey] || baseColor;
-      const label = locale === 'en'
+      const label = contentLocale(locale) === 'en'
         ? (s.labelEn || s.labelPt || s.stageKey || s.id)
         : (s.labelPt || s.labelEn || s.stageKey || s.id);
       return {

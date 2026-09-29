@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { withAdminApi } from '../../../../lib/admin-api.js';
 import { CAP } from '../../../../lib/ae/require-admin.js';
 import { apiError, apiErrorFromResult, ERR, httpStatusForError } from '../../../../lib/api-error.js';
-import { z, zPositiveInt } from '../../../../lib/validate.js';
+import { z, zLocale, zPositiveInt } from '../../../../lib/validate.js';
 import { createEmployeeDirect } from '../../../../lib/hire.js';
 import { audit } from '../../../../lib/audit.js';
 import { checkRateLimit } from '../../../../lib/rate-limit.js';
@@ -13,7 +13,7 @@ const bodySchema = z.object({
   email: z.string().trim().email().max(254),
   startDate: z.string().trim().max(10).optional().nullable(),
   sendAccessInvite: z.boolean().optional().default(false),
-  locale: z.enum(['pt-BR', 'en']).optional(),
+  locale: zLocale.optional(),
 });
 
 /**

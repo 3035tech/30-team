@@ -8,6 +8,7 @@ import {
   submitEmployeeClimateSurvey,
   submitEmployeeTeamPulse,
 } from '../../../../lib/employee-surveys.js';
+import { normalizeLocale } from '../../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,7 @@ export async function GET(request) {
 
     const url = new URL(request.url);
     const locale =
-      url.searchParams.get('locale') === 'en' || session.locale === 'en' ? 'en' : 'pt-BR';
+      normalizeLocale(url.searchParams.get('locale') || session.locale);
 
     const inbox = await listEmployeeSurveyInbox(query, {
       companyId: session.companyId,

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { zLocale } from '../../../../../../lib/validate.js';
+import { normalizeLocale } from '../../../../../../lib/locale-negotiation.js';
 import { apiError, apiErrorFromResult, HTTP_STATUS, ERR } from '../../../../../../lib/api-error.js';
 import { withTransaction } from '../../../../../../lib/db.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
@@ -13,7 +15,7 @@ const MAX_BODY_BYTES = 64 * 1024;
 const RATE_LIMIT = 30;
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const id = z.string().regex(/^[1-9]\d{0,17}$/);
-const locale = z.enum(['pt-BR', 'en']);
+const locale = zLocale;
 const answer = z.union([
   z.object({ questionId: id, optionId: id }).strict(),
   z.object({ questionId: id, ranking: z.array(id).min(1).max(MAX_ANSWERS) }).strict(),
@@ -27,7 +29,7 @@ export async function GET(request) {
   try {
     const session = await authenticateMobileEmployee(mobileEmployeeBearerToken(request));
     if (!session) return apiError(request, ERR.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
-    const loc = new URL(request.url).searchParams.get('locale') === 'en' ? 'en' : 'pt-BR';
+    const loc = normalizeLocale(new URL(request.url).searchParams.get('locale'));
     return NextResponse.json(await listEmployeeMotivators(null, { ...session, locale: loc }), { headers: NO_STORE });
   } catch { return apiError(request, ERR.INTERNAL, HTTP_STATUS.INTERNAL_SERVER_ERROR); }
 }

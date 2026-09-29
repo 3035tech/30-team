@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { cn } from '../../lib/cn';
-import { t } from '../../lib/i18n';
+import { t, localeHtmlLang } from '../../lib/i18n';
 import { S, AdminDeleteButton } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
 import { AppLoading, ContentEnter } from './AppLoading';
@@ -183,7 +183,7 @@ export function VacancyInterviewSlotsBlock({
     }
   };
 
-  const weekLabel = `${weekStart.toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR')} – ${new Date(weekEnd.getTime() - 1).toLocaleDateString(locale === 'en' ? 'en-US' : 'pt-BR')}`;
+  const weekLabel = `${weekStart.toLocaleDateString(localeHtmlLang(locale))} – ${new Date(weekEnd.getTime() - 1).toLocaleDateString(localeHtmlLang(locale))}`;
   const scheduledCount = items.filter((s) => s.status === INTERVIEW_SLOT_STATUS.SCHEDULED).length;
 
   return (
@@ -239,9 +239,9 @@ export function VacancyInterviewSlotsBlock({
                         {slot.candidateName || `#${slot.candidateId}`}
                       </p>
                       <p className="m-0 font-mono text-2xs text-ink-muted">
-                        {new Date(slot.startsAt).toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR')}
+                        {new Date(slot.startsAt).toLocaleString(localeHtmlLang(locale))}
                         {slot.endsAt
-                          ? ` – ${new Date(slot.endsAt).toLocaleTimeString(locale === 'en' ? 'en-US' : 'pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+                          ? ` – ${new Date(slot.endsAt).toLocaleTimeString(localeHtmlLang(locale), { hour: '2-digit', minute: '2-digit' })}`
                           : ''}
                       </p>
                       {slot.meetUrl ? (

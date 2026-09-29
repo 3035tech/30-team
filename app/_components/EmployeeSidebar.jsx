@@ -193,6 +193,14 @@ export function EmployeeSidebar({
     >
       <SidebarRail
         ariaLabel={t(locale, 'employeeHome.sectionNavAria')}
+        toggle={
+          <SidebarRailButton
+            icon={navCollapsed ? 'expand' : 'collapse'}
+            label={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
+            className="db-sidebar-collapse-toggle"
+            onClick={() => setNavCollapsed((v) => !v)}
+          />
+        }
         brand={
           <BrandMark
             size={26}
@@ -211,12 +219,6 @@ export function EmployeeSidebar({
               onClick={onClose}
             />
             <EmployeeLogoutButton locale={locale} variant="rail" onLoggedOut={onClose} />
-            <SidebarRailButton
-              icon={navCollapsed ? 'expand' : 'collapse'}
-              label={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
-              className="db-sidebar-collapse-toggle"
-              onClick={() => setNavCollapsed((v) => !v)}
-            />
           </>
         }
       >

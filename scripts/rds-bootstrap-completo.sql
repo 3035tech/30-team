@@ -420,7 +420,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_setup_token TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS password_setup_expires_at TIMESTAMPTZ;
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_locale_check;
-ALTER TABLE users ADD CONSTRAINT users_locale_check CHECK (locale IN ('pt-BR', 'en'));
+ALTER TABLE users ADD CONSTRAINT users_locale_check CHECK (locale IN ('pt-BR', 'pt-PT', 'en', 'es-419', 'es-ES', 'fr-FR', 'de-DE'));
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_users_password_setup_token
   ON users (password_setup_token)

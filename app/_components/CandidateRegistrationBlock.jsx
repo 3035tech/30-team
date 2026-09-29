@@ -1,6 +1,6 @@
 'use client';
 
-import { t } from '../../lib/i18n';
+import { t, t as i18nT } from '../../lib/i18n';
 import { BR_STATES, AVAILABILITY_VALUES, SOURCE_VALUES } from '../../lib/candidate-profile';
 import { salaryToCentsDigits, stripSalary, formatSalaryBr } from '../../lib/br-masks';
 import { formatDisplayDate } from '../../lib/format-display-date';
@@ -17,9 +17,8 @@ const sourceKeys = { linkedin: 'sourceLinkedin', referral: 'sourceReferral', age
 // Recruitment fields remain separate from DP address, notes and current salary.
 export function CandidateRegistrationBlock({ candidate, lmsOverdue = [], locale = 'pt-BR', readOnly = false, onSaved }) {
   const { promptForm, toast } = useAppFeedback();
-  const en = locale.startsWith('en');
-  const heading = en ? 'Recruitment record' : 'Dados de recrutamento';
-  const editLabel = en ? 'Edit recruitment record' : 'Editar dados de recrutamento';
+  const heading = i18nT(locale, 'ui.candidateRegistrationBlock.recruitmentRecord');
+  const editLabel = i18nT(locale, 'ui.candidateRegistrationBlock.editRecruitmentRecord');
   const label = (keys, value) => value ? (keys[value] ? t(locale, `recruiting.${keys[value]}`) : value) : '—';
   const enumOptions = (values, keys, current) => [
     { value: '', label: t(locale, 'panel.dp.notInformed') },

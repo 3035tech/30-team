@@ -6,6 +6,7 @@ import { mobileOneOnOneBody } from '../../../../../../lib/mobile-employee-payloa
 import { submitEmployeeOneOnOnePrep } from '../../../../../../lib/employee-one-on-one-prep.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit.js';
+import { normalizeLocale } from '../../../../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 const NO_STORE = Object.freeze({ 'Cache-Control': 'no-store' });
@@ -18,7 +19,7 @@ export async function GET(request) {
   try {
     const session = await authenticateMobileEmployee(mobileEmployeeBearerToken(request));
     if (!session) return apiError(request, ERR.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
-    const locale = new URL(request.url).searchParams.get('locale') === 'en' ? 'en' : 'pt-BR';
+    const locale = normalizeLocale(new URL(request.url).searchParams.get('locale'));
     const result = await getEmployeeOneOnOne(null, { ...session, locale });
     if (!result.ok) return apiErrorFromResult(request, result, { fallbackCode: ERR.UNAUTHORIZED });
     return NextResponse.json(mobileOneOnOneBody(result), { headers: NO_STORE });

@@ -13,6 +13,7 @@ import {
   verifyEmployee2faLogin,
 } from '../../../../lib/employee-2fa.js';
 import { buildEmployeeLoginResponse } from '../../../../lib/employee-login-session.js';
+import { contentLocale } from '../../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,7 +65,7 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+    const locale = contentLocale(body.locale);
     const choices = await sessionCompanyChoices(session);
 
     if (body.challengeToken) {

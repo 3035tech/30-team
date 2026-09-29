@@ -47,7 +47,7 @@ function formatDue(raw, locale) {
   if (!raw) return '';
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return '';
-  const loc = localeHtmlLang(locale) === 'en' ? 'en-US' : 'pt-BR';
+  const loc = localeHtmlLang(locale);
   return d.toLocaleDateString(loc, { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 

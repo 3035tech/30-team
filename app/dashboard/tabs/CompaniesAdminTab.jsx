@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, localeHtmlLang } from '../../../lib/i18n';
 import { publicCompanyPath } from '../../../lib/public-job-url';
 import { parseCompaniesPagination, parseCompaniesSort } from '../../../lib/assessment-filters';
 import {
@@ -223,7 +223,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
   const companiesActive = String(sp.companiesActive || '').trim();
   const hasCompaniesFilter = Boolean(companiesQ || companiesActive);
   const [searchDraft, setSearchDraft] = useState(companiesQ);
-  const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
+  const dateLocale = localeHtmlLang(locale);
 
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState([]);

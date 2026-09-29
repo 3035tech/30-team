@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { t } from '../../../../lib/i18n';
+import { t, localeHtmlLang } from '../../../../lib/i18n';
 import { cn } from '../../../../lib/cn';
 import { AdminIconButton, S } from '../../dashboard-shared';
 import { AppLoading } from '../../../_components/AppLoading';
@@ -38,7 +38,7 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
     };
   }, [companyId]);
 
-  const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
+  const dateLocale = localeHtmlLang(locale);
   const formatNext = (iso) => {
     if (!iso) return '—';
     const d = new Date(`${iso}T12:00:00`);

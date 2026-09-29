@@ -16,6 +16,7 @@
     "release:post-deploy-smoke": "node scripts/validate-pilot-deployment.js",
     "db:test-motivators": "node test/unit/motivators-invite-flow.js",
     "test:ae-scoring": "node test/unit/ae-scoring.js",
+    "i18n:translate": "node --env-file=.env scripts/i18n-translate-catalog.mjs",
     "db:seed": "node scripts/seed-data.js",
     "db:seed-demo-30pay": "node --env-file=.env scripts/seed-demo-30pay.js",
     "db:seed-demo-30pay:confirm": "CONFIRM_DEMO_PURGE=1 node --env-file=.env scripts/seed-demo-30pay.js",

@@ -1,4 +1,5 @@
 import { AppLoading } from '../_components/AppLoading';
+import { t as i18nT } from '../../lib/i18n.js';
 
 const SIDEBAR_ROWS = [5, 4, 3, 5, 3];
 
@@ -10,7 +11,7 @@ function SkeletonBar({ className = '' }) {
 export function DashboardRouteLoading({ locale = 'pt-BR' }) {
   return (
     <div className="min-h-screen bg-canvas font-ui text-ink" aria-busy="true">
-      <span className="sr-only" role="status" aria-live="polite">{locale === 'en' ? 'Loading dashboard' : 'Carregando painel'}</span>
+      <span className="sr-only" role="status" aria-live="polite">{i18nT(locale, 'ui.dashboardRouteLoading.loadingDashboard')}</span>
       <div className="flex min-h-screen">
         <aside aria-hidden="true" className="hidden w-[240px] shrink-0 border-r border-ink/8 bg-surface/70 px-4 py-5 md:block">
           <div className="mb-8 flex items-center gap-3 px-1">

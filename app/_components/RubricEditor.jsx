@@ -2,7 +2,7 @@
 
 import { useId } from 'react';
 import { TYPE_DATA } from '../../lib/data';
-import { normalizeLocale, t } from '../../lib/i18n';
+import { t, t as i18nT, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 
 /**
@@ -11,11 +11,8 @@ import { cn } from '../../lib/cn';
  */
 export function RubricEditor({ value = {}, onChange, locale = 'pt-BR', compact = false }) {
   const id = useId();
-  const isEn = normalizeLocale(locale) === 'en';
   const types = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9'];
-  const explanation = isEn
-    ? 'Each weight is independent, from 0% to 100%. The total is informational and does not need to equal 100%.'
-    : 'Cada peso é independente, de 0% a 100%. O total é informativo e não precisa somar 100%.';
+  const explanation = i18nT(locale, 'ui.rubricEditor.eachWeightIsIndependentFrom');
   
   const handleChange = (type, newValue) => {
     const parsed = Number(newValue);
@@ -29,14 +26,14 @@ export function RubricEditor({ value = {}, onChange, locale = 'pt-BR', compact =
   };
 
   const total = types.reduce((sum, type) => sum + (Number(value[type]) || 0), 0);
-  const formattedTotal = new Intl.NumberFormat(isEn ? 'en-US' : 'pt-BR', {
+  const formattedTotal = new Intl.NumberFormat(localeHtmlLang(locale), {
     maximumFractionDigits: 10,
   }).format(total);
   const summary = (
     <>
       <div className="flex items-center justify-between gap-2 border-t border-ink/12 pt-2" role="status" aria-live="polite" aria-atomic="true">
         <span className="font-mono text-prose text-ink-muted">
-          {t(locale, 'recruiting.rubricTotal')} ({isEn ? 'informational' : 'informativo'}):
+          {t(locale, 'recruiting.rubricTotal')} ({i18nT(locale, 'ui.rubricEditor.informational')}):
         </span>
         <span className="font-mono text-sm font-semibold tabular-nums text-ink">{formattedTotal}%</span>
       </div>
@@ -91,7 +88,7 @@ export function RubricEditor({ value = {}, onChange, locale = 'pt-BR', compact =
                   {type}
                 </span>
                 <span>
-                  {typeData?.name || type} — {isEn ? 'Weight' : 'Peso'} (%)
+                  {typeData?.name || type} — {i18nT(locale, 'ui.rubricEditor.weight')} (%)
                 </span>
               </label>
               

@@ -5,6 +5,7 @@ import {
   markInterviewPrepPrepared,
   resolveInterviewPrepByToken,
 } from '../../../../../lib/interview-prep.js';
+import { normalizeLocale } from '../../../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,7 @@ export async function GET(request, props) {
   try {
     const token = params?.token || '';
     const url = new URL(request.url);
-    const locale = url.searchParams.get('locale') === 'en' ? 'en' : 'pt-BR';
+    const locale = normalizeLocale(url.searchParams.get('locale'));
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`prep-get:${ip}`, 60, 60 * 1000);
     if (!rl.ok) {

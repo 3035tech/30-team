@@ -3,13 +3,14 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
 import { z } from 'zod';
+import { normalizeLocale } from '../../lib/locale-negotiation.js';
 import { getEmployeeOneOnOnePrep, submitEmployeeOneOnOnePrep } from '../../lib/employee-one-on-one-prep.js';
 import { mobileOneOnOneBody } from '../../lib/mobile-employee-payload.js';
 
 async function route(session) {
   const calls = [];
   const dependencies = {
-    NextResponse: { json: (body, options) => ({ body, ...options }) }, z,
+    NextResponse: { json: (body, options) => ({ body, ...options }) }, z, normalizeLocale,
     apiError: (_request, code, status) => ({ code, status }),
     apiErrorFromResult: (_request, result) => result,
     HTTP_STATUS: { UNAUTHORIZED: 401, BAD_REQUEST: 400, TOO_MANY_REQUESTS: 429, INTERNAL_SERVER_ERROR: 500 },

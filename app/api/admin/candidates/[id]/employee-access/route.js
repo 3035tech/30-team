@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { withAdminApi } from '../../../../../../lib/admin-api.js';
 import { CAP } from '../../../../../../lib/ae/require-admin.js';
 import { apiErrorFromResult, ERR } from '../../../../../../lib/api-error.js';
-import { z, zPositiveInt } from '../../../../../../lib/validate.js';
+import { z, zLocale, zPositiveInt } from '../../../../../../lib/validate.js';
 import { query } from '../../../../../../lib/db.js';
 import { issueEmployeePasswordInvite } from '../../../../../../lib/employee-auth.js';
 import { audit } from '../../../../../../lib/audit.js';
@@ -10,7 +10,7 @@ import { EMPLOYMENT_STATUS } from '../../../../../../lib/domain-status.js';
 
 const bodySchema = z.object({
   companyId: zPositiveInt.optional(),
-  locale: z.enum(['pt-BR', 'en']).optional(),
+  locale: zLocale.optional(),
 });
 
 /** POST /api/admin/candidates/[id]/employee-access — invite set-password email */

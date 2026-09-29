@@ -10,6 +10,7 @@ import {
   setOnboardingCheckinMeetUrl,
   reopenOnboardingCheckin,
 } from '../../../../../../lib/people/onboarding-checkins';
+import { contentLocale } from '../../../../../../lib/i18n.js';
 
 async function loadCandidateScope(candidateId, scope) {
   const c = await query(
@@ -107,7 +108,7 @@ export async function PATCH(request, props) {
       return NextResponse.json({ item: result.item });
     }
 
-    const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+    const locale = contentLocale(body.locale);
     const outcome = body.outcome || '';
     const result = await updateOnboardingCheckin(query, {
       companyId: loaded.candidate.companyId,

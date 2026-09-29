@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
-import { t } from '../../../lib/i18n';
+import { t, localeHtmlLang } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { S, AdminListPager, AdminListSearch, AdminPageHeader, AdminTableShell, AdminTh } from '../dashboard-shared';
 import { EmptyState } from '../../_components/EmptyState';
@@ -25,7 +25,7 @@ function leadStatusTone(status) {
 export function LeadsAdminTab({ navigateDashboard, locale }) {
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
-  const dateLocale = locale === 'en' ? 'en-US' : 'pt-BR';
+  const dateLocale = localeHtmlLang(locale);
 
   const filters = useMemo(() => {
     const status = (urlParams.get('leadsStatus') || 'all').toLowerCase();

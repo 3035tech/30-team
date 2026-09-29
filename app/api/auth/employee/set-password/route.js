@@ -12,6 +12,7 @@ import {
   signEmployee2faChallenge,
 } from '../../../../../lib/employee-2fa.js';
 import { buildEmployeeLoginResponse } from '../../../../../lib/employee-login-session.js';
+import { contentLocale } from '../../../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,7 +69,7 @@ export async function POST(request) {
 
     const token = String(body.token || '').trim();
     const password = String(body.password || '');
-    const locale = body.locale === 'en' ? 'en' : 'pt-BR';
+    const locale = contentLocale(body.locale);
 
     const result = await completeEmployeePasswordSetup(query, { token, password });
     if (!result.ok) {

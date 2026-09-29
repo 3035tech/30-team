@@ -8,6 +8,7 @@ import { completeLmsLesson, uncompleteLmsLesson } from '../../../../lib/lms.js';
 import { updateEmployeePdiItemStatus } from '../../../../lib/employee-pdi.js';
 import { submitEmployeeOneOnOnePrep } from '../../../../lib/employee-one-on-one-prep.js';
 import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../../../lib/domain-status.js';
+import { normalizeLocale } from '../../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,7 @@ export async function GET(request) {
 
     const url = new URL(request.url);
     const locale =
-      url.searchParams.get('locale') === 'en' || session.locale === 'en' ? 'en' : 'pt-BR';
+      normalizeLocale(url.searchParams.get('locale') || session.locale);
 
     const home = await getEmployeeHome(query, {
       companyId: session.companyId,

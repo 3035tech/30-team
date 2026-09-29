@@ -63,7 +63,17 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 
 **Provas / regressão:** [`test/README.md`](test/README.md) — `npm run dtov:full-app` (SQL + HTTP + browser).
 
-**Idioma inicial:** na primeira visita (sem cookie `NEXT_LOCALE`), o `proxy.js` lê o `Accept-Language` do navegador e escolhe o primeiro idioma suportado (`pt-BR`, `pt-PT`, `en`, `es-419`, `es-ES`; `es-MX`/`es-AR` → `es-419`, `pt` → `pt-BR`). Idioma fora da lista, ou sem cabeçalho (inclui crawlers), cai em inglês. O cookie é gravado por 1 ano e a escolha manual do usuário continua valendo. Lógica em `lib/locale-negotiation.js`.
+**Idioma inicial:** na primeira visita (sem cookie `NEXT_LOCALE`), o `proxy.js` lê o `Accept-Language` do navegador e escolhe o primeiro idioma suportado (`pt-BR`, `pt-PT`, `en`, `es-419`, `es-ES`, `fr-FR`, `de-DE`; `es-MX`/`es-AR` → `es-419`, `pt` → `pt-BR`, `fr-CA` → `fr-FR`, `de-AT` → `de-DE`). Idioma fora da lista, ou sem cabeçalho (inclui crawlers), cai em inglês. O cookie é gravado por 1 ano e a escolha manual do usuário continua valendo. Lógica em `lib/locale-negotiation.js`.
+
+**i18n (onde cada texto vem):**
+
+- Copy de UI: `t(locale, 'chave')` em `lib/i18n.js`. Catálogos completos: `lib/i18n/catalogs/pt-BR.js`, `en-US.js`, `fr-FR.js`, `de-DE.js`; `pt-PT`/`es-*` são overrides em `lib/i18n/regional.js`.
+- Fallback por chave (`localeFallbackChain`): idioma → irmão regional (`es-ES` → `es-419`) → base mais próxima (família pt → `pt-BR`, demais → `en`) → a outra base. `messageNode(locale, 'panel.help')` devolve um subtree já mesclado.
+- Conteúdo que só existe em pt/en (Eneagrama, Motivadores, prompts de IA, PDFs): `contentLocale(locale)` → `pt-BR` para a família pt, `en` para o resto. Campos `_pt`/`_en` do banco: `localizedField(locale, { pt, en })`.
+- Não usar `locale === 'en' ? … : …` em código novo: adicionar a chave em pt-BR e en (bloco `ui.<arquivo>` para copy local) e deixar a tradução gerar fr/de.
+- `users.locale` aceita todos os `LOCALES` (migration `134_user_locale_all_supported.sql`); APIs validam com `zLocale` (`lib/validate.js`).
+
+**Tradução por IA (fr-FR / de-DE):** `npm run i18n:translate -- --locale fr-FR` (ou `de-DE`; `--target catalog|landing|all`, `--limit N`, `--force`). Traduz só chaves ausentes a partir do `en-US` e da landing em inglês, valida placeholders `{x}`, tags HTML, quebras de linha e termos da marca, e recusa ` — `. Strings reprovadas ficam em inglês no runtime. Requer `OPENAI_API_KEY` válida (modelo em `OPENAI_TRANSLATE_MODEL`). O resultado é rascunho: revisão por nativo antes de divulgar os idiomas.
 
 **Build:** `npm run build` usa o modo Webpack suportado pelo Next 16. O diretório pode ser isolado com `NEXT_DIST_DIR` em CI ou validações concorrentes; produção mantém `.next` por padrão.
 

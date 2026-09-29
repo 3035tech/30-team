@@ -4,7 +4,7 @@ import { SelectField } from '../_components/SelectField';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { cn } from '../../lib/cn';
-import { errorMessage, t } from '../../lib/i18n';
+import { errorMessage, t, contentLocale } from '../../lib/i18n';
 import { typeHintTooltip, typeShortLabel } from '../../lib/type-en';
 import { S } from './dashboard-shared';
 import { RichTextEditor } from '../_components/RichTextEditor';
@@ -344,7 +344,7 @@ export function VacancyClientReportBlock({
         })
         .filter(Boolean);
 
-      const en = locale === 'en';
+      const en = contentLocale(locale) === 'en';
       const html = en
         ? `<p><strong>Who to advance:</strong> ${advance.length ? advance.join('; ') : '—'}${discuss.length ? `. Discuss further: ${discuss.join('; ')}` : ''}.</p>
 <p><strong>Why (fit / role context):</strong> Shortlist for ${vacTitle || 'this role'} ranked by rubric alignment and interview notes. ${bank.length ? `Hold for now: ${bank.join('; ')}.` : ''}</p>
@@ -476,7 +476,7 @@ export function VacancyClientReportBlock({
     }
     setNoteActionBusy('fromBrief');
     try {
-      const loc = locale === 'en' ? 'en' : 'pt-BR';
+      const loc = contentLocale(locale);
       const results = await Promise.all(
         eligible.map(async (c) => {
           const res = await fetch(

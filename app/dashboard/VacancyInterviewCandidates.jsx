@@ -4,7 +4,7 @@ import { SelectField } from '../_components/SelectField';
 
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '../../lib/cn';
-import { t } from '../../lib/i18n';
+import { t, contentLocale, t as i18nT } from '../../lib/i18n';
 import { RichTextEditor } from '../_components/RichTextEditor';
 import { BrStateSelect } from '../_components/BrStateSelect';
 import { BrCitySelect } from '../_components/BrCitySelect';
@@ -144,7 +144,7 @@ function CandidateCard({
       setBriefLoading(true);
       try {
         const res = await fetch(
-          `/api/admin/candidates/${encodeURIComponent(row.candidateId)}?locale=${encodeURIComponent(locale === 'en' ? 'en' : 'pt-BR')}`
+          `/api/admin/candidates/${encodeURIComponent(row.candidateId)}?locale=${encodeURIComponent(contentLocale(locale))}`
         );
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
@@ -358,7 +358,7 @@ function CandidateCard({
             {(row.topType != null || row.availability || row.source || row.salaryExpectation) ? (
               <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
                 <CandidateMetaItem
-                  label={locale === 'en' ? 'Type' : 'Tipo'}
+                  label={i18nT(locale, 'ui.vacancyInterviewCandidates.type')}
                   value={row.topType != null ? t(locale, 'recruiting.typeShort', { type: row.topType }) : null}
                   tone="brand"
                 />

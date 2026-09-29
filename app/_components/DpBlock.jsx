@@ -4,7 +4,7 @@ import { DP_ADDRESS_NUMBER_MAX_LENGTH } from '../../lib/dp-profile-constants';
 import { dpUploadValidationKey, dpUploadResponseKey } from '../../lib/dp-upload-validation';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { t, localeHtmlLang } from '../../lib/i18n';
+import { t, localeHtmlLang, t as i18nT } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import {
   S,
@@ -225,10 +225,10 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       confirmLabel: t(locale, 'panel.dp.save'),
       submit: async (values) => {
         if ([values.phone, values.emergencyPhone].some(value => value && (String(value).replace(/\D/g, '').length < 10 || String(value).replace(/\D/g, '').length > 15))) {
-          throw new Error(locale.startsWith('en') ? 'Enter a phone number with area code (10–15 digits), or leave it blank.' : 'Informe o telefone com DDD (10 a 15 dígitos), ou deixe em branco.');
+          throw new Error(i18nT(locale, 'ui.dpBlock.enterAPhoneNumberWith'));
         }
         if (values.cpf && String(values.cpf).replace(/\D/g, '').length !== 11) {
-          throw new Error(locale.startsWith('en') ? 'Enter an 11-digit CPF, or leave it blank.' : 'Informe um CPF com 11 dígitos, ou deixe em branco.');
+          throw new Error(i18nT(locale, 'ui.dpBlock.enterAn11DigitCpf'));
         }
         const res = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}`, {
           method: 'PATCH',
@@ -942,7 +942,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           <div className="space-y-5">
             <section>
               <h3 className={cn(S.cardSection, 'mb-3 mt-0 block')}>
-                {String(locale).startsWith('en') ? 'Personal' : 'Pessoal'}
+                {i18nT(locale, 'ui.dpBlock.personal')}
               </h3>
               <div className="grid gap-2 sm:grid-cols-2">
                 <FormField as="div" label={t(locale, 'panel.dp.fullName')}>
@@ -969,7 +969,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             </section>
             <section>
               <h3 className={cn(S.cardSection, 'mb-3 mt-0 block')}>
-                {String(locale).startsWith('en') ? 'Contact' : 'Contato'}
+                {i18nT(locale, 'ui.dpBlock.contact')}
               </h3>
               <div className="grid gap-2 sm:grid-cols-2">
                 <FormField as="div" label={t(locale, 'panel.dp.corporateEmail')}>
@@ -1002,7 +1002,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             </section>
             <section>
               <h3 className={cn(S.cardSection, 'mb-3 mt-0 block')}>
-                {String(locale).startsWith('en') ? 'Professional' : 'Profissional'}
+                {i18nT(locale, 'ui.dpBlock.professional')}
               </h3>
               <div className="grid gap-2 sm:grid-cols-2">
                 <FormField as="div" label={t(locale, 'panel.dp.employeeNumber')}>
@@ -1038,7 +1038,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             </section>
             <section>
               <h3 className={cn(S.cardSection, 'mb-3 mt-0 block')}>
-                {String(locale).startsWith('en') ? 'Dependents' : 'Dependentes'}
+                {i18nT(locale, 'ui.dpBlock.dependents')}
               </h3>
               <div className="grid gap-2 sm:grid-cols-2">
                 <FormField as="div" label={t(locale, 'panel.dp.dependents')} className="sm:col-span-2">
@@ -1056,7 +1056,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             </section>
             <section>
               <h3 className={cn(S.cardSection, 'mb-3 mt-0 block')}>
-                {String(locale).startsWith('en') ? 'Emergency' : 'Emergência'}
+                {i18nT(locale, 'ui.dpBlock.emergency')}
               </h3>
               <div className="grid gap-2 sm:grid-cols-2">
                 <FormField as="div" label={t(locale, 'panel.dp.emergencyName')}>

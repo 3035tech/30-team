@@ -5,9 +5,9 @@ import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
 import { formatDisplayDate } from '../../lib/format-display-date';
 import { InlineCallout } from './InlineCallout';
+import { t as i18nT } from '../../lib/i18n.js';
 
 export function FormalReviewResultsBlock({ candidateId, locale = 'pt-BR', onPdiChanged }) {
-  const en = locale.startsWith('en');
   const { promptForm, confirm, toast } = useAppFeedback();
   const [results, setResults] = useState([]);
   const [state, setState] = useState('loading');
@@ -27,39 +27,39 @@ export function FormalReviewResultsBlock({ candidateId, locale = 'pt-BR', onPdiC
 
   async function useResult(result, item) {
     const values = await promptForm({
-      title: en ? 'Create a development goal' : 'Criar meta de PDI',
+      title: i18nT(locale, 'ui.formalReviewResultsBlock.createADevelopmentGoal'),
       fields: [
-        { key: 'title', label: en ? 'Title' : 'Título', required: true, maxLength: 200, defaultValue: item.label },
-        { key: 'objective', label: en ? 'Development agreement' : 'Acordo de desenvolvimento', type: 'textarea', maxLength: 4000 },
+        { key: 'title', label: i18nT(locale, 'ui.formalReviewResultsBlock.title'), required: true, maxLength: 200, defaultValue: item.label },
+        { key: 'objective', label: i18nT(locale, 'ui.formalReviewResultsBlock.developmentAgreement'), type: 'textarea', maxLength: 4000 },
       ],
     });
-    if (!values || !await confirm({ title: en ? 'Use this result in PDI?' : 'Usar este resultado no PDI?', message: en ? 'A separate development plan will be created. Review answers will not change.' : 'Será criado um plano de desenvolvimento separado. As respostas da avaliação não serão alteradas.' })) return;
+    if (!values || !await confirm({ title: i18nT(locale, 'ui.formalReviewResultsBlock.useThisResultInPdi'), message: i18nT(locale, 'ui.formalReviewResultsBlock.aSeparateDevelopmentPlanWill') })) return;
     setBusy(true);
     try {
-      const source = `${en ? 'Source' : 'Origem'}: ${result.cycleTitle} · ${en ? 'Review' : 'Avaliação'} #${result.id} · ${item.label}`;
+      const source = `${i18nT(locale, 'ui.formalReviewResultsBlock.source')}: ${result.cycleTitle} · ${i18nT(locale, 'ui.formalReviewResultsBlock.review')} #${result.id} · ${item.label}`;
       const response = await fetch(`/api/admin/candidates/${candidateId}/development-plans`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: values.title, objective: `${source}\n${values.objective || ''}`, seedIdeas: [values.title], status: 'active' }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || (en ? 'Could not save.' : 'Não foi possível salvar.'));
-      toast(en ? 'Development plan created.' : 'Plano de desenvolvimento criado.', 'ok');
+      if (!response.ok) throw new Error(data.error || (i18nT(locale, 'ui.formalReviewResultsBlock.couldNotSave')));
+      toast(i18nT(locale, 'ui.formalReviewResultsBlock.developmentPlanCreated'), 'ok');
       onPdiChanged?.();
     } catch (error) { toast(error.message, 'error'); }
     finally { setBusy(false); }
   }
   if (state === 'forbidden') return null;
-  return <section className={`${S.card} ${S.stack}`} aria-label={en ? 'Review results' : 'Resultados de avaliações'}>
+  return <section className={`${S.card} ${S.stack}`} aria-label={i18nT(locale, 'ui.formalReviewResultsBlock.reviewResults')}>
     <div>
-      <h3 className={S.cardSection}>{en ? 'Review results' : 'Resultados de avaliações'}</h3>
-      <p className={`m-0 ${S.muted}`}>{en ? 'Review completed cycles and choose what to develop in PDI.' : 'Consulte os ciclos concluídos e escolha o que desenvolver no PDI.'}</p>
+      <h3 className={S.cardSection}>{i18nT(locale, 'ui.formalReviewResultsBlock.reviewResults')}</h3>
+      <p className={`m-0 ${S.muted}`}>{i18nT(locale, 'ui.formalReviewResultsBlock.reviewCompletedCyclesAndChoose')}</p>
     </div>
-    {state === 'loading' ? <p role="status" className={`m-0 ${S.muted}`}>{en ? 'Loading results…' : 'Carregando resultados…'}</p> : null}
+    {state === 'loading' ? <p role="status" className={`m-0 ${S.muted}`}>{i18nT(locale, 'ui.formalReviewResultsBlock.loadingResults')}</p> : null}
     {state === 'error' ? <InlineCallout tone="danger" role="alert">
-      <p className="m-0 mb-2">{en ? 'Could not load review results.' : 'Não foi possível carregar os resultados.'}</p>
-      <button type="button" className={S.btnGhost} onClick={() => setReload(value => value + 1)}>{en ? 'Try again' : 'Tentar novamente'}</button>
+      <p className="m-0 mb-2">{i18nT(locale, 'ui.formalReviewResultsBlock.couldNotLoadReviewResults')}</p>
+      <button type="button" className={S.btnGhost} onClick={() => setReload(value => value + 1)}>{i18nT(locale, 'ui.formalReviewResultsBlock.tryAgain')}</button>
     </InlineCallout> : null}
-    {state === 'ready' && !results.length ? <p className={`m-0 ${S.muted}`}>{en ? 'No completed reviews yet. Results will appear here when available.' : 'Nenhuma avaliação concluída ainda. Os resultados aparecerão aqui quando disponíveis.'}</p> : null}
+    {state === 'ready' && !results.length ? <p className={`m-0 ${S.muted}`}>{i18nT(locale, 'ui.formalReviewResultsBlock.noCompletedReviewsYetResults')}</p> : null}
     {state === 'ready' && results.map(result => <details key={result.id} className="min-w-0 rounded-control border border-ink/10 p-3 sm:p-4">
       <summary className="cursor-pointer break-words rounded-control font-ui font-medium text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40">
         {result.cycleTitle}
@@ -71,8 +71,8 @@ export function FormalReviewResultsBlock({ candidateId, locale = 'pt-BR', onPdiC
           {item.description ? <p className={`mb-0 mt-1 whitespace-pre-wrap break-words ${S.muted}`}>{item.description}</p> : null}
         </div>
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 sm:flex-col sm:items-end">
-          <p className={`m-0 ${S.cardMuted}`}>{en ? 'Average' : 'Média'} <span className={`${S.cardMetric} text-ink`}>{item.average == null ? '—' : `${item.average.toLocaleString(locale, { maximumFractionDigits: 2 })}/5`}</span></p>
-          <button type="button" className={S.btnGhost} disabled={busy} onClick={() => useResult(result, item)}>{en ? 'Use in PDI' : 'Usar no PDI'}</button>
+          <p className={`m-0 ${S.cardMuted}`}>{i18nT(locale, 'ui.formalReviewResultsBlock.average')} <span className={`${S.cardMetric} text-ink`}>{item.average == null ? '—' : `${item.average.toLocaleString(locale, { maximumFractionDigits: 2 })}/5`}</span></p>
+          <button type="button" className={S.btnGhost} disabled={busy} onClick={() => useResult(result, item)}>{i18nT(locale, 'ui.formalReviewResultsBlock.useInPdi')}</button>
         </div>
       </li>)}</ul>
     </details>)}

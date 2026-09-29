@@ -33,6 +33,7 @@ import {
   SortableTh,
   clientSortNextDir,
 } from '../dashboard-shared';
+import { t as i18nT, contentLocale } from '../../../lib/i18n';
 
 export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
   const [roles, setRoles] = useState([]);
@@ -47,147 +48,11 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
   const [impactFilter, setImpactFilter] = useState('');
   const { confirm, promptForm, toast } = useAppFeedback();
 
-  const t = (key) => {
-    const messages = {
-      'pt-BR': {
-        title: 'Sucessão',
-        subtitle: 'Papéis críticos + sucessores + prontidão',
-        listEmpty: 'Nenhum papel crítico cadastrado',
-        searchNamePh: 'Buscar por título…',
-        listEmptyDesc:
-          'Comece por um papel de alto impacto; depois atribua sucessores e acompanhe prontidão na Equipe.',
-        needCompanyTitle: 'Selecione uma empresa',
-        needCompanyHint: 'Escolha a empresa no filtro do painel para gerenciar sucessão.',
-        createRoleButton: 'Novo papel',
-        ctaTeam: 'Ver Equipe',
-        ctaHelp: 'Roteiro no Guia',
-        roleTitle: 'Título do papel',
-        roleTitlePlaceholder: 'Ex: Diretor Comercial, CTO...',
-        roleDescription: 'Descrição',
-        impactLevel: 'Nível de impacto',
-        impactHigh: 'Alto',
-        impactCritical: 'Crítico',
-        filterAll: 'Todos',
-        successorsCount: 'Sucessores',
-        createRoleSuccess: 'Papel criado',
-        updateRoleSuccess: 'Papel atualizado',
-        deactivateRoleSuccess: 'Papel desativado',
-        errorRoleTitleRequired: 'Título é obrigatório',
-        loadError: 'Erro ao carregar papéis',
-        saveError: 'Erro ao salvar',
-        edit: 'Editar',
-        deactivate: 'Desativar',
-        actions: 'Ações',
-        expand: 'Ver sucessores',
-        collapse: 'Ocultar',
-        noSuccessors: 'Nenhum sucessor ainda',
-        noSuccessorsHint: 'Use “Adicionar sucessor” para vincular um colaborador a este papel.',
-        unknownPerson: 'Pessoa sem nome',
-        confirmDeactivate: 'Desativar este papel?',
-        editRoleTitle: 'Editar papel',
-        assignSuccessor: 'Adicionar sucessor',
-        successorCandidate: 'Colaborador',
-        successorCandidatePh: 'Buscar por nome ou e-mail…',
-        successorCandidateHelp: 'Só colaboradores ativos da empresa.',
-        readiness: 'Prontidão',
-        readinessNotReady: 'Não pronto',
-        readinessDeveloping: 'Em desenvolvimento',
-        readinessReady: 'Pronto (6–12m)',
-        readinessNow: 'Pronto agora',
-        notes: 'Notas de desenvolvimento',
-        targetDate: 'Data-alvo',
-        createPlanSuccess: 'Sucessor atribuído',
-        updatePlanSuccess: 'Prontidão atualizada',
-        deletePlanSuccess: 'Sucessor removido',
-        confirmRemoveSuccessor: 'Remover este sucessor do papel?',
-        removeSuccessor: 'Remover',
-        editReadiness: 'Alterar prontidão',
-        pickEmployee: 'Selecione um colaborador',
-        alreadyAssigned: 'Este colaborador já está atribuído a este papel',
-        openOnTeam: 'Abrir na Equipe',
-        openPdi: 'Ver no PDI',
-        coverageTitle: 'Cobertura de bench',
-        coverageHint: 'Papéis com pelo menos um sucessor pronto vs só em desenvolvimento vs sem sucessor.',
-        coverageGapHint: '{n} papel(éis) sem sucessor. Priorize atribuição antes da urgência.',
-        coverageReady: 'Com pronto',
-        coverageDeveloping: 'Só em desenvolvimento',
-        coverageEmpty: 'Sem sucessor',
-        coverageMix: 'Mix de prontidão',
-        coverageCountShort: 'n',
-        coverageCap: 'Gráfico: {shown} de {total} papéis (lista completa abaixo)',
-        coverageRowAria: '{title}: pronto {ready}, em desenvolvimento {developing}, não pronto {notReady}',
-      },
-      en: {
-        title: 'Succession',
-        subtitle: 'Critical roles + successors + readiness',
-        listEmpty: 'No critical roles registered',
-        searchNamePh: 'Search by title…',
-        listEmptyDesc:
-          'Start with a high-impact role; then assign successors and track readiness in Team.',
-        needCompanyTitle: 'Select a company',
-        needCompanyHint: 'Choose a company in the panel filter to manage succession.',
-        createRoleButton: 'New role',
-        ctaTeam: 'Open Team',
-        ctaHelp: 'Demo path in Help',
-        roleTitle: 'Role title',
-        roleTitlePlaceholder: 'E.g.: Sales Director, CTO...',
-        roleDescription: 'Description',
-        impactLevel: 'Impact level',
-        impactHigh: 'High',
-        impactCritical: 'Critical',
-        filterAll: 'All',
-        successorsCount: 'Successors',
-        createRoleSuccess: 'Role created',
-        updateRoleSuccess: 'Role updated',
-        deactivateRoleSuccess: 'Role deactivated',
-        errorRoleTitleRequired: 'Title is required',
-        loadError: 'Failed to load roles',
-        saveError: 'Failed to save',
-        edit: 'Edit',
-        deactivate: 'Deactivate',
-        actions: 'Actions',
-        expand: 'View successors',
-        collapse: 'Hide',
-        noSuccessors: 'No successors yet',
-        noSuccessorsHint: 'Use “Add successor” to link an employee to this role.',
-        unknownPerson: 'Unnamed person',
-        confirmDeactivate: 'Deactivate this role?',
-        editRoleTitle: 'Edit role',
-        assignSuccessor: 'Add successor',
-        successorCandidate: 'Employee',
-        successorCandidatePh: 'Search by name or email…',
-        successorCandidateHelp: 'Active employees of this company only.',
-        readiness: 'Readiness',
-        readinessNotReady: 'Not ready',
-        readinessDeveloping: 'Developing',
-        readinessReady: 'Ready (6–12m)',
-        readinessNow: 'Ready now',
-        notes: 'Development notes',
-        targetDate: 'Target date',
-        createPlanSuccess: 'Successor assigned',
-        updatePlanSuccess: 'Readiness updated',
-        deletePlanSuccess: 'Successor removed',
-        confirmRemoveSuccessor: 'Remove this successor from the role?',
-        removeSuccessor: 'Remove',
-        editReadiness: 'Change readiness',
-        pickEmployee: 'Pick an employee',
-        alreadyAssigned: 'This employee is already assigned to this role',
-        openOnTeam: 'Open on Team',
-        openPdi: 'View in IDP',
-        coverageTitle: 'Bench coverage',
-        coverageHint: 'Roles with at least one ready successor vs developing-only vs no successor.',
-        coverageGapHint: '{n} role(s) with no successor. Prioritize assignment before urgency.',
-        coverageReady: 'Has ready',
-        coverageDeveloping: 'Developing only',
-        coverageEmpty: 'No successor',
-        coverageMix: 'Readiness mix',
-        coverageCountShort: 'n',
-        coverageCap: 'Chart: {shown} of {total} roles (full list below)',
-        coverageRowAria: '{title}: ready {ready}, developing {developing}, not ready {notReady}',
-      },
-    };
-    return messages[locale]?.[key] || messages['pt-BR'][key] || key;
-  };
+  function t(key, values = {}) {
+    const path = `adminModules.succession.${key}`;
+    const out = i18nT(locale, path, values);
+    return out === path ? key : out;
+  }
 
   function companyQs(prefix = '?') {
     if (!companyId) return '';
@@ -566,7 +431,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
 
   const sortedRoles = useMemo(() => {
     const dirMul = sortDir === 'asc' ? 1 : -1;
-    const collator = locale === 'en' ? 'en' : 'pt-BR';
+    const collator = contentLocale(locale);
     const q = String(nameQ || '').trim().toLowerCase();
     const rows = [...roles].filter((row) => {
       if (impactFilter && row.impactLevel !== impactFilter) return false;

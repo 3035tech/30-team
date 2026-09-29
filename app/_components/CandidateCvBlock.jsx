@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/cn';
-import { t } from '../../lib/i18n';
+import { t, localeHtmlLang } from '../../lib/i18n';
 import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
 import { AppLoading, ContentEnter } from './AppLoading';
@@ -168,7 +168,7 @@ export function CandidateCvBlock({
                 {cv.cvUpdatedAt ? (
                   <span className="font-mono text-2xs text-ink-faint">
                     {t(locale, 'recruiting.cvUpdatedAt', {
-                      date: new Date(cv.cvUpdatedAt).toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR'),
+                      date: new Date(cv.cvUpdatedAt).toLocaleString(localeHtmlLang(locale)),
                     })}
                   </span>
                 ) : null}

@@ -5,9 +5,10 @@ import { useAppFeedback } from './AppFeedback';
 import { AppLoading } from './AppLoading';
 import { CompetencyCategoriesBlock } from './CompetencyCategoriesBlock';
 import { S, AdminPageHeader, AdminCreateButton, AdminEditButton } from '../dashboard/dashboard-shared';
+import { t as i18nT, contentLocale } from '../../lib/i18n.js';
 
 export function CompetencyCatalogBlock({ companyId, locale = 'pt-BR' }) {
-  const en = locale.startsWith('en');
+  const en = contentLocale(locale) === 'en';
   const { promptForm, confirm, toast } = useAppFeedback();
   const [items, setItems] = useState([]);
   const [search, setSearch] = useState('');
@@ -35,8 +36,8 @@ export function CompetencyCatalogBlock({ companyId, locale = 'pt-BR' }) {
         method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...values, companyId }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || (en ? 'Could not save. Try again.' : 'Não foi possível salvar. Tente novamente.'));
-      toast(method === 'PUT' ? (en ? 'Examples added. Existing competencies were preserved.' : 'Exemplos adicionados. Competências existentes preservadas.') : (en ? 'Competency saved.' : 'Competência salva.'), 'ok');
+      if (!response.ok) throw new Error(data.error || (i18nT(locale, 'ui.competencyCatalogBlock.couldNotSaveTryAgain')));
+      toast(method === 'PUT' ? (i18nT(locale, 'ui.competencyCatalogBlock.examplesAddedExistingCompetenciesWere')) : (i18nT(locale, 'ui.competencyCatalogBlock.competencySaved')), 'ok');
       await load();
     } catch (e) { if (keepFormOpen) throw e; toast(e.message, 'error'); }
     finally { setBusy(false); }
@@ -46,37 +47,37 @@ export function CompetencyCatalogBlock({ companyId, locale = 'pt-BR' }) {
       title: en ? (item ? 'Edit competency' : 'New competency') : (item ? 'Editar competência' : 'Nova competência'),
       submit: values => save({ ...values, categoryId: values.categoryId ? Number(values.categoryId) : null, ...(item ? { id: item.id } : {}) }, item ? 'PATCH' : 'POST', true),
       fields: [
-        { key: 'name', label: en ? 'Name' : 'Nome', required: true, maxLength: 200, defaultValue: item?.name || '' },
-        { key: 'description', label: en ? 'Description (third person)' : 'Descrição (terceira pessoa)', type: 'textarea', maxLength: 2000, defaultValue: item?.description || '' },
-        { key: 'selfDescription', label: en ? 'Self-assessment wording (first person)' : 'Texto da autoavaliação (primeira pessoa)', type: 'textarea', maxLength: 2000, defaultValue: item?.selfDescription || '' },
-        { key: 'categoryId', label: en ? 'Category (optional)' : 'Categoria (opcional)', type: 'entitySearch', minChars: 0,
+        { key: 'name', label: i18nT(locale, 'ui.competencyCatalogBlock.name'), required: true, maxLength: 200, defaultValue: item?.name || '' },
+        { key: 'description', label: i18nT(locale, 'ui.competencyCatalogBlock.descriptionThirdPerson'), type: 'textarea', maxLength: 2000, defaultValue: item?.description || '' },
+        { key: 'selfDescription', label: i18nT(locale, 'ui.competencyCatalogBlock.selfAssessmentWordingFirstPerson'), type: 'textarea', maxLength: 2000, defaultValue: item?.selfDescription || '' },
+        { key: 'categoryId', label: i18nT(locale, 'ui.competencyCatalogBlock.categoryOptional'), type: 'entitySearch', minChars: 0,
           searchUrl: `/api/admin/competency-categories?companyId=${companyId}`, defaultValue: item?.categoryId ? String(item.categoryId) : '',
-          placeholder: en ? 'Search categories' : 'Buscar categorias', help: item?.categoryName ? `${en ? 'Current' : 'Atual'}: ${item.categoryName}` : (en ? 'Optional. Manage categories from the catalog.' : 'Opcional. Cadastre categorias pelo catálogo.') },
+          placeholder: i18nT(locale, 'ui.competencyCatalogBlock.searchCategories'), help: item?.categoryName ? `${i18nT(locale, 'ui.competencyCatalogBlock.current')}: ${item.categoryName}` : (i18nT(locale, 'ui.competencyCatalogBlock.optionalManageCategoriesFromThe')) },
       ],
     });
   }
   async function toggle(item) {
-    if (!await confirm({ title: item.name, message: en ? 'Change availability for new reviews? Existing responses remain unchanged.' : 'Alterar a disponibilidade para novas avaliações? As respostas existentes serão preservadas.' })) return;
+    if (!await confirm({ title: item.name, message: i18nT(locale, 'ui.competencyCatalogBlock.changeAvailabilityForNewReviews') })) return;
     await save({ id: item.id, active: !item.active }, 'PATCH');
   }
-  if (!companyId) return <p>{en ? 'Select a company.' : 'Selecione uma empresa.'}</p>;
+  if (!companyId) return <p>{i18nT(locale, 'ui.competencyCatalogBlock.selectACompany')}</p>;
   if (managingCategories) return <CompetencyCategoriesBlock key={companyId} companyId={companyId} locale={locale} onBack={() => { setManagingCategories(false); void load(); }} />;
   return <section className={S.stack}>
-    <AdminPageHeader title={en ? 'Competencies' : 'Competências'} actions={<AdminCreateButton label={en ? 'New competency' : 'Nova competência'} disabled={busy} onClick={() => void edit()} />} />
-    <button type="button" className={`${S.btnGhost} self-start`} onClick={() => setManagingCategories(true)}>{en ? 'Manage categories' : 'Gerenciar categorias'}</button>
-    <button type="button" className={`${S.btnGhost} self-start`} disabled={busy} onClick={async () => { if (await confirm({ title: en ? 'Add 17 example competencies?' : 'Adicionar 17 competências de exemplo?', message: en ? 'You can edit these examples. Existing items are not replaced.' : 'Você poderá editar os exemplos. Os itens existentes não serão substituídos.' })) await save({}, 'PUT'); }}>{en ? 'Add example competencies' : 'Adicionar competências de exemplo'}</button>
-    <input className={S.input} aria-label={en ? 'Search competencies' : 'Buscar competências'} placeholder={en ? 'Search competencies' : 'Buscar competências'} value={search} onChange={e => setSearch(e.target.value)} />
-    {error ? <p role="alert">{error} <button className={S.btnGhost} onClick={load}>{en ? 'Retry' : 'Tentar novamente'}</button></p> : null}
+    <AdminPageHeader title={i18nT(locale, 'ui.competencyCatalogBlock.competencies')} actions={<AdminCreateButton label={i18nT(locale, 'ui.competencyCatalogBlock.newCompetency')} disabled={busy} onClick={() => void edit()} />} />
+    <button type="button" className={`${S.btnGhost} self-start`} onClick={() => setManagingCategories(true)}>{i18nT(locale, 'ui.competencyCatalogBlock.manageCategories')}</button>
+    <button type="button" className={`${S.btnGhost} self-start`} disabled={busy} onClick={async () => { if (await confirm({ title: i18nT(locale, 'ui.competencyCatalogBlock.add17ExampleCompetencies'), message: i18nT(locale, 'ui.competencyCatalogBlock.youCanEditTheseExamples') })) await save({}, 'PUT'); }}>{i18nT(locale, 'ui.competencyCatalogBlock.addExampleCompetencies')}</button>
+    <input className={S.input} aria-label={i18nT(locale, 'ui.competencyCatalogBlock.searchCompetencies')} placeholder={i18nT(locale, 'ui.competencyCatalogBlock.searchCompetencies')} value={search} onChange={e => setSearch(e.target.value)} />
+    {error ? <p role="alert">{error} <button className={S.btnGhost} onClick={load}>{i18nT(locale, 'ui.competencyCatalogBlock.retry')}</button></p> : null}
     {loading ? <AppLoading locale={locale} variant="panel" /> : <ul className="m-0 list-none space-y-4 p-0">
       {items.filter(item => `${item.name} ${item.description} ${item.categoryName || ''}`.toLocaleLowerCase(locale).includes(search.toLocaleLowerCase(locale))).map(item => <li key={item.id} className="border-b border-ink/10 pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="m-0 text-base font-medium">{item.name}</h3>
-          <div className="flex items-center gap-2"><AdminEditButton label={en ? 'Edit' : 'Editar'} disabled={busy} onClick={() => void edit(item)} /><button className={S.btnGhost} disabled={busy} onClick={() => void toggle(item)}>{item.active ? (en ? 'Deactivate' : 'Inativar') : (en ? 'Activate' : 'Ativar')}</button></div>
+          <div className="flex items-center gap-2"><AdminEditButton label={i18nT(locale, 'ui.competencyCatalogBlock.edit')} disabled={busy} onClick={() => void edit(item)} /><button className={S.btnGhost} disabled={busy} onClick={() => void toggle(item)}>{item.active ? (i18nT(locale, 'ui.competencyCatalogBlock.deactivate')) : (i18nT(locale, 'ui.competencyCatalogBlock.activate'))}</button></div>
         </div>
         <p className="my-1 max-w-prose text-sm text-ink-muted">{item.description}</p>
-        <p className={S.faint}>{item.active ? (en ? 'Active' : 'Ativa') : (en ? 'Inactive' : 'Inativa')} · {en ? 'Uses in reviews' : 'Usos em avaliações'}: {item.usageCount || 0}{item.categoryName ? ` · ${item.categoryName}` : ''}</p>
+        <p className={S.faint}>{item.active ? (i18nT(locale, 'ui.competencyCatalogBlock.active')) : (i18nT(locale, 'ui.competencyCatalogBlock.inactive'))} · {i18nT(locale, 'ui.competencyCatalogBlock.usesInReviews')}: {item.usageCount || 0}{item.categoryName ? ` · ${item.categoryName}` : ''}</p>
       </li>)}
-      {!items.some(item => `${item.name} ${item.description} ${item.categoryName || ''}`.toLocaleLowerCase(locale).includes(search.toLocaleLowerCase(locale))) ? <li>{en ? 'No competencies found.' : 'Nenhuma competência encontrada.'}</li> : null}
+      {!items.some(item => `${item.name} ${item.description} ${item.categoryName || ''}`.toLocaleLowerCase(locale).includes(search.toLocaleLowerCase(locale))) ? <li>{i18nT(locale, 'ui.competencyCatalogBlock.noCompetenciesFound')}</li> : null}
     </ul>}
   </section>;
 }
