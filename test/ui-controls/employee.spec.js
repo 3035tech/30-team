@@ -31,7 +31,7 @@ test('employee priorities, PDI filters, DP keyboard navigation and completed cou
   await expect(page.getByRole('heading',{name:'Checklist documental'})).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('button',{name:'pdi',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Marcar feito'}).first()).toBeVisible();
+  await expect(page.getByRole('button',{name:'Marcar como feito'}).first()).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 

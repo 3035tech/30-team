@@ -677,6 +677,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                   <SortableTh columnKey="name" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colName')}</SortableTh>
                   <SortableTh columnKey="slug" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colSlug')}</SortableTh>
                   <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colActive')}</SortableTh>
+                  <AdminTh align="right">{t(locale, 'panel.admin.colActiveEmployees')}</AdminTh>
                   <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleCompanySort}>{t(locale, 'panel.admin.colCreated')}</SortableTh>
                   <AdminTh>{t(locale, 'panel.admin.colLinkT')}</AdminTh>
                   <AdminTh>{t(locale, 'panel.admin.colCareers')}</AdminTh>
@@ -712,6 +713,9 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                       <td className="px-4 py-2 align-middle font-mono text-ink-muted whitespace-nowrap">{c.slug}</td>
                       <td className="px-4 py-2 align-middle font-mono text-ink-muted">
                         {c.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}
+                      </td>
+                      <td className="px-4 py-2 text-right align-middle font-mono tabular-nums text-ink">
+                        {Number(c.activeEmployees || 0).toLocaleString(dateLocale)}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 align-middle font-mono text-ink-faint">
                         {createdAt

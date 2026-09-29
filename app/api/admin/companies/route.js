@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { PAGE_SIZE_OPTIONS, sqlCompaniesOrderBy } from '../../../../lib/assessment-filters';
 import { apiError, ERR } from '../../../../lib/api-error';
 import { CAP, requireCapability } from '../../../../lib/permissions';
+import { EMPLOYMENT_STATUS } from '../../../../lib/domain-status';
 import { parseCompanyProfileFromBody } from '../../../../lib/company-profile';
 import { isCompanyLogoStorageConfigured } from '../../../../lib/company-logo';
 import {
@@ -102,29 +103,40 @@ export async function GET(request) {
   const lim = params.length + 1;
   const off = params.length + 2;
   const r = await queryRead(
-    `SELECT
-       c.id,
-       c.name,
-       c.slug,
-       c.active,
-       c.website,
-       c.about_html AS "aboutHtml",
-       c.public_profile_enabled AS "publicProfileEnabled",
-       c.anniversary_date AS "anniversaryDate",
-       c.logo_url AS "logoUrl",
-       c.created_at AS "createdAt",
-       lk.token AS "activeToken",
-       lk.expires_at AS "activeTokenExpiresAt"
-     FROM companies c
-     LEFT JOIN company_links lk ON lk.company_id = c.id AND lk.active = TRUE
-     WHERE ${whereSql}
-    ${orderSql}
-     LIMIT $${lim} OFFSET $${off}`,
+    `WITH page AS MATERIALIZED (
+       SELECT
+         c.id,
+         c.name,
+         c.slug,
+         c.active,
+         c.website,
+         c.about_html AS "aboutHtml",
+         c.public_profile_enabled AS "publicProfileEnabled",
+         c.anniversary_date AS "anniversaryDate",
+         c.logo_url AS "logoUrl",
+         c.created_at AS "createdAt",
+         lk.token AS "activeToken",
+         lk.expires_at AS "activeTokenExpiresAt",
+         ROW_NUMBER() OVER (${orderSql}) AS rn
+       FROM companies c
+       LEFT JOIN company_links lk ON lk.company_id = c.id AND lk.active = TRUE
+       WHERE ${whereSql}
+      ${orderSql}
+       LIMIT $${lim} OFFSET $${off}
+     )
+     SELECT p.*, emp.n AS "activeEmployees"
+     FROM page p
+     LEFT JOIN LATERAL (
+       SELECT COUNT(*)::int AS n
+       FROM candidates ce
+       WHERE ce.company_id = p.id AND ce.employment_status = '${EMPLOYMENT_STATUS.EMPLOYEE}'
+     ) emp ON TRUE
+     ORDER BY p.rn`,
     listParams
   );
 
   return NextResponse.json({
-    items: r.rows,
+    items: r.rows.map(({ rn: _rn, ...row }) => row),
     total,
     page: effectivePage,
     pageSize,

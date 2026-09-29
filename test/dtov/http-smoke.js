@@ -1186,6 +1186,11 @@ export async function runHttpSmoke(baseUrl) {
       ok('admin', 'companies-logo-flag', String(companiesBody.logoStorageConfigured));
     }
     const firstCo = Array.isArray(companiesBody.items) ? companiesBody.items[0] : null;
+    if (firstCo && !Number.isInteger(firstCo.activeEmployees)) {
+      fail('admin', 'companies-active-employees', `activeEmployees=${firstCo.activeEmployees}`);
+    } else if (firstCo) {
+      ok('admin', 'companies-active-employees', String(firstCo.activeEmployees));
+    }
     if (firstCo?.slug) {
       const qsOwn = new URLSearchParams({
         checkSlug: String(firstCo.slug),

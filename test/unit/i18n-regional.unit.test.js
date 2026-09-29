@@ -13,7 +13,7 @@ import {
 import { buildProductLandingMetadata, getProductLandingCopy } from '../../lib/product-landing-seo.js';
 
 test('regional locales normalize with stable aliases and region metadata', () => {
-  assert.deepEqual(LOCALES, ['pt-BR', 'pt-PT', 'en', 'es-419', 'es-ES']);
+  assert.deepEqual(LOCALES, ['pt-BR', 'pt-PT', 'en', 'es-419', 'es-ES', 'fr-FR', 'de-DE']);
   assert.equal(normalizeLocale('en-US'), 'en');
   assert.equal(normalizeLocale('pt_pt'), 'pt-PT');
   assert.equal(normalizeLocale('es'), 'es-419');
@@ -46,7 +46,7 @@ test('regional catalogs override high-traffic copy and fall back safely', () => 
 test('Spanish landing copy is selected consistently', () => {
   const copy = getProductLandingCopy('es-419');
   assert.match(copy.metaTitle, /reclutamiento/i);
-  assert.match(copy.heroTitle, /visión continua/i);
+  assert.match(copy.heroTitle, /Las personas crecen/i);
   assert.equal(copy.navPricing, 'Precios');
   assert.equal(copy.ui.navJourney, 'Cómo funciona');
   assert.equal(buildProductLandingMetadata('es-419').openGraph.locale, 'es_419');
