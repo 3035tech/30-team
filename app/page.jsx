@@ -21,6 +21,7 @@ export default async function HomePage() {
     'pt-PT': getProductLandingCopy('pt-PT'),
     en: getProductLandingCopy('en'),
     'es-419': getProductLandingCopy('es-419'),
+    'es-ES': getProductLandingCopy('es-ES'),
   };
   const jsonLd = buildProductLandingJsonLd(locale);
 

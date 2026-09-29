@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
+import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { dialogFieldClass } from './app-dialog-styles';
 
@@ -32,16 +33,9 @@ export function EntitySearchSelect({
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
 
-  const emptyHint =
-    minChars <= 0
-      ? locale === 'en'
-        ? 'Search or pick…'
-        : 'Busque ou escolha…'
-      : locale === 'en'
-        ? 'Type to search…'
-        : 'Digite para buscar…';
-  const noResults = locale === 'en' ? 'No matches' : 'Nenhum resultado';
-  const clearLabel = locale === 'en' ? 'Clear' : 'Limpar';
+  const emptyHint = t(locale, minChars <= 0 ? 'common.entitySearch.pick' : 'common.entitySearch.type');
+  const noResults = t(locale, 'common.entitySearch.noResults');
+  const clearLabel = t(locale, 'common.entitySearch.clear');
 
   useEffect(() => {
     if (value && initialSelection?.id != null && String(value) === String(initialSelection.id) && hydratedSelection.current !== String(value)) {

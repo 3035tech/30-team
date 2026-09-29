@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { orgChartLayout, orgDescendantIds, ORG_CARD_WIDTH, ORG_CARD_HEIGHT } from '../../lib/people/org-chart-layout.js';
+import { listOrgChart, setCandidateManager } from '../../lib/people/org-chart.js';
+const roots = [{ id: 1, children: [{ id: 2, children: [{ id: 4, children: [] }] }, { id: 3, children: [] }] }];
+test('tree positions connect levels without overlapping cards', () => {
+  const layout = orgChartLayout(roots);
+  assert.equal(layout.nodes.length, 4); assert.equal(layout.edges.length, 3);
+  for (const { from, to } of layout.edges) assert.ok(to.y > from.y + ORG_CARD_HEIGHT);
+  for (const a of layout.nodes) for (const b of layout.nodes) {
+    if (a.id === b.id || a.y !== b.y) continue;
+    assert.ok(a.x + ORG_CARD_WIDTH <= b.x || b.x + ORG_CARD_WIDTH <= a.x);
+  }
+  assert.equal(layout.nodes.find((node) => node.id === 4).depth, 2);
+});
+test('collapse preserves manager but hides whole subtree; descendants are excluded from reassignment', () => {
+  assert.deepEqual(orgChartLayout(roots, new Set([2])).nodes.map((node) => node.id), [1, 2, 3]);
+  assert.deepEqual([...orgDescendantIds(roots[0].children[0])], [2, 4]);
+});
+test('disconnected roots wrap and deep employees remain visible', () => {
+  const forest = Array.from({ length: 200 }, (_, id) => ({ id, children: [] }));
+  const layout = orgChartLayout(forest);
+  assert.equal(layout.nodes.length, 200); assert.ok(layout.width < 1200);
+  let chain = { id: 12, children: [] };
+  for (let id = 11; id; id--) chain = { id, children: [chain] };
+  assert.equal(orgChartLayout([chain]).nodes.length, 12);
+});
+test('legacy cycles do not hide employees or create recursive JSON', async () => {
+  const result = await listOrgChart(async () => ({ rows: [{ id: 1, name: 'A', managerCandidateId: 2 }, { id: 2, name: 'B', managerCandidateId: 1 }, { id: 3, name: 'C', managerCandidateId: 2 }] }), { companyId: 1 });
+  assert.equal(result.total, 3); assert.equal(result.roots.length, 3);
+  assert.doesNotThrow(() => JSON.stringify(result));
+});
+test('manager mutation rejects self, foreign managers and descendants before UPDATE', async () => {
+  const db = { query: async (sql, params) => {
+    assert.ok(!sql.includes('UPDATE'));
+    if (sql.includes('SELECT id FROM')) return { rowCount: params[0] === 2 ? 1 : 0, rows: [] };
+    return { rowCount: 1, rows: [{ mid: 1 }] };
+  } };
+  for (const managerCandidateId of [1, 2, 999]) {
+    const result = await setCandidateManager(db, { companyId: 1, candidateId: 1, managerCandidateId });
+    assert.equal(result.ok, false);
+  }
+});

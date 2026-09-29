@@ -24,7 +24,7 @@ export function OrganizationTab({ companyId, locale, navigateDashboard }) {
   const [page, setPage] = useState(1);
   const options = orgUnitOptions(units);
   const safePage = Math.min(page, Math.max(1, Math.ceil(options.length / PAGE_SIZE)));
-  const listTitle = locale === 'en' ? 'Organizational units' : 'Unidades organizacionais';
+  const listTitle = t(locale, 'panel.orgUnits.listTitle');
   function edit(unit = {}) { setForm({ id: unit.id, name: unit.name || '', parentId: unit.parentId || '' }); setSaveError(''); }
   async function save(event) {
     event.preventDefault(); if (busy) return; setBusy(true); setSaveError('');
@@ -45,6 +45,7 @@ export function OrganizationTab({ companyId, locale, navigateDashboard }) {
   }
   if (!companyId) return <EmptyState title={t(locale, 'panel.orgUnits.chooseCompany')} />;
   return <div className="flex flex-col gap-4">
+    <OrgChartBlock key={companyId} locale={locale} companyId={companyId} navigateDashboard={navigateDashboard} />
     <AdminPageHeader title={listTitle} description={t(locale, 'panel.orgUnits.hint')}
       actions={<AdminCreateButton label={t(locale, units.length ? 'panel.orgUnits.create' : 'panel.orgUnits.firstCreate')} disabled={busy || loading || Boolean(error) || Boolean(form)} onClick={() => edit()} />} />
     {form ? <ContentEnter animKey={`org-form-${form.id || 'new'}`}><form className={S.card} onSubmit={save} aria-label={t(locale, form.id ? 'panel.orgUnits.edit' : 'panel.orgUnits.create')}>
@@ -78,6 +79,5 @@ export function OrganizationTab({ companyId, locale, navigateDashboard }) {
       </li>)}</ul>
       <AdminListPager locale={locale} page={safePage} pageSize={PAGE_SIZE} pageSizeOptions={[PAGE_SIZE]} total={units.length} onPageChange={setPage} />
     </ContentEnter>}
-    <OrgChartBlock key={companyId} locale={locale} companyId={companyId} navigateDashboard={navigateDashboard} />
   </div>;
 }

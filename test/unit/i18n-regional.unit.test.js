@@ -13,7 +13,7 @@ import {
 import { buildProductLandingMetadata, getProductLandingCopy } from '../../lib/product-landing-seo.js';
 
 test('regional locales normalize with stable aliases and region metadata', () => {
-  assert.deepEqual(LOCALES, ['pt-BR', 'pt-PT', 'en', 'es-419']);
+  assert.deepEqual(LOCALES, ['pt-BR', 'pt-PT', 'en', 'es-419', 'es-ES']);
   assert.equal(normalizeLocale('en-US'), 'en');
   assert.equal(normalizeLocale('pt_pt'), 'pt-PT');
   assert.equal(normalizeLocale('es'), 'es-419');
@@ -50,4 +50,23 @@ test('Spanish landing copy is selected consistently', () => {
   assert.equal(copy.navPricing, 'Precios');
   assert.equal(copy.ui.navJourney, 'Cómo funciona');
   assert.equal(buildProductLandingMetadata('es-419').openGraph.locale, 'es_419');
+});
+
+
+test('Spain and Latin America retain distinct terminology and shared Spanish copy', () => {
+  assert.equal(normalizeLocale('es_ES'), 'es-ES');
+  assert.equal(localeHtmlLang('es-ES'), 'es-ES');
+  assert.equal(localeFlag('es-ES'), '🇪🇸');
+  assert.equal(localeLabel('es-ES'), 'Español (España)');
+  assert.equal(localeLabel('es-419'), 'Español (Latinoamérica)');
+  assert.equal(localeRegionConfig('es-ES').region, 'ES');
+  assert.equal(t('es-ES', 'login.enter'), 'Iniciar sesión →');
+  assert.equal(t('es-ES', 'panel.orgChart.managerTitle'), 'Responsable directo');
+  assert.equal(t('es-419', 'panel.orgChart.managerTitle'), 'Jefe directo');
+  assert.equal(t('es-ES', 'panel.dp.mobile'), 'Teléfono móvil');
+  assert.equal(t('es-419', 'panel.dp.mobile'), 'Celular');
+  assert.equal(t('pt-PT', 'panel.common.save'), 'Guardar');
+  assert.equal(t('en', 'dashboard.notifInterviewScheduledTitle'), 'Interview scheduled');
+  assert.equal(buildProductLandingMetadata('es-ES').openGraph.locale, 'es_ES');
+  assert.equal(getProductLandingCopy('es-ES').navPricing, 'Precios');
 });

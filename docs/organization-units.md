@@ -42,3 +42,47 @@ migração repetida, vínculo preservando cargo/gestor e retry). Revisão visual
 390 px e 1365 px; ações empilhadas no mobile para preservar a leitura dos nomes.
 
 Fora do escopo: filiais, centros de custo, posições/headcount, aprovações, transferência em massa e histórico temporal completo de lotação.
+
+## Organograma visual — 2026-09-29
+
+O organograma aparece aberto antes das unidades. Cartões mostram pessoa, cargo,
+unidade e nível; linhas indicam os vínculos de gestão. Há busca, zoom, ajuste à
+largura, expansão/recolhimento de ramos e painel de edição do gestor. Ao salvar,
+a árvore é recarregada do servidor. A pessoa pode ir para o primeiro nível
+removendo seu gestor; os subordinados continuam vinculados a ela.
+
+Modelagem: reutiliza `candidates.manager_candidate_id`, FK existente e índice
+`(company_id, manager_candidate_id)`. Um colaborador tem no máximo um gestor
+direto e um gestor pode ter vários subordinados. O nível é derivado do caminho
+até a raiz, evitando uma coluna redundante que poderia divergir do vínculo.
+Cargo e departamento não são alterados. Não há migration nem tabela nova.
+
+A API e sua auditoria existente são reutilizadas. Todas as escritas de gestor
+pela aplicação agora serializam na linha da empresa, dentro de transação,
+antes de verificar ciclos e gravar. O servidor rejeita gestor próprio,
+descendente e pessoa de outra empresa. Ciclos legados são apresentados como
+raízes separadas, sem ocultar pessoas nem produzir JSON recursivo; a leitura
+não altera dados. Clientes injetados na função de escrita devem estar em uma
+transação. Continua o limite de 200 pessoas por visualização; o aviso explica
+como atribuir um gestor fora do recorte pela ficha individual.
+
+O layout usa React, HTML e SVG, sem pacote externo. As raízes independentes
+quebram em linhas; equipes conectadas preservam a árvore. O canvas tem rolagem
+própria e o editor fica abaixo em telas menores. A edição é por seleção do
+gestor e botão Salvar; não inclui arrastar e soltar nem posições manuais.
+
+Provas: `node --test test/unit/org-chart-layout.unit.test.js` e
+`node test/dtov/org-chart.test.js` (DTOV local, dados temporários removidos).
+Incluem profundidade acima de oito níveis, layout com 200 raízes, recolhimento,
+preservação dos subordinados, isolamento entre empresas e corrida A→B/B→A.
+
+Validação realizada: 19 testes unitários de layout/i18n/preços/regressão aprovados;
+integração DTOV aprovada; build `NEXT_DIST_DIR=.next-org-review npm run build`
+aprovado. No navegador local, Bruno passou de nível 2 para 3 ao trocar Ana por
+Joana como gestora; a recarga preservou o resultado e o vínculo original foi
+restaurado. Recolher o ramo de Ana escondeu seus subordinados; esses mesmos
+subordinados não aparecem como gestores elegíveis de Ana. Espanhol da Espanha
+mostrou “Responsable directo”. Viewport 390×844 (433 CSS px com zoom do navegador)
+sem overflow horizontal da página. Console exibiu aviso de hidratação por
+atributos `data-gr-*` inseridos pela extensão Grammarly; nenhum erro funcional
+do organograma foi observado. Nenhuma alteração feita em produção.

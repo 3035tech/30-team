@@ -24,6 +24,7 @@ function PrimaryCta({ copy, compact = false }) {
 function landingCopyKey(locale) {
   if (locale === 'en') return 'en';
   if (locale === 'pt-PT') return 'pt-PT';
+  if (locale === 'es-ES') return 'es-ES';
   if (locale === 'es-419') return 'es-419';
   return 'pt-BR';
 }
