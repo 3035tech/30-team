@@ -13,13 +13,13 @@ alwaysApply: true
 1. **UI nova ou bloco em edição** → `className` Tailwind com tokens (`brand-*`, `canvas`, `ink`, `success`/`danger`/`warning`/`info`, `pipeline-*`, `font-display` / `font-mono` / `font-ui`, `text-2xs` / `text-prose`, `min-h-touch`, `rounded-card` / `rounded-control`).
 
 2. **Tipografia (escala obrigatória)** — ver `tailwind.config.js` `fontSize` + `FONTS` em `lib/theme.js`:
-   - **Famílias:** `font-ui` corpo · `font-mono` labels/meta/CTAs densos · `font-display` títulos de página / marketing (não body de form)
+   - **Famílias:** `font-ui` corpo · `font-mono` labels/meta/CTAs densos (Inter + `tabular-nums`) · `font-code` só para código/URL/`kbd` (monoespaçada real) · `font-display` títulos de página / marketing (não body de form; sempre com peso `font-semibold`/`font-bold`)
    - **Tamanhos:** `text-2xs` (11) labels · `text-xs` (12) faint · `text-prose` (13) body muted/CTA · `text-sm`+ cards · sem `text-[Npx]` novo
    - Preferir `S.label` / `S.muted` / `S.faint` / `S.pageTitle` / `S.card*` / `FormField` (+ `S.fieldRow` / `formFieldRowClass`) em vez de inventar
    - Campos em grade: **sempre** label acima via `FormField`; pai com `items-start` — hint/readonly nunca estica irmãos
 
 3. **Reutilizar antes de inventar** (grep primeiro):
-   - `S.*` em `app/dashboard/dashboard-shared.jsx` — `S.card`, `S.cardTight`, `S.label`, `S.btnPrimary`, `S.btnBrandSoft`, `S.btnGhost`, `S.input`, `S.select`, `S.filterChip`, `S.stack`, `S.row`, `S.muted`, `S.faint`, `S.pageTitle`
+   - `S.*` em `app/dashboard/dashboard-shared.jsx` — `S.card`, `S.cardTight`, `S.cardShell` (sem padding: use quando precisar de padding próprio, pois `cn()` não faz merge e `p-0`/`p-3` sobre `S.card` não vencem), `S.label`, `S.btnPrimary`, `S.btnBrandSoft`, `S.btnGhost`, `S.input`, `S.select`, `S.filterChip`, `S.stack`, `S.row`, `S.muted`, `S.faint`, `S.pageTitle`
    - `dialog*Class` em `app/_components/app-dialog-styles.js`
    - `EmptyState`, `Icon`, `PanelSubNav`, `TypeBadge`, `StatusToneChip`, `AdminRichFormDrawer`, `PromptFormDialog`, `AppLoading` (`ContentEnter`, `NavLoadBar`, `variant="panel"`), `CollapsibleBlock` / `DisclosureToggle`, `MeterBar` / `Bar`, `ScaleRatingButtons`, `StatMetricTile`, `SegmentedControl`, `InlineCallout`, `PublicNarrowShell`, `InsightListItem`, `IconActionTip`, `useAppFeedback`
    - Admin list: `AdminPageHeader`, `AdminTableShell`, `AdminListSearch`, `AdminTh`, `SortableTh`, `AdminListPager`, `Admin*Button`

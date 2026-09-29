@@ -38,8 +38,13 @@ Origem: brand kit oficial `30grow-brand-kit.zip` (vetores sem fonte, favicon aju
 
 ## Linguagem de interface
 
-- Sans-serif: preservada a stack moderna de sistema, com Inter como primeira preferência se disponível. Nenhum download de fonte externa é necessário. Títulos antes serifados agora usam essa mesma família; mono fica reservado para dados/códigos existentes.
-- H1 700; H2/H3 600; corpo 400; labels 500; ações principais 600.
+- Sans-serif: preservada a stack moderna de sistema, com Inter como primeira preferência se disponível. Nenhum download de fonte externa é necessário. Títulos antes serifados agora usam essa mesma família.
+- `font-mono` virou Inter com `tabular-nums` (labels/meta/números alinhados); monoespaçada de verdade só com `font-code` (URLs, `kbd`, códigos TOTP, JSON de auditoria).
+- H1 700; H2/H3 600 (títulos `font-display` nunca `font-normal`); corpo 400; labels 500; ações principais 600. Valor de KPI em `StatMetricTile` usa `S.cardMetricLg`.
+- Um CTA verde por tela: ações de criar de uma subseção usam `AdminCreateButton variant="secondary"`; exportar/filtros usam `S.btnGhost`.
+- Ações de linha (`AdminView/Edit/Delete/IconButton`): repouso neutro (`border-line bg-surface`) com o ícone na cor semântica; o fundo tintado só aparece no hover.
+- Cabeçalhos de tabela (`SortableTh`, `AdminTh`, `AdminActionsTh`) e células usam `px-4` para alinhar coluna e conteúdo.
+- `cn()` não faz merge de classes: para padding próprio em card, partir de `S.cardShell` (sem padding), não de `S.card`/`S.cardTight`.
 - Cards e modais 16px, campos/botões 10px; bordas leves, sombra de card 0 1px 2px / 4%.
 - Superfícies planas: sem gradientes, texto com gradiente, brilho radial ou vidro (`backdrop-blur`) em cards/modais. `.bg-radial-glow*` permanecem como hooks sem efeito.
 - Sombras só por token: `shadow-card`, `shadow-menu` (dropdowns), `shadow-dialog` (modais/tour), `shadow-toast`. Raios ad hoc foram normalizados para `rounded-card` / `rounded-control` (exceção: moldura do celular no mockup da landing).
