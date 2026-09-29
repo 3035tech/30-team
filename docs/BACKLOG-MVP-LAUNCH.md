@@ -29,9 +29,9 @@ Cada item só está concluído quando há prova do fluxo, estado de erro compree
 
 **Aceite:** matriz automatizada de acesso passa para `admin`, `direction` e `hr`; tentativas cross-tenant retornam erro canônico sem vazar existência ou dados.
 
-### MVP-03 — Jornada principal ponta a ponta
+### MVP-03 — Jornada principal ponta a ponta ✅ ENTREGUE
 
-**Evidência atual (29/09/2026):** jornada completa validada pela interface no DTOV, de empresa/gestor novos até a mesma pessoa contratada na Equipe, incluindo inscrição pública, convite, 54 respostas, notas de decisão e persistência após recarregar. O spec `test/e2e/pilot-primary-journey.spec.js` agora reúne esse percurso; sua descoberta/compilação passou e o runner foi executado, mas a última tentativa falhou na avaliação pública ao aguardar a questão 2 após recarregamento. Corrigir/investigar e obter uma execução completa verde permanece como gate do aceite automatizado. Ver [evidências e limites](validation/MVP-03-2026-09-29.md).
+**Evidência de aceite (29/09/2026):** build de produção local passou e o runner `test/e2e/pilot-primary-journey.spec.js` concluiu a jornada no DTOV: **1 passed (42,5 s), Chromium**. Empresa/gestor novos, módulos, cargo/vaga, inscrição pública, convite simulado, 54 respostas, resultado, notas persistidas, aprovação, cancelamento/confirmação da contratação e a mesma pessoa na Equipe após recarregar. A execução sem Fast Refresh eliminou o recarregamento que interrompia a avaliação no servidor de desenvolvimento. SMTP real e integrações externas continuam no MVP-04. Ver [evidências e limites](validation/MVP-03-2026-09-29.md).
 
 **Objetivo:** provar o job central sem intervenção técnica.
 

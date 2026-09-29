@@ -148,12 +148,19 @@ test('MVP-03 creates a company and manager, recruits and hires the same candidat
       await candidate.getByPlaceholder('Ex: maria@empresa.com', { exact: true }).fill(candidateEmail);
       await candidate.getByRole('checkbox').check();
       await candidate.getByRole('button', { name: 'Começar →', exact: true }).click();
-      const submitted = candidate.waitForResponse(r => r.request().method() === 'POST' && new URL(r.url()).pathname === '/api/results', { timeout: 90_000 });
       for (let question = 1; question <= 54; question += 1) {
         await expect(candidate.getByText(`Questão ${question} de 54`, { exact: true })).toBeVisible();
-        await candidate.getByRole('button', { name: '3 Às vezes', exact: true }).click();
+        const answer = candidate.getByRole('button', { name: '3 Às vezes', exact: true });
+        if (question === 54) {
+          const [submitted] = await Promise.all([
+            candidate.waitForResponse(r => r.request().method() === 'POST' && new URL(r.url()).pathname === '/api/results', { timeout: 90_000 }),
+            answer.click(),
+          ]);
+          expect(submitted.ok()).toBeTruthy();
+        } else {
+          await answer.click();
+        }
       }
-      expect((await submitted).ok()).toBeTruthy();
       await expect(candidate.getByRole('heading', { name: 'Obrigado!', exact: true })).toBeVisible();
     });
   } finally {
@@ -169,6 +176,9 @@ test('MVP-03 creates a company and manager, recruits and hires the same candidat
     const savedNotes = page.waitForResponse(r => r.request().method() === 'PATCH' && r.url().includes(`/vacancies/${vacancyId}/candidates/`));
     await page.getByRole('button', { name: 'Salvar notas', exact: true }).click();
     expect((await savedNotes).ok()).toBeTruthy();
+    await page.reload();
+    await page.getByRole('button', { name: 'Expandir', exact: true }).last().click();
+    await expect(page.getByRole('textbox', { name: 'Anotações da entrevista…', exact: true })).toHaveText(decision);
     await page.getByRole('tab', { name: 'Pipeline', exact: true }).click();
     await expect(page.locator('.kanban-scroll div[draggable="true"]')).toHaveCount(1);
     const stage = page.getByRole('combobox', { name: 'Mover para estágio', exact: true });
