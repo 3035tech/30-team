@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
-import { flattenOrgChart, orgChartLayout, orgDescendantIds, ORG_CARD_WIDTH, ORG_CARD_HEIGHT } from '../../lib/people/org-chart-layout';
+import { flattenOrgChart, orgChartLayout, orgDescendantIds, ORG_CARD_WIDTH, ORG_CARD_HEIGHT, filterOrgPeople } from '../../lib/people/org-chart-layout';
 import { S } from '../dashboard/dashboard-shared';
 import { AppLoading } from './AppLoading';
 import { EmptyState } from './EmptyState';
@@ -13,7 +13,7 @@ import { useAppFeedback } from './AppFeedback';
 import { SelectField } from './SelectField';
 
 export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard = null }) {
-  const { toast } = useAppFeedback();
+  const { toast, confirm } = useAppFeedback();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -57,11 +57,20 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
   const currentManager = people.find((person) => person.id === selected?.managerCandidateId);
   const dirty = selected && manager !== String(selected.managerCandidateId ?? '');
 
-  function select(person) {
+  const matches = useMemo(() => filterOrgPeople(people, search), [people, search]);
+
+  async function select(person) {
+    if (saving) return false;
+    if (person.id === selectedId) return true;
+    if (dirty && person.id !== selectedId && !await confirm({
+      title: msg('discardTitle'), message: msg('discardMessage'),
+      confirmLabel: msg('discardConfirm'), cancelLabel: msg('keepEditing'),
+    })) return false;
     setSelectedId(person.id); setManager(String(person.managerCandidateId ?? '')); setSaveError('');
+    return true;
   }
-  function reveal(person) {
-    select(person);
+  async function reveal(person) {
+    if (!await select(person)) return;
     setCollapsed((previous) => {
       const next = new Set(previous);
       let current = person;
@@ -74,7 +83,18 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
     });
   }
   useEffect(() => {
-    if (selectedId) viewport.current?.querySelector(`[data-person-id="${selectedId}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center' });
+    const canvas = viewport.current;
+    const card = canvas?.querySelector(`[data-person-id="${selectedId}"]`);
+    if (!card) return;
+    const bounds = card.getBoundingClientRect();
+    const visible = canvas.getBoundingClientRect();
+    // Scroll only the canvas; selecting a person must not jump the dashboard.
+    if (bounds.left < visible.left || bounds.right > visible.right) {
+      canvas.scrollLeft += bounds.left - visible.left - (canvas.clientWidth - bounds.width) / 2;
+    }
+    if (bounds.top < visible.top || bounds.bottom > visible.bottom) {
+      canvas.scrollTop += bounds.top - visible.top - (canvas.clientHeight - bounds.height) / 2;
+    }
   }, [selectedId, collapsed]);
 
   async function save(event) {
@@ -97,7 +117,7 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
 
   if (!companyId) return null;
   return <CollapsibleBlock locale={locale} title={msg('title')} count={data?.total || null} defaultOpen variant="card" collapsedHint={msg('hint')}>
-    {loading ? <AppLoading variant="panel" /> : error ? <InlineCallout tone="danger" role="alert">{error}<button type="button" className={S.btnGhost} onClick={load}>{t(locale, 'panel.common.retry')}</button></InlineCallout> : !people.length ? <EmptyState title={msg('empty')} description={msg('emptyHint')} /> : <>
+    {loading ? <AppLoading locale={locale} variant="panel" /> : error ? <InlineCallout tone="danger" role="alert">{error}<button type="button" className={S.btnGhost} onClick={load}>{t(locale, 'panel.common.retry')}</button></InlineCallout> : !people.length ? <EmptyState title={msg('empty')} description={msg('emptyHint')} /> : <>
       <p className={cn(S.muted, 'mb-3')}>{msg('hint')}</p>
       {data.capped ? <InlineCallout tone="info">{msg('capped')}</InlineCallout> : null}
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
@@ -106,17 +126,17 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
           <input type="search" className={S.input} value={search} disabled={saving} onChange={(event) => setSearch(event.target.value)} placeholder={msg('searchPlaceholder')} />
         </label>
         <div className="flex flex-wrap items-center gap-1" role="group" aria-label={msg('viewControls')}>
-          <button type="button" className={S.btnGhost} aria-label={msg('zoomOut')} disabled={zoom <= .4} onClick={() => setZoom((value) => Math.max(.4, value - .2))}>−</button>
+          <button type="button" className={S.btnGhost} aria-label={msg('zoomOut')} disabled={zoom <= .1} onClick={() => setZoom((value) => Math.max(.1, Number((value - .2).toFixed(2))))}>−</button>
           <span className="w-12 text-center font-ui text-xs tabular-nums" aria-live="polite">{Math.round(zoom * 100)}%</span>
-          <button type="button" className={S.btnGhost} aria-label={msg('zoomIn')} disabled={zoom >= 1.6} onClick={() => setZoom((value) => Math.min(1.6, value + .2))}>+</button>
-          <button type="button" className={S.btnGhost} onClick={() => setZoom(Math.max(.4, Math.min(1, (viewport.current?.clientWidth || layout.width) / layout.width)))}>{msg('fit')}</button>
+          <button type="button" className={S.btnGhost} aria-label={msg('zoomIn')} disabled={zoom >= 1.6} onClick={() => setZoom((value) => Math.min(1.6, Number((value + .2).toFixed(2))))}>+</button>
+          <button type="button" className={S.btnGhost} onClick={() => { setZoom(Math.min(1, (viewport.current?.clientWidth || layout.width) / layout.width)); viewport.current?.scrollTo({ top: 0, left: 0 }); }}>{msg('fit')}</button>
           <button type="button" className={S.btnGhost} onClick={() => setCollapsed(new Set())}>{msg('expandAll')}</button>
           <button type="button" className={S.btnGhost} onClick={() => setCollapsed(new Set(people.filter((person) => person.children?.length).map((person) => person.id)))}>{msg('collapseAll')}</button>
         </div>
       </div>
       {search.trim() ? <div className="mb-3 flex max-h-40 flex-wrap gap-2 overflow-auto" aria-label={msg('searchResults')}>
-        {people.filter((person) => `${person.name} ${person.jobRoleName || ''}`.toLocaleLowerCase(locale).includes(search.trim().toLocaleLowerCase(locale))).map((person) => <button key={person.id} type="button" disabled={saving} className={S.btnGhost} onClick={() => reveal(person)}>{person.name}</button>)}
-        {!people.some((person) => `${person.name} ${person.jobRoleName || ''}`.toLocaleLowerCase(locale).includes(search.trim().toLocaleLowerCase(locale))) ? <p className={S.muted}>{msg('noResults')}</p> : null}
+        {matches.map((person) => <button key={person.id} type="button" disabled={saving} className={S.btnGhost} onClick={() => reveal(person)}>{person.name}</button>)}
+        {!matches.length ? <p className={S.muted}>{msg('noResults')}</p> : null}
       </div> : null}
       <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div ref={viewport} role="region" tabIndex={0} aria-label={msg('canvas')} className="relative max-h-[640px] min-h-72 min-w-0 overflow-auto overscroll-contain rounded-card border border-ink/15 bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" style={{ backgroundImage: 'radial-gradient(var(--color-ink-faint, #b4acbf) 0.6px, transparent 0.6px)', backgroundSize: '20px 20px' }}>
@@ -144,7 +164,7 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
           {!selected ? <><h3 className={S.cardTitle}>{msg('editHierarchy')}</h3><p className={S.muted}>{msg('selectHint')}</p></> : <form onSubmit={save}>
             <h3 className={cn(S.cardTitle, 'break-words')}>{selected.name}</h3>
             <p className={S.muted}>{msg('level', { n: selected.depth + 1 })}{currentManager ? ` · ${msg('managerHintNamed', { name: currentManager.name })}` : ` · ${(selected.managerCandidateId ? msg('outsideView') : msg('managerHintEmpty'))}`}</p>
-            <label className="flex flex-col gap-2 font-ui text-sm">{msg('managerTitle')}<SelectField value={manager} disabled={saving} onChange={(event) => { setManager(event.target.value); setSaveError(''); }}>
+            <label className="flex flex-col gap-2 font-ui text-sm">{msg('managerTitle')}<SelectField aria-label={msg('managerTitle')} value={manager} disabled={saving} onChange={(event) => { setManager(event.target.value); setSaveError(''); }}>
               <option value="">{msg('rootOption')}</option>
               {selected.managerCandidateId && !people.some((person) => person.id === selected.managerCandidateId) ? <option value={selected.managerCandidateId} disabled>{msg('outsideView')}</option> : null}
               {choices.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}
@@ -152,7 +172,7 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
             <p className={cn(S.faint, 'mt-3')}>{msg('moveHint')}</p>
             {saveError ? <InlineCallout tone="danger" role="alert">{saveError}</InlineCallout> : null}
             <div className="mt-4 flex flex-wrap gap-2"><button type="submit" className={S.btnPrimary} disabled={saving || !dirty}>{t(locale, saving ? 'panel.orgUnits.saving' : 'panel.common.save')}</button><button type="button" className={S.btnGhost} disabled={saving || !dirty} onClick={() => { setManager(String(selected.managerCandidateId ?? '')); setSaveError(''); }}>{t(locale, 'panel.common.cancel')}</button></div>
-            {navigateDashboard ? <button type="button" className={cn(S.btnGhost, 'mt-3')} disabled={saving} onClick={() => navigateDashboard({ tab: 'team', candidate: String(selected.id), roster: 'internal' })}>{msg('viewProfile')}</button> : null}
+            {navigateDashboard ? <button type="button" className={cn(S.btnGhost, 'mt-3')} disabled={saving} onClick={async () => { if (!dirty || await confirm({ title: msg('discardTitle'), message: msg('discardMessage'), confirmLabel: msg('discardConfirm'), cancelLabel: msg('keepEditing') })) navigateDashboard({ tab: 'team', candidate: String(selected.id), roster: 'internal' }); }}>{msg('viewProfile')}</button> : null}
           </form>}
         </aside>
       </div>

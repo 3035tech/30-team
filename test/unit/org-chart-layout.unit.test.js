@@ -1,8 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { orgChartLayout, orgDescendantIds, ORG_CARD_WIDTH, ORG_CARD_HEIGHT } from '../../lib/people/org-chart-layout.js';
+import { orgChartLayout, orgDescendantIds, filterOrgPeople, ORG_CARD_WIDTH, ORG_CARD_HEIGHT } from '../../lib/people/org-chart-layout.js';
 import { listOrgChart, setCandidateManager } from '../../lib/people/org-chart.js';
 const roots = [{ id: 1, children: [{ id: 2, children: [{ id: 4, children: [] }] }, { id: 3, children: [] }] }];
+test('search matches accents and terms across name, role and unit', () => {
+  const people = [{ id: 1, name: 'João Silva', jobRoleName: 'Técnico', orgUnitName: 'Operações' }, { id: 2, name: 'Ana', jobRoleName: null }];
+  assert.deepEqual(filterOrgPeople(people, '  OPERACOES   joao ').map((p) => p.id), [1]);
+  assert.deepEqual(filterOrgPeople(people, 'tecnico').map((p) => p.id), [1]);
+  assert.deepEqual(filterOrgPeople(people, 'ana tecnico'), []);
+  assert.equal(filterOrgPeople(people, ' ').length, 2);
+});
 test('tree positions connect levels without overlapping cards', () => {
   const layout = orgChartLayout(roots);
   assert.equal(layout.nodes.length, 4); assert.equal(layout.edges.length, 3);

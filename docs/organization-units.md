@@ -86,3 +86,13 @@ mostrou “Responsable directo”. Viewport 390×844 (433 CSS px com zoom do nav
 sem overflow horizontal da página. Console exibiu aviso de hidratação por
 atributos `data-gr-*` inseridos pela extensão Grammarly; nenhum erro funcional
 do organograma foi observado. Nenhuma alteração feita em produção.
+
+### Polish do organograma (29/09/2026)
+
+- Busca por nome, cargo e unidade, ignorando acentos e espaços extras.
+- Ajuste à largura permite visualizar árvores largas também no celular.
+- Seleção por busca desloca apenas o canvas, sem deslocar a página inteira.
+- Trocar de pessoa ou abrir a ficha pede confirmação ao descartar uma alteração
+  de gestor ainda não salva; selecionar o mesmo cartão preserva o rascunho.
+- Carregamento e confirmações seguem o idioma selecionado. Terminologia pt-PT
+  revisada; espanhol da Espanha e da América Latina continuam separados.
