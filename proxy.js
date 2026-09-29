@@ -29,6 +29,38 @@ import {
 } from './lib/job-attribution';
 import { applyContentSecurityPolicyHeaders } from './lib/security-csp';
 import { isCrawlerNoIndexPath } from './lib/crawler-guard';
+import {
+  LOCALE_COOKIE,
+  LOCALE_COOKIE_MAX_AGE_SEC,
+  localeFromAcceptLanguage,
+} from './lib/locale-negotiation';
+
+const detectedLocaleByRequest = new WeakMap();
+
+/** First visit without NEXT_LOCALE: picks the browser language (unsupported -> en). */
+function detectMissingLocale(request) {
+  if (request.nextUrl.pathname.startsWith('/api/')) return;
+  if (request.cookies.get(LOCALE_COOKIE)?.value) return;
+  const locale = localeFromAcceptLanguage(request.headers.get('accept-language'));
+  request.cookies.set(LOCALE_COOKIE, locale);
+  detectedLocaleByRequest.set(request, locale);
+}
+
+/** Forwards request headers so server components see cookies set in `proxy`. */
+function nextResponse(request) {
+  return NextResponse.next({ request: { headers: request.headers } });
+}
+
+function withDetectedLocaleCookie(request, response) {
+  const locale = detectedLocaleByRequest.get(request);
+  if (!locale) return response;
+  response.cookies.set(LOCALE_COOKIE, locale, {
+    path: '/',
+    maxAge: LOCALE_COOKIE_MAX_AGE_SEC,
+    sameSite: 'lax',
+  });
+  return response;
+}
 
 /**
  * Sliding: reemite cookie se JWT ainda válido e perto do fim (falha nunca bloqueia o request).
@@ -89,7 +121,10 @@ function withSecurityHeaders(response, { noindex = false } = {}) {
 
 function secureResponse(request, response) {
   const noindex = isCrawlerNoIndexPath(request.nextUrl.pathname);
-  return withJobAttributionCookie(request, withSecurityHeaders(response, { noindex }));
+  return withDetectedLocaleCookie(
+    request,
+    withJobAttributionCookie(request, withSecurityHeaders(response, { noindex }))
+  );
 }
 
 function withJobAttributionCookie(request, response) {
@@ -177,6 +212,7 @@ async function isEmployeeSessionLive(request, payload) {
 
 export async function proxy(request) {
   const { pathname } = request.nextUrl;
+  detectMissingLocale(request);
 
   if (pathname === SESSION_EDGE_PATH || pathname === EMPLOYEE_SESSION_EDGE_PATH) {
     return secureResponse(request, NextResponse.next());

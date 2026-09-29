@@ -265,13 +265,13 @@ html.dark body,
 }
 
 /* Nav items: muted → readable active */
-.dark .db-sidebar a,
-.dark .db-sidebar button {
+.dark .db-sidebar-panel a,
+.dark .db-sidebar-panel button {
   color: rgb(var(--ink) / 0.78);
 }
 
-.dark .db-sidebar a:hover,
-.dark .db-sidebar button:hover {
+.dark .db-sidebar-panel a:hover,
+.dark .db-sidebar-panel button:hover {
   background-color: rgb(var(--ink) / 0.06);
   color: rgb(var(--ink) / 0.95);
 }

@@ -223,10 +223,7 @@ textarea:focus-visible {
     -webkit-overflow-scrolling: touch;
     width: min(300px, 88vw) !important;
     max-width: 320px;
-    padding: 20px 14px 32px 18px !important;
-    padding-top: max(20px, env(safe-area-inset-top, 0px)) !important;
-    padding-bottom: max(32px, env(safe-area-inset-bottom, 0px)) !important;
-    /* --surface is navy inside .db-sidebar (see "Navigation has its own contrast context"). */
+    padding: 0 !important;
     background: rgb(var(--surface)) !important;
   }
   .db-sidebar.db-sidebar-open {
@@ -541,8 +538,9 @@ textarea:focus-visible {
 /* Mobile + dark CSS are imported from app/layout.jsx (not @import here).
  * Native CSS ignores @import after other rules, so dark mode never applied. */
 
-/* Navigation has its own contrast context in both light and dark modes. */
-.db-sidebar {
+/* Icon rail has its own navy contrast context in both light and dark modes;
+ * the page panel next to it (.db-sidebar-panel) uses the regular light tokens. */
+.db-rail {
   --surface: 17 24 39;
   --canvas: 17 24 39;
   --ink: 248 250 252;

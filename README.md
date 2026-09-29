@@ -63,6 +63,8 @@ Navegador (React) → Next.js (App Router) → PostgreSQL 16
 
 **Provas / regressão:** [`test/README.md`](test/README.md) — `npm run dtov:full-app` (SQL + HTTP + browser).
 
+**Idioma inicial:** na primeira visita (sem cookie `NEXT_LOCALE`), o `proxy.js` lê o `Accept-Language` do navegador e escolhe o primeiro idioma suportado (`pt-BR`, `pt-PT`, `en`, `es-419`, `es-ES`; `es-MX`/`es-AR` → `es-419`, `pt` → `pt-BR`). Idioma fora da lista, ou sem cabeçalho (inclui crawlers), cai em inglês. O cookie é gravado por 1 ano e a escolha manual do usuário continua valendo. Lógica em `lib/locale-negotiation.js`.
+
 **Build:** `npm run build` usa o modo Webpack suportado pelo Next 16. O diretório pode ser isolado com `NEXT_DIST_DIR` em CI ou validações concorrentes; produção mantém `.next` por padrão.
 
 ---

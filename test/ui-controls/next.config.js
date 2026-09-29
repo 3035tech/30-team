@@ -1,1 +1,1 @@
-module.exports = { experimental: { externalDir: true } };
+module.exports = { devIndicators: false, experimental: { externalDir: true } };

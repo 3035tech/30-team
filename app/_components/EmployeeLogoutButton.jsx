@@ -8,9 +8,10 @@ import { employeeLoginUrl } from '../../lib/employee-client-session';
 import { Icon } from './Icon';
 import { Spinner } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
+import { SidebarRailButton } from './SidebarRail';
 
 /** Both employee menus share the same logout and failure behavior. */
-export function EmployeeLogoutButton({ locale, compact = false, role, onLoggedOut, className }) {
+export function EmployeeLogoutButton({ locale, compact = false, role, onLoggedOut, className, variant }) {
   const router = useRouter();
   const { toast, confirm } = useAppFeedback();
   const pending = useRef(false);
@@ -42,6 +43,10 @@ export function EmployeeLogoutButton({ locale, compact = false, role, onLoggedOu
       pending.current = false;
     }
   };
+  if (variant === 'rail') {
+    return <SidebarRailButton icon="logout" tone="danger" label={busy ? t(locale, 'employeeHome.loggingOut') : label}
+      disabled={busy} onClick={logout} />;
+  }
   return <button type="button" role={role} onClick={logout} disabled={busy} aria-busy={busy}
     aria-label={busy ? t(locale, 'employeeHome.loggingOut') : label} title={compact ? label : undefined}
     className={cn('flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-control border-0 bg-transparent py-3 font-ui text-sm font-medium text-ink-muted transition-colors hover:bg-danger/10 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-default disabled:opacity-55', compact ? 'justify-center px-0' : 'justify-start px-2.5', className)}>

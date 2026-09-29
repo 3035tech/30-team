@@ -16,7 +16,6 @@ import { cn } from '../../lib/cn';
 import { managerLoginUrl } from '../../lib/manager-client-session';
 import { BrandMark } from '../_components/BrandMark';
 import { Icon } from '../_components/Icon';
-import { IconActionTip } from '../_components/IconActionTip';
 import { DateField } from '../_components/DateField';
 import { RosterEmptyHint } from '../_components/RosterEmptyHint';
 
@@ -48,9 +47,10 @@ import {
 } from '../../lib/dashboard-company-scope.js';
 import {
   DASHBOARD_NAV_SECTION,
+  DASHBOARD_NAV_SECTIONS,
   getDashboardSection,
-  getDefaultDashboardSections,
 } from '../../lib/dashboard-navigation.js';
+import { SidebarRail, SidebarRailButton } from '../_components/SidebarRail';
 import { helpMetaForTab } from '../../lib/help-screen-context.js';
 
 function TabLoadingFallback() {
@@ -243,8 +243,6 @@ const ProfileTab = dynamic(
 );
 
 const SIDEBAR_COLLAPSED_KEY = '30team_sidebar_collapsed';
-const NAV_SECTIONS_KEY = '30team_nav_sections_open_v2';
-
 export default function DashboardClient(props) {
   const [locale, setLocale] = useLocale(props.auth?.locale || props.initialLocale || 'pt-BR');
   return (
@@ -312,9 +310,8 @@ function DashboardClientContent({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const sidebarNavRef = useRef(null);
-  const [navSectionsOpen, setNavSectionsOpen] = useState(() =>
-    getDefaultDashboardSections(initialTabRef.current)
-  );
+  /** Section picked on the rail; only valid while the tab it was picked on stays active. */
+  const [railPick, setRailPick] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(null);
   const [isDesktop, setIsDesktop] = useState(true);
   const [newCandidates, setNewCandidates] = useState(false);
@@ -445,17 +442,6 @@ function DashboardClientContent({
   }, []);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(NAV_SECTIONS_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
-        setNavSectionsOpen((prev) => ({ ...prev, ...parsed }));
-      }
-    } catch {}
-  }, []);
-
-  useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return undefined;
     const mq = window.matchMedia('(min-width: 769px)');
     const apply = () => setIsDesktop(mq.matches);
@@ -516,29 +502,6 @@ function DashboardClientContent({
     });
   };
 
-  const toggleNavSection = (key) => {
-    setNavSectionsOpen((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      try {
-        localStorage.setItem(NAV_SECTIONS_KEY, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-  };
-
-  // Keep the section that owns the active tab expanded.
-  useEffect(() => {
-    const sec = getDashboardSection(tab);
-    if (!sec) return;
-    setNavSectionsOpen((prev) => {
-      if (prev[sec]) return prev;
-      const next = { ...prev, [sec]: true };
-      try {
-        localStorage.setItem(NAV_SECTIONS_KEY, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-  }, [tab]);
 
   // Keep the active destination visible inside the sidebar without moving the page content.
   useEffect(() => {
@@ -557,7 +520,7 @@ function DashboardClientContent({
       }
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [tab, navCollapsed, navSectionsOpen]);
+  }, [tab, navCollapsed, railPick]);
 
   useEffect(() => {
     try {
@@ -854,68 +817,83 @@ function DashboardClientContent({
       type="button"
       id={`${id}-tab`}
       onClick={() => { navigateToTab(id); setSidebarOpen(false); if (id === 'team') setNewCandidates(false); }}
-      title={navCollapsed ? label : undefined}
       aria-label={label}
       aria-current={tab === id ? 'page' : undefined}
       className={cn(
-        'relative mb-0.5 flex w-full items-center gap-2.5 rounded-control border-none font-ui text-[0.875rem] font-medium',
-        navCollapsed ? 'justify-center px-0 py-2.5' : 'justify-start py-2.5',
-        !navCollapsed && (tab === id ? 'border-l-[3px] border-l-brand-500 pl-[9px] pr-3' : 'border-l-[3px] border-l-transparent pl-[11px] pr-3'),
+        'relative mb-0.5 flex min-h-touch w-full items-center gap-2.5 rounded-control border-none py-2 pl-3 pr-3 font-ui text-sm font-medium',
         tab === id ? 'bg-brand-500/[0.09] text-brand-800' : 'bg-transparent text-ink-muted hover:bg-ink/[0.035] hover:text-ink',
         'cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500'
       )}
     >
-      <Icon name={icon} />
-      {!navCollapsed ? <span className="min-w-0 flex-1">{label}</span> : null}
-      {badge ? (
-        <span
-          className={cn(
-            'inline-block h-[7px] w-[7px] flex-shrink-0 rounded-full bg-brand-500',
-            navCollapsed && 'absolute right-2.5 top-2'
-          )}
-        />
-      ) : null}
+      <Icon name={icon} className="h-4 w-4 shrink-0" />
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      {badge ? <span className="inline-block h-[7px] w-[7px] flex-shrink-0 rounded-full bg-brand-500" /> : null}
     </button>
   );
 
-  const sectionLabel = (sectionKey, text, opts = {}) => {
-    if (navCollapsed) {
-      return <div className="mx-1 mb-2 mt-2.5 h-px bg-ink/[0.08]" aria-hidden />;
-    }
-    const open = navSectionsOpen[sectionKey] !== false;
-    return (
-      <button
-        type="button"
-        className={cn(
-          'group mb-0.5 flex min-h-touch w-full cursor-pointer items-center justify-between gap-2 rounded-control border-0 bg-transparent px-2.5 text-left font-ui text-prose font-semibold normal-case tracking-normal text-ink/75 hover:bg-ink/[0.025] hover:text-ink'
-        )}
-        onClick={() => {
-          toggleNavSection(sectionKey);
-          if (opts.navigateTab) {
-            navigateToTab(opts.navigateTab);
-            setSidebarOpen(false);
-          }
-        }}
-        aria-expanded={open}
-        aria-controls={`nav-section-${sectionKey}`}
-      >
-        <span className="min-w-0 flex-1 truncate">{text}</span>
-        <Icon
-          name={open ? 'chevronDown' : 'chevronRight'}
-          className="h-3 w-3 flex-shrink-0 text-ink-faint transition-colors group-hover:text-ink-muted"
-        />
-      </button>
-    );
+  const canSee = (cap) => can(sessionAuth, cap);
+  const navLinksBySection = {
+    [DASHBOARD_NAV_SECTION.HOME]: [
+      canSee(CAP.OVERVIEW_VIEW) && { id: 'overview', icon: 'overview', label: t(locale, 'dashboard.overview') },
+      canSee(CAP.OVERVIEW_VIEW) && { id: 'analytics', icon: 'chart', label: t(locale, 'dashboard.analytics') },
+    ],
+    [DASHBOARD_NAV_SECTION.PEOPLE]: [
+      canSee(CAP.TEAM_VIEW) && { id: 'team', icon: 'team', label: t(locale, 'dashboard.team'), badge: newCandidates && tab !== 'team' },
+      canSee(CAP.TEAM_VIEW) && { id: 'organization', icon: 'building', label: t(locale, 'panel.orgUnits.title') },
+      showCompensation && { id: 'compensation', icon: 'salary', label: t(locale, 'dashboard.compensation') },
+      showDp && { id: 'dp', icon: 'dp', label: t(locale, 'dashboard.dp') },
+      showBenefits && { id: 'company-benefits', icon: 'gift', label: t(locale, 'dashboard.companyBenefits') },
+    ],
+    [DASHBOARD_NAV_SECTION.RECRUITING]: [
+      showVacancies && { id: 'vacancies', icon: 'vacancies', label: t(locale, 'dashboard.vacancies') },
+      showVacancies && { id: 'talent-bank', icon: 'team', label: t(locale, 'dashboard.talentBank') },
+      showJobRoles && { id: 'job-roles', icon: 'briefcase', label: t(locale, 'jobRoles.title') },
+    ],
+    [DASHBOARD_NAV_SECTION.DEVELOPMENT]: [
+      showPdi && { id: 'pdi', icon: 'clipboard', label: t(locale, 'dashboard.pdi') },
+      showPerformance && { id: 'performance-reviews', icon: 'clipboard', label: t(locale, 'dashboard.performanceReviews') },
+      showPerformance && { id: 'okr', icon: 'okr', label: t(locale, 'dashboard.okr') },
+      showSuccession && { id: 'succession', icon: 'succession', label: t(locale, 'succession.title') },
+      showLearning && { id: 'learning-resources', icon: 'book', label: t(locale, 'dashboard.learningResources') },
+      showLearning && { id: 'lms', icon: 'book', label: t(locale, 'dashboard.lms') },
+    ],
+    [DASHBOARD_NAV_SECTION.CULTURE_HR]: [
+      canSee(CAP.COMPATIBILITY_VIEW) && { id: 'compatibility', icon: 'compatibility', label: t(locale, 'dashboard.compatibility') },
+      canSee(CAP.COMPARE_VIEW) && { id: 'compare', icon: 'compare', label: t(locale, 'dashboard.compare') },
+      canSee(CAP.GROUP_VIEW) && { id: 'group', icon: 'group', label: t(locale, 'dashboard.group') },
+      canSee(CAP.LEADERSHIP_VIEW) && { id: 'leadership', icon: 'leadership', label: t(locale, 'dashboard.leadership') },
+      showMotivators && { id: 'motivators', icon: 'motivators', label: t(locale, 'dashboard.motivators') },
+      showClimate && { id: 'climate', icon: 'climate', label: t(locale, 'dashboard.climate') },
+      showCompanyFeed && { id: 'company-feed', icon: 'list', label: t(locale, 'dashboard.companyFeed') },
+      showExitAnalysis && { id: 'exit-analysis', icon: 'exit', label: t(locale, 'dashboard.exitAnalysis') },
+      showWhistleblowing && { id: 'whistleblowing', icon: 'feedbackInfo', label: t(locale, 'dashboard.whistleblowing') },
+    ],
+    [DASHBOARD_NAV_SECTION.ADMINISTRATION]: [
+      showUsers && { id: 'users', icon: 'users', label: t(locale, 'dashboard.users') },
+      showCompanies && { id: 'companies', icon: 'companies', label: t(locale, 'dashboard.companies') },
+      showLeads && { id: 'leads', icon: 'users', label: t(locale, 'dashboard.leads') },
+      showProductFeedback && { id: 'product-feedback', icon: 'feedbackInfo', label: t(locale, 'dashboard.productFeedback') },
+      showAudit && { id: 'audit', icon: 'list', label: t(locale, 'dashboard.audit') },
+    ],
   };
+  const navSections = DASHBOARD_NAV_SECTIONS.map((section) => ({
+    ...section,
+    label: t(locale, section.labelKey),
+    links: (navLinksBySection[section.id] || []).filter(Boolean),
+  })).filter((section) => section.links.length > 0);
+  const activeNavSection = getDashboardSection(tab);
+  const railSection = railPick?.tab === tab ? railPick.section : activeNavSection;
+  const panelSection =
+    navSections.find((s) => s.id === railSection) ||
+    navSections.find((s) => s.id === activeNavSection) ||
+    navSections[0];
 
-  const sectionBody = (sectionKey, children) => {
-    const open = navCollapsed || navSectionsOpen[sectionKey] !== false;
-    if (!open) return null;
-    return (
-      <div id={`nav-section-${sectionKey}`} className="mb-1">
-        {children}
-      </div>
-    );
+  const onRailSection = (section) => {
+    if (navCollapsed) {
+      navigateToTab(section.links[0].id);
+      return;
+    }
+    setRailPick({ tab, section: section.id });
   };
 
   return (
@@ -947,22 +925,17 @@ function DashboardClientContent({
         <aside
           id="dashboard-sidebar"
           className={cn(
-            'db-sidebar flex flex-shrink-0 flex-col gap-2 border-r border-ink/12 bg-surface',
+            'db-sidebar db-sidebar--rail flex flex-shrink-0 flex-row border-r border-ink/12 bg-surface',
             sidebarOpen && 'db-sidebar-open',
             navCollapsed && 'db-sidebar-collapsed',
-            navCollapsed ? 'w-[72px] px-2.5 pb-6 pt-5' : 'w-[240px] px-3.5 pb-6 pt-5'
+            navCollapsed ? 'w-16' : 'w-[300px]'
           )}
         >
-          <div
-            className={cn(
-              'mb-2 flex flex-shrink-0 gap-2',
-              navCollapsed ? 'flex-col items-center justify-center' : 'flex-row items-start justify-between'
-            )}
-          >
-            <div className={cn('min-w-0', navCollapsed ? 'text-center' : 'text-left')}>
+          <SidebarRail
+            ariaLabel={t(locale, 'dashboard.sectionsNavAria')}
+            brand={
               <BrandMark
-                size={28}
-                withWordmark={!navCollapsed}
+                size={26}
                 onClick={() => {
                   navigateToTab('overview');
                   setSidebarOpen(false);
@@ -970,193 +943,78 @@ function DashboardClientContent({
                 title={t(locale, 'dashboard.homeAria')}
                 aria-label={t(locale, 'dashboard.homeAria')}
               />
-            </div>
-            <button
-              type="button"
-              className={cn(
-                'db-sidebar-collapse-toggle flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-lg border border-ink/12 bg-transparent text-ink-muted',
-                !navCollapsed && 'mt-0.5'
-              )}
-              onClick={toggleSidebarCollapsed}
-              aria-label={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
-              title={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
-            >
-              <Icon name={navCollapsed ? 'expand' : 'collapse'} />
-            </button>
-            <button
-              type="button"
-              className="db-sidebar-close-mobile flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-lg border border-ink/12 bg-transparent text-ink-muted"
-              onClick={() => setSidebarOpen(false)}
-              aria-label={t(locale, 'common.closeMenu')}
-            >
-              <Icon name="close" />
-            </button>
-          </div>
-          <nav ref={sidebarNavRef} className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]">
-            {can(sessionAuth, CAP.OVERVIEW_VIEW) ? (
+            }
+            footer={
               <>
-                {sectionLabel(DASHBOARD_NAV_SECTION.HOME, t(locale, 'dashboard.sectionHome'))}
-                {sectionBody(DASHBOARD_NAV_SECTION.HOME, (
-                  <>
-                    <NavLink id="overview" icon="overview" label={t(locale, 'dashboard.overview')} />
-                    <NavLink id="analytics" icon="chart" label={t(locale, 'dashboard.analytics')} />
-                  </>
-                ))}
+                {can(sessionAuth, CAP.HELP_VIEW) ? (
+                  <SidebarRailButton
+                    icon="help"
+                    label={t(locale, 'dashboard.help')}
+                    active={tab === 'help'}
+                    onClick={() => { navigateToTab('help'); setSidebarOpen(false); }}
+                  />
+                ) : null}
+                {can(sessionAuth, CAP.PROFILE_SELF) ? (
+                  <SidebarRailButton
+                    icon="user"
+                    label={t(locale, 'dashboard.profile')}
+                    active={tab === 'profile'}
+                    onClick={() => { navigateToTab('profile'); setSidebarOpen(false); }}
+                  />
+                ) : null}
+                <SidebarRailButton
+                  icon="logout"
+                  tone="danger"
+                  label={t(locale, 'dashboard.logout')}
+                  disabled={loggingOut}
+                  onClick={() => void logout()}
+                />
+                <SidebarRailButton
+                  icon={navCollapsed ? 'expand' : 'collapse'}
+                  label={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
+                  className="db-sidebar-collapse-toggle"
+                  onClick={toggleSidebarCollapsed}
+                />
               </>
-            ) : null}
-
-            {can(sessionAuth, CAP.TEAM_VIEW) || showCompensation || showDp || showBenefits ? (
-              <>
-                <div className="mx-2 my-1 h-px bg-ink/[0.07]" />
-                {sectionLabel(DASHBOARD_NAV_SECTION.PEOPLE, t(locale, 'dashboard.sectionPeople'))}
-                {sectionBody(DASHBOARD_NAV_SECTION.PEOPLE, (
-                  <>
-                    {can(sessionAuth, CAP.TEAM_VIEW) ? (
-                      <>
-                        <NavLink id="team" icon="team" label={t(locale, 'dashboard.team')} badge={newCandidates && tab !== 'team'} />
-                        <NavLink id="organization" icon="building" label={t(locale, 'panel.orgUnits.title')} />
-                      </>
-                    ) : null}
-                    {showCompensation ? (
-                      <NavLink id="compensation" icon="salary" label={t(locale, 'dashboard.compensation')} />
-                    ) : null}
-                    {showDp ? <NavLink id="dp" icon="dp" label={t(locale, 'dashboard.dp')} /> : null}
-                    {showBenefits ? <NavLink id="company-benefits" icon="gift" label={t(locale, 'dashboard.companyBenefits')} /> : null}
-                  </>
-                ))}
-              </>
-            ) : null}
-
-            {showVacancies || showJobRoles ? (
-              <>
-                <div className="mx-2 my-1 h-px bg-ink/[0.07]" />
-                {sectionLabel(DASHBOARD_NAV_SECTION.RECRUITING, t(locale, 'dashboard.sectionRecruiting'))}
-                {sectionBody(DASHBOARD_NAV_SECTION.RECRUITING, (
-                  <>
-                    {showVacancies ? (
-                      <>
-                        <NavLink id="vacancies" icon="vacancies" label={t(locale, 'dashboard.vacancies')} />
-                        <NavLink id="talent-bank" icon="team" label={t(locale, 'dashboard.talentBank')} />
-                      </>
-                    ) : null}
-                    {showJobRoles ? (
-                      <NavLink id="job-roles" icon="briefcase" label={t(locale, 'jobRoles.title')} />
-                    ) : null}
-                  </>
-                ))}
-              </>
-            ) : null}
-
-            {showPerformance || showSuccession || showLearning || showPdi ? (
-              <>
-                <div className="mx-2 my-1 h-px bg-ink/[0.07]" />
-                {sectionLabel(DASHBOARD_NAV_SECTION.DEVELOPMENT, t(locale, 'dashboard.sectionDevelopment'))}
-                {sectionBody(DASHBOARD_NAV_SECTION.DEVELOPMENT, (
-                  <>
-                    {showPdi ? (
-                      <NavLink id="pdi" icon="clipboard" label={t(locale, 'dashboard.pdi')} />
-                    ) : null}
-                    {showPerformance ? (
-                      <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'dashboard.performanceReviews')} />
-                    ) : null}
-                    {showPerformance ? (
-                      <NavLink id="okr" icon="okr" label={t(locale, 'dashboard.okr')} />
-                    ) : null}
-                    {showSuccession ? (
-                      <NavLink id="succession" icon="succession" label={t(locale, 'succession.title')} />
-                    ) : null}
-                    {showLearning ? (
-                      <>
-                        <NavLink id="learning-resources" icon="book" label={t(locale, 'dashboard.learningResources')} />
-                        <NavLink id="lms" icon="book" label={t(locale, 'dashboard.lms')} />
-                      </>
-                    ) : null}
-                  </>
-                ))}
-              </>
-            ) : null}
-
-            {can(sessionAuth, CAP.COMPATIBILITY_VIEW) || can(sessionAuth, CAP.COMPARE_VIEW) || can(sessionAuth, CAP.GROUP_VIEW) || can(sessionAuth, CAP.LEADERSHIP_VIEW) || showMotivators || showClimate || showWhistleblowing || showExitAnalysis || showCompanyFeed ? (
-              <>
-                <div className="mx-2 my-1 h-px bg-ink/[0.07]" />
-                {sectionLabel(DASHBOARD_NAV_SECTION.CULTURE_HR, t(locale, 'dashboard.sectionCultureHr'))}
-                {sectionBody(DASHBOARD_NAV_SECTION.CULTURE_HR, (
-                  <>
-                    {can(sessionAuth, CAP.COMPATIBILITY_VIEW) ? (
-                      <NavLink id="compatibility" icon="compatibility" label={t(locale, 'dashboard.compatibility')} />
-                    ) : null}
-                    {can(sessionAuth, CAP.COMPARE_VIEW) ? (
-                      <NavLink id="compare" icon="compare" label={t(locale, 'dashboard.compare')} />
-                    ) : null}
-                    {can(sessionAuth, CAP.GROUP_VIEW) ? (
-                      <NavLink id="group" icon="group" label={t(locale, 'dashboard.group')} />
-                    ) : null}
-                    {can(sessionAuth, CAP.LEADERSHIP_VIEW) ? (
-                      <NavLink id="leadership" icon="leadership" label={t(locale, 'dashboard.leadership')} />
-                    ) : null}
-                    {showMotivators ? <NavLink id="motivators" icon="motivators" label={t(locale, 'dashboard.motivators')} /> : null}
-                    {showClimate ? <NavLink id="climate" icon="climate" label={t(locale, 'dashboard.climate')} /> : null}
-                    {showCompanyFeed ? <NavLink id="company-feed" icon="list" label={t(locale, 'dashboard.companyFeed')} /> : null}
-                    {showExitAnalysis ? <NavLink id="exit-analysis" icon="exit" label={t(locale, 'dashboard.exitAnalysis')} /> : null}
-                    {showWhistleblowing ? <NavLink id="whistleblowing" icon="feedbackInfo" label={t(locale, 'dashboard.whistleblowing')} /> : null}
-                  </>
-                ))}
-              </>
-            ) : null}
-
-            {showCompanies || showUsers || showLeads || showProductFeedback || showAudit ? (
-              <>
-                <div className="mx-2 my-1 h-px bg-ink/[0.07]" />
-                {sectionLabel(DASHBOARD_NAV_SECTION.ADMINISTRATION, t(locale, 'dashboard.sectionAdministration'))}
-                {sectionBody(DASHBOARD_NAV_SECTION.ADMINISTRATION, (
-                  <>
-                    {showUsers ? <NavLink id="users" icon="users" label={t(locale, 'dashboard.users')} /> : null}
-                    {showCompanies ? (
-                      <NavLink id="companies" icon="companies" label={t(locale, 'dashboard.companies')} />
-                    ) : null}
-                    {showLeads ? <NavLink id="leads" icon="users" label={t(locale, 'dashboard.leads')} /> : null}
-                    {showProductFeedback ? (
-                      <NavLink
-                        id="product-feedback"
-                        icon="feedbackInfo"
-                        label={t(locale, 'dashboard.productFeedback')}
-                      />
-                    ) : null}
-                    {showAudit ? (
-                      <NavLink id="audit" icon="list" label={t(locale, 'dashboard.audit')} />
-                    ) : null}
-                  </>
-                ))}
-              </>
-            ) : null}
-          </nav>
-          <div className="flex-shrink-0 border-t border-ink/[0.08] pt-2.5">
-            {can(sessionAuth, CAP.HELP_VIEW) ? (
-              <NavLink id="help" icon="help" label={t(locale, 'dashboard.help')} />
-            ) : null}
-            {can(sessionAuth, CAP.PROFILE_SELF) ? (
-              <NavLink id="profile" icon="user" label={t(locale, 'dashboard.profile')} />
-            ) : null}
-            <IconActionTip
-              label={t(locale, 'dashboard.logout')}
-              className="w-full"
-            >
-              <button
-                type="button"
-                onClick={() => void logout()}
-                disabled={loggingOut}
-                title={navCollapsed ? t(locale, 'dashboard.logout') : undefined}
-                aria-label={t(locale, 'dashboard.logout')}
-                className={cn(
-                  'flex min-h-touch w-full cursor-pointer items-center gap-2.5 rounded-control border-0 bg-transparent font-ui text-sm font-medium text-ink-muted hover:bg-danger/10 hover:text-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-default disabled:opacity-55',
-                  navCollapsed ? 'justify-center px-0 py-[11px]' : 'justify-start px-[11px] py-[11px]'
-                )}
+            }
+          >
+            {navSections.map((section) => (
+              <SidebarRailButton
+                key={section.id}
+                icon={section.icon}
+                label={section.label}
+                active={section.id === activeNavSection}
+                selected={!navCollapsed && section.id === panelSection?.id}
+                pressed={navCollapsed ? undefined : section.id === panelSection?.id}
+                badge={section.links.some((link) => link.badge)}
+                onClick={() => onRailSection(section)}
+              />
+            ))}
+          </SidebarRail>
+          {!navCollapsed ? (
+            <div className="db-sidebar-panel flex min-w-0 flex-1 flex-col px-2 pb-4 pt-4">
+              <div className="mb-3 flex min-h-10 flex-shrink-0 items-center justify-between gap-2 pl-3">
+                <p className="m-0 min-w-0 truncate font-ui text-sm font-semibold text-ink">{panelSection?.label}</p>
+                <button
+                  type="button"
+                  className="db-sidebar-close-mobile flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-transparent text-ink-muted"
+                  onClick={() => setSidebarOpen(false)}
+                  aria-label={t(locale, 'common.closeMenu')}
+                >
+                  <Icon name="close" />
+                </button>
+              </div>
+              <nav
+                ref={sidebarNavRef}
+                aria-label={panelSection?.label}
+                className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]"
               >
-                <Icon name="logout" className="h-[18px] w-[18px] shrink-0" />
-                {!navCollapsed ? <span>{t(locale, 'dashboard.logout')}</span> : null}
-              </button>
-            </IconActionTip>
-          </div>
+                {panelSection?.links.map((link) => (
+                  <NavLink key={link.id} id={link.id} icon={link.icon} label={link.label} badge={link.badge} />
+                ))}
+              </nav>
+            </div>
+          ) : null}
         </aside>
 
         <main className="db-main relative mx-auto min-w-0 max-w-[1600px] flex-1 px-6 pb-[60px] pt-7">

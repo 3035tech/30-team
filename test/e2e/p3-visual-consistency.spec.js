@@ -141,12 +141,20 @@ test('P3: employee sections, empty state and course navigation work in both them
   await expect(empty).toBeVisible();
   await expect(empty).toHaveCSS('font-size', '13px');
   await expect(empty).toHaveCSS('text-align', 'left');
-  for (const id of ['pdi', 'surveys', 'oneOnOne']) {
+  const surveysToggle = page.locator('#surveys').getByRole('button').first();
+  await surveysToggle.click();
+  await expect(surveysToggle).toHaveAttribute('aria-expanded', 'true');
+  // Secondary sections open alone (no long scroll on the Today view).
+  for (const id of ['pdi', 'oneOnOne']) {
+    await page.evaluate(hash => { window.location.hash = hash; }, id);
     const sectionToggle = page.locator(`#${id}`).getByRole('button').first();
-    await sectionToggle.click();
+    await expect(page.locator(`#${id}`)).toBeVisible();
+    await expect(page.locator('#tasks')).toBeHidden();
     await expect(sectionToggle).toHaveAttribute('aria-expanded', 'true');
     await expect(sectionToggle.locator('span.text-xl').first()).toHaveCSS('font-size', '20px');
   }
+  await page.getByRole('link', { name: 'Voltar para Hoje' }).click();
+  await expect(page.locator('#tasks')).toBeVisible();
   for (const dark of [false, true]) {
     await page.evaluate(value => document.documentElement.classList.toggle('dark', value), dark);
     expect(await textContrast(empty)).toBeGreaterThanOrEqual(4.5);
@@ -160,7 +168,7 @@ test('P3: employee sections, empty state and course navigation work in both them
     await noPageOverflow(page);
     await page.screenshot({ path: `/private/tmp/p3-employee-${dark ? 'dark' : 'light'}-mobile.png` });
   }
-  await page.locator('#lms').getByRole('link').last().click();
+  await page.getByRole('navigation', { name: 'Seções do espaço' }).getByRole('link', { name: 'Meus cursos' }).first().click();
   await expect(page).toHaveURL(/\/employee\/lms/);
   await expect(page.getByRole('heading', { name: 'Meus cursos', exact: true })).toBeVisible();
   await page.goto('/employee/pdi');

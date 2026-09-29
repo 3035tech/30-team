@@ -1,13 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
-import { S } from '../dashboard/dashboard-shared';
 import { BrandMark } from './BrandMark';
 import { Icon } from './Icon';
 import { EmployeeLogoutButton } from './EmployeeLogoutButton';
+import { SidebarRail, SidebarRailButton } from './SidebarRail';
 import { useEmployeeNav } from './EmployeeNavContext';
 import { employeeSectionAllowedByCompanyModules } from '../../lib/company-modules';
 
@@ -59,16 +60,19 @@ export const EMPLOYEE_NAV_ITEMS = Object.freeze([
 const NAV_GROUPS = Object.freeze([
   {
     id: 'today',
+    icon: 'list',
     labelKey: 'employeeHome.navGroupToday',
     ids: ['tasks', 'journey', 'surveys'],
   },
   {
     id: 'grow',
+    icon: 'academy',
     labelKey: 'employeeHome.navGroupGrow',
     ids: ['pdi', 'formalReviews', 'okr', 'lms', 'oneOnOne', 'feedback'],
   },
   {
     id: 'work',
+    icon: 'briefcase',
     labelKey: 'employeeHome.navGroupWork',
     ids: ['dp', 'timeClock', 'variablePay', 'feed', 'kudos', 'company'],
   },
@@ -140,8 +144,11 @@ export function EmployeeSidebar({
 
   const goItem = (item, e) => {
     onClose?.();
-    if (isDedicatedRoute(item.id)) return; // let Link navigate
-    e.preventDefault();
+    if (isDedicatedRoute(item.id)) {
+      if (!e) router.push(item.href);
+      return; // let Link navigate
+    }
+    e?.preventDefault();
     if (onHome) {
       focusSection(item.hash || item.id);
       if (typeof window !== 'undefined') {
@@ -155,42 +162,94 @@ export function EmployeeSidebar({
     router.push(item.href);
   };
 
+  const groupsWithItems = allowedGroups
+    .map((group) => ({ ...group, items: group.ids.map((id) => itemById[id]).filter(Boolean) }))
+    .filter((group) => group.items.length > 0);
+  const activeGroupId = groupsWithItems.find((group) => group.items.some(isActive))?.id || null;
+  /** Group picked on the rail; only valid while the same group stays active. */
+  const [railPick, setRailPick] = useState(null);
+  const railGroup = railPick?.activeGroupId === activeGroupId ? railPick.group : activeGroupId;
+  const panelGroup =
+    groupsWithItems.find((group) => group.id === railGroup) ||
+    groupsWithItems.find((group) => group.id === activeGroupId) ||
+    groupsWithItems[0];
+
+  const onRailGroup = (group) => {
+    if (navCollapsed) {
+      goItem(group.items[0]);
+      return;
+    }
+    setRailPick({ activeGroupId, group: group.id });
+  };
+
   return (
     <aside
       id="employee-sidebar"
       className={cn(
-        'db-sidebar flex flex-shrink-0 flex-col gap-2 border-r border-ink/12 bg-surface',
+        'db-sidebar db-sidebar--rail flex flex-shrink-0 flex-row border-r border-ink/12 bg-surface',
         open && 'db-sidebar-open',
-        navCollapsed ? 'db-sidebar-collapsed w-[72px] px-2.5 pb-6 pt-5' : 'w-[220px] px-3.5 pb-8 pt-5'
+        navCollapsed ? 'db-sidebar-collapsed w-16' : 'w-[288px]'
       )}
     >
-      <div
-        className={cn(
-          'mb-3 flex flex-shrink-0 gap-2',
-          navCollapsed ? 'flex-col items-center' : 'items-start justify-between'
-        )}
-      >
-        <div className={cn('min-w-0', navCollapsed && 'text-center')}>
+      <SidebarRail
+        ariaLabel={t(locale, 'employeeHome.sectionNavAria')}
+        brand={
           <BrandMark
-            size={28}
-            withWordmark={!navCollapsed}
+            size={26}
             href="/employee"
             title={t(locale, 'employeeHome.eyebrow')}
             aria-label={t(locale, 'employeeHome.eyebrow')}
           />
-          {!navCollapsed ? (
-            <>
-              <span className={cn(S.label, 'mt-2.5 block')}>{t(locale, 'employeeHome.sidebarLabel')}</span>
+        }
+        footer={
+          <>
+            <SidebarRailButton
+              icon="user"
+              href="/employee/profile"
+              label={t(locale, 'dashboard.profile')}
+              active={onProfile}
+              onClick={onClose}
+            />
+            <EmployeeLogoutButton locale={locale} variant="rail" onLoggedOut={onClose} />
+            <SidebarRailButton
+              icon={navCollapsed ? 'expand' : 'collapse'}
+              label={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
+              className="db-sidebar-collapse-toggle"
+              onClick={() => setNavCollapsed((v) => !v)}
+            />
+          </>
+        }
+      >
+        {groupsWithItems.map((group) => (
+          <SidebarRailButton
+            key={group.id}
+            icon={group.icon}
+            label={t(locale, group.labelKey)}
+            active={group.id === activeGroupId}
+            selected={!navCollapsed && group.id === panelGroup?.id}
+            pressed={navCollapsed ? undefined : group.id === panelGroup?.id}
+            badge={group.items.some((item) => badgeFor(item.id, badges) > 0)}
+            onClick={() => onRailGroup(group)}
+          />
+        ))}
+      </SidebarRail>
+      {!navCollapsed ? (
+        <div className="db-sidebar-panel flex min-w-0 flex-1 flex-col px-2 pb-4 pt-4">
+          <div className="mb-3 flex min-h-10 flex-shrink-0 items-start justify-between gap-2 pl-3">
+            <div className="min-w-0">
+              <p className="m-0 truncate font-ui text-sm font-semibold text-ink">
+                {panelGroup ? t(locale, panelGroup.labelKey) : t(locale, 'employeeHome.sidebarLabel')}
+              </p>
               {companyName || companyLogoUrl ? (
-                <div className="mt-1.5 flex min-w-0 items-center gap-2">
+                <div className="mt-1 flex min-w-0 items-center gap-2">
                   {companyLogoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element -- remote company logo URL from S3
                     <img
                       src={companyLogoUrl}
                       alt=""
-                      width={20}
-                      height={20}
-                      className="h-5 w-5 flex-shrink-0 rounded object-contain"
+                      width={18}
+                      height={18}
+                      className="h-[18px] w-[18px] flex-shrink-0 rounded object-contain"
                     />
                   ) : null}
                   {companyName ? (
@@ -200,111 +259,47 @@ export function EmployeeSidebar({
                   ) : null}
                 </div>
               ) : null}
-            </>
-          ) : companyLogoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={companyLogoUrl}
-              alt={companyName || ''}
-              width={28}
-              height={28}
-              className="mt-2 h-7 w-7 rounded object-contain"
-              title={companyName || undefined}
-            />
-          ) : null}
-        </div>
-        <button
-          type="button"
-          className="db-sidebar-collapse-toggle flex h-8 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-lg border border-ink/12 bg-transparent text-ink-muted"
-          onClick={() => setNavCollapsed((v) => !v)}
-          aria-label={
-            navCollapsed
-              ? t(locale, 'dashboard.expandSidebar')
-              : t(locale, 'dashboard.collapseSidebar')
-          }
-          title={
-            navCollapsed
-              ? t(locale, 'dashboard.expandSidebar')
-              : t(locale, 'dashboard.collapseSidebar')
-          }
-        >
-          <Icon name={navCollapsed ? 'expand' : 'collapse'} />
-        </button>
-        <button
-          type="button"
-          className="db-sidebar-close-mobile flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-lg border border-ink/12 bg-transparent text-ink-muted"
-          onClick={onClose}
-          aria-label={t(locale, 'common.closeMenu')}
-        >
-          <Icon name="close" />
-        </button>
-      </div>
-
-      <nav
-        className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4"
-        aria-label={t(locale, 'employeeHome.sectionNavAria')}
-      >
-        {allowedGroups.map((group, gIdx) => {
-          const items = group.ids.map((id) => itemById[id]).filter(Boolean);
-          if (!items.length) return null;
-          return (
-            <div key={group.id} className={cn(gIdx > 0 && 'mt-2')}>
-              {gIdx > 0 ? <div className="mb-2 h-px bg-ink/[0.08]" aria-hidden /> : null}
-              {!navCollapsed ? (
-                <span className={cn(S.label, 'mb-1 block px-2.5')}>{t(locale, group.labelKey)}</span>
-              ) : null}
-              <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
-                {items.map((item) => {
-                  const active = isActive(item);
-                  const badgeN = badgeFor(item.id, badges);
-                  return (
-                    <li key={item.id}>
-                      <Link
-                        href={item.href}
-                        aria-label={navCollapsed ? t(locale, item.labelKey) : undefined}
-                        title={navCollapsed ? t(locale, item.labelKey) : undefined}
-                        aria-current={active ? 'page' : undefined}
-                        className={cn(
-                          'relative mb-0.5 flex min-h-touch w-full items-center gap-2.5 rounded-control border-none font-ui text-sm font-medium no-underline transition-colors',
-                          navCollapsed ? 'justify-center px-0 py-2.5' : 'justify-start py-2.5',
-                          !navCollapsed && (active ? 'border-l-[3px] border-l-brand-500 pl-[9px] pr-3' : 'border-l-[3px] border-l-transparent pl-[11px] pr-3'),
-                          active ? 'bg-brand-500/[0.09] text-brand-800' : 'bg-transparent text-ink-muted hover:bg-ink/[0.035] hover:text-ink',
-                          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500'
-                        )}
-                        onClick={(e) => goItem(item, e)}
-                      >
-                        <Icon name={item.icon} className="h-4 w-4 shrink-0 opacity-80" />
-                        {!navCollapsed ? (
-                          <>
-                            <span className="min-w-0 flex-1 truncate">{t(locale, item.labelKey)}</span>
-                            <NavBadge n={badgeN} />
-                          </>
-                        ) : badgeN > 0 ? (
-                          <span
-                            className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-brand-500"
-                            aria-hidden
-                          />
-                        ) : null}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
             </div>
-          );
-        })}
-      </nav>
-      <div className="shrink-0 border-t border-ink/10 py-2">
-        <Link href="/employee/profile" onClick={onClose} aria-label={t(locale, 'dashboard.profile')} aria-current={onProfile ? 'page' : undefined}
-          title={navCollapsed ? t(locale, 'dashboard.profile') : undefined}
-          className={cn('flex min-h-touch w-full items-center gap-2.5 rounded-control py-2.5 font-ui text-sm font-medium no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500',
-            navCollapsed ? 'justify-center px-0' : 'px-[11px]',
-            onProfile ? 'bg-brand-500/[0.09] text-brand-800' : 'text-ink-muted hover:bg-ink/[0.035] hover:text-ink')}>
-          <Icon name="user" />
-          {!navCollapsed ? <span>{t(locale, 'dashboard.profile')}</span> : null}
-        </Link>
-        <EmployeeLogoutButton locale={locale} compact={navCollapsed} onLoggedOut={onClose} />
-      </div>
+            <button
+              type="button"
+              className="db-sidebar-close-mobile flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-transparent text-ink-muted"
+              onClick={onClose}
+              aria-label={t(locale, 'common.closeMenu')}
+            >
+              <Icon name="close" />
+            </button>
+          </div>
+          <nav
+            className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4"
+            aria-label={panelGroup ? t(locale, panelGroup.labelKey) : t(locale, 'employeeHome.sectionNavAria')}
+          >
+            <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+              {(panelGroup?.items || []).map((item) => {
+                const active = isActive(item);
+                const badgeN = badgeFor(item.id, badges);
+                return (
+                  <li key={item.id}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? 'page' : undefined}
+                      className={cn(
+                        'relative mb-0.5 flex min-h-touch w-full items-center gap-2.5 rounded-control border-none py-2 pl-3 pr-3 font-ui text-sm font-medium no-underline transition-colors',
+                        active ? 'bg-brand-500/[0.09] text-brand-800' : 'bg-transparent text-ink-muted hover:bg-ink/[0.035] hover:text-ink',
+                        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500'
+                      )}
+                      onClick={(e) => goItem(item, e)}
+                    >
+                      <Icon name={item.icon} className="h-4 w-4 shrink-0 opacity-80" />
+                      <span className="min-w-0 flex-1 truncate">{t(locale, item.labelKey)}</span>
+                      <NavBadge n={badgeN} />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
+      ) : null}
     </aside>
   );
 }

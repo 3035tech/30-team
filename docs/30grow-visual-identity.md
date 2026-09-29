@@ -49,7 +49,7 @@ Origem: brand kit oficial `30grow-brand-kit.zip` (vetores sem fonte, favicon aju
 - Superfícies planas: sem gradientes, texto com gradiente, brilho radial ou vidro (`backdrop-blur`) em cards/modais. `.bg-radial-glow*` permanecem como hooks sem efeito.
 - Sombras só por token: `shadow-card`, `shadow-menu` (dropdowns), `shadow-dialog` (modais/tour), `shadow-toast`. Raios ad hoc foram normalizados para `rounded-card` / `rounded-control` (exceção: moldura do celular no mockup da landing).
 - Botões de ação: `bg-action` + `text-action-ink` (nunca somar `text-white`, que quebra o contraste no dark mode).
-- Sidebar navy nas três visões; estado selecionado verde discreto; palavra completa expandida e símbolo quando recolhida.
+- Menu lateral em trilho (opção D): faixa navy de ícones por área (`SidebarRail` / `SidebarRailButton`, contexto de cor `.db-rail`) + painel claro com as telas da área (`.db-sidebar-panel`). Área da tela atual em verde; área só selecionada em branco translúcido. Recolhido = só o trilho (64px); clicar numa área abre a primeira tela. Mesmo padrão no painel do gestor e no portal do colaborador.
 - Campos brancos, labels visíveis, foco verde com outline acessível.
 - Tabelas neutras com header e hover off-white. Status preservam sucesso, aviso, erro e neutro.
 - Dark mode existente preservado com fundos navy/slate e texto claro.
