@@ -53,7 +53,7 @@ export async function POST(request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Erro ao salvar resultado:', error);
+    console.error('Erro ao salvar resultado:', { code: error?.code || 'UNKNOWN' });
     return apiError(request, ERR.INTERNAL, 500);
   }
 }
@@ -76,7 +76,7 @@ export async function GET(request) {
     );
     return NextResponse.json(result.rows);
   } catch (error) {
-    console.error('Erro ao buscar resultados:', error);
+    console.error('Erro ao buscar resultados:', { code: error?.code || 'UNKNOWN' });
     return apiError(request, ERR.INTERNAL, 500);
   }
 }

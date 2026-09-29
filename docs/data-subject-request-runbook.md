@@ -34,3 +34,10 @@ Canal inicial: `contact@3035tech.com`, assunto **Privacidade 30Grow**. Não soli
 ## Escalonamento imediato
 
 Escalar para responsável de privacidade e segurança quando houver suspeita de vazamento, acesso cross-tenant, pedido judicial, risco ao denunciante, dado de criança/adolescente, conflito de identidade ou dúvida sobre obrigação de preservação.
+
+## Limites técnicos verificados em 29/09/2026
+
+- `GET /api/admin/candidates/{id}` fornece um dossiê parcial (inclui até 30 avaliações); não é exportação integral do titular. A exportação CSV geral também não substitui a coleta por classe/empresa.
+- O ensaio `node --experimental-vm-modules test/dtov/privacy-rehearsal.test.js` usa apenas PostgreSQL local DTOV em transação revertida. Executa os handlers reais com autenticação simulada; não prova UI, cookies reais, S3 ou entrega de arquivo ao titular.
+- `PATCH` corrige cadastro; `DELETE` remove a pessoa e pode acionar cascatas. Confirmar obrigações e vínculos antes de executar. Objetos S3, backups e registros legados sem relação de identidade precisam de tratamento separado.
+- Não usar busca por nome para apagar `results`. Registrar a pendência de vínculo legado e informar o escopo efetivamente atendido.

@@ -77,6 +77,8 @@ Fluxo mínimo:
 
 **Evidência atual:** inventário, política operacional e runbook estão em `docs/pilot-privacy-checklist.md`, `docs/privacy-retention-policy.md` e `docs/data-subject-request-runbook.md`. Minutas públicas versionadas estão em `/privacy` e `/terms`, vinculadas na landpage, preços e cadastro. Aprovação jurídica, prazos definitivos, subprocessadores e lifecycle do provedor permanecem gates humanos.
 
+**Revisão técnica (29/09/2026):** corrigidos descarte por homônimo, logs sensíveis e purge sem empresa/remoção indevida de pessoas. Ensaio DTOV com rollback e 56 testes passaram. Aprovação jurídica, prova integral por classe e validações do provedor continuam abertas. Ver [evidências](validation/MVP-06-2026-09-29.md) e [decisões para aprovação](privacy-approval-matrix.md).
+
 **Objetivo:** lançar com tratamento mínimo responsável de dados pessoais e de RH.
 
 1. Inventariar dados pessoais, remuneração, DP, avaliações e relatos anônimos.

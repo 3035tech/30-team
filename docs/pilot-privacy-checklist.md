@@ -32,7 +32,13 @@ Registre responsável, data e resultado em [`pilot-go-live-signoff.md`](./pilot-
 - [x] Canal técnico de entrada definido e publicado; responsável nominal ainda deve constar no sign-off.
 - [ ] Bases, finalidades, prazos e subprocessadores aprovados.
 - [ ] Minutas de Termos e Política publicadas e coerentes com módulos; aprovação jurídica pendente.
-- [ ] Exportação/correção/exclusão ensaiadas em homologação.
-- [ ] Logs pesquisados por token, senha, documento, respostas e SQL params.
+- [x] Acesso/correção/exclusão do cadastro e retenção ensaiados no DTOV com rollback; escopo e limites em `validation/MVP-06-2026-09-29.md`.
+- [ ] Exportação completa de todas as classes, objetos e execução em homologação ainda precisam de prova.
+- [x] Logger estruturado testado com dados sintéticos sensíveis; logs locais revisados e vazamentos de tokens/e-mail corrigidos.
+- [ ] Validar logs de homologação, proxy/provedor, Sentry e retenção dos logs anteriores.
 - [x] Escopo tenant de remuneração e DP coberto no smoke HTTP; ouvidoria usa `company_id` em listagem, atualização e agregados e entra na validação automatizada desta entrega.
 - [ ] Retenção de backup/S3 documentada com o provedor.
+
+## Evidência técnica
+
+Ver [MVP-06 — revisão de 29/09](validation/MVP-06-2026-09-29.md) e [matriz para aprovação](privacy-approval-matrix.md). O item não equivale a aprovação jurídica ou a eliminação integral ensaiada.

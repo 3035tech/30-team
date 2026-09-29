@@ -16,7 +16,7 @@ Documento interno do 30Grow para o piloto. A versão pública está em `/privacy
 | Classe | Enquanto ativa | Encerramento / pedido | Automação atual |
 |---|---|---|---|
 | Conta de gestor e vínculos | vigência do acesso | revogar sessão, desativar e aplicar soft delete após validação | revogação de sessão; soft delete |
-| Candidato, candidatura e avaliação | processo seletivo + prazo aprovado pela empresa | exportar/corrigir; anonimizar ou excluir se elegível | `RETENTION_DAYS` + purge em lotes para avaliações antigas e órfãos elegíveis |
+| Candidato, candidatura e avaliação | processo seletivo + prazo aprovado pela empresa | exportar/corrigir; anonimizar ou excluir se elegível | `RETENTION_DAYS` + purge de avaliações por empresa; simulação por padrão; pessoas nunca são removidas por ausência de avaliação |
 | Currículo e anexos de recrutamento | processo + prazo aprovado | remover objeto e referência após verificar vínculo | exige rotina operacional/S3 lifecycle validado |
 | Colaborador e gestão | vínculo + prazo contratual/legal | restringir como alumni; excluir/anonimizar somente o que não precisa ser preservado | soft delete e escopo tenant; sem purge genérico |
 | Remuneração | vínculo + prazo legal/contratual aprovado | acesso restrito; não apagar automaticamente | capability dedicada + auditoria |
@@ -28,17 +28,22 @@ Documento interno do 30Grow para o piloto. A versão pública está em `/privacy
 
 ## Rotina disponível
 
-`lib/retention.js` executa exclusão física em lotes de avaliações anteriores ao corte e depois remove candidatos realmente órfãos. O tamanho e o número máximo de lotes são limitados por `RETENTION_BATCH_SIZE` e `RETENTION_MAX_BATCHES`.
+`POST /api/admin/retention/purge` exige sessão de superadmin com permissão de usuários, `companyId` explícito e `days` inteiro positivo. Não usa `CRON_SECRET`. `dryRun` é `true` por padrão; somente o booleano `false` executa a exclusão física de avaliações. Clientes da API que omitiam empresa precisam ser atualizados. Não há migration nem mudança nos dados existentes.
 
-Antes de executar em produção:
+Exemplo de corpo para simular (substituir por empresa e período aprovados):
 
-1. registrar empresa/escopo, responsável, base e período aprovado;
-2. gerar contagem de impacto e confirmar backups;
-3. executar em janela controlada com `CRON_SECRET`;
-4. conferir truncamento e repetir somente se aprovado;
-5. registrar totais, horário e operador sem copiar conteúdo pessoal para o ticket.
+```json
+{"companyId": 123, "days": 365, "dryRun": true}
+```
 
-O purge existente não é uma rotina universal de eliminação. Remuneração, DP, ouvidoria, objetos S3 e backups exigem decisão específica.
+O período acima é apenas exemplo técnico, não prazo jurídico aprovado. O retorno informa `eligibleAssessments`; não contém respostas nem dados pessoais. A execução com `dryRun: false` retorna os totais removidos e `truncated`. Limites: `RETENTION_BATCH_SIZE` e `RETENTION_MAX_BATCHES`.
+
+Antes da execução, registrar escopo, aprovação, período e responsável; confirmar backup e ausência de obrigação de preservação; revisar a simulação com uma segunda pessoa. A simulação não reserva um snapshot: novas avaliações podem se tornar elegíveis até a execução. A função não implementa legal hold automático; se houver preservação ativa ou dúvida, não executar o purge da empresa.
+
+Pessoas não são mais apagadas pelo purge: ausência de avaliação/1:1 não prova ausência de vínculos de DP, remuneração ou recrutamento. A exclusão individual existente pode atingir relações com `ON DELETE CASCADE`; exige revisão do escopo e das obrigações antes do uso. Não é uma rotina universal de atendimento LGPD.
+
+A tabela legada `results` não tem vínculo confiável de candidato/empresa. A exclusão individual não a remove por nome: homônimos não podem ser confundidos. Registros legados exigem identificação e descarte separados, com evidência; não declarar eliminação completa enquanto restarem dados elegíveis, objetos ou backups.
+
 
 ## Gate antes do primeiro cliente
 

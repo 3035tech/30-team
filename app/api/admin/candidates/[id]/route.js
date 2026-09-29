@@ -117,7 +117,7 @@ export async function GET(request, props) {
 
   const [timeline, people, lmsOverdue] = await Promise.all([
     buildCandidateTimeline(id).catch((e) => {
-      console.error('candidate timeline:', e);
+      console.error('candidate timeline:', { code: e?.code || 'UNKNOWN' });
       return [];
     }),
     buildCandidatePeopleBrief(query, {
@@ -128,7 +128,7 @@ export async function GET(request, props) {
       scores: assessmentsWithHistory[0]?.scores || null,
       topType: assessmentsWithHistory[0]?.topType ?? null,
     }).catch((e) => {
-      console.error('candidate people brief:', e);
+      console.error('candidate people brief:', { code: e?.code || 'UNKNOWN' });
       return null;
     }),
     listCandidateOverdueLms(query, {
@@ -327,7 +327,7 @@ export async function PATCH(request, props) {
     return result;
   }).catch((error) => {
     if (error.dpErrorCode) return { errorCode: error.dpErrorCode, status: 400 };
-    console.error('PATCH candidate profile transaction', error);
+    console.error('PATCH candidate profile transaction', { code: error?.code || 'UNKNOWN' });
     return { errorCode: ERR.INTERNAL, status: 500 };
   });
   if (up.errorCode) return apiError(request, up.errorCode, up.status || 400);
@@ -366,21 +366,20 @@ export async function DELETE(request, props) {
     const owned = await query(`SELECT id FROM candidates WHERE id = $1 AND company_id = $2 LIMIT 1`, [id, companyId]);
     if (owned.rowCount === 0) return apiError(request, ERR.UNAUTHORIZED, 401);
   }
-  const cand = await query(`SELECT full_name AS "fullName" FROM candidates WHERE id = $1 LIMIT 1`, [id]);
+  const cand = await query(`SELECT company_id AS "companyId" FROM candidates WHERE id = $1 LIMIT 1`, [id]);
   if (cand.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
-  const fullName = cand.rows?.[0]?.fullName || null;
 
   const del = await query(`DELETE FROM candidates WHERE id = $1 RETURNING id`, [id]);
   if (del.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
 
-  // Best-effort cleanup: legacy table used by /api/results
-  if (fullName) {
-    await query(`DELETE FROM results WHERE LOWER(name) = LOWER($1)`, [fullName]);
-  }
+  // Legacy results have no reliable candidate/tenant relationship. A name is
+  // not an identity: deleting homonyms could erase another company's data.
+  // Handle those records through a separately reviewed retention procedure.
 
   await audit({
     actorUserId: payload.userId || null,
     action: 'candidate.delete',
+    companyId: cand.rows[0].companyId,
     targetType: 'candidate',
     targetId: id,
   });
