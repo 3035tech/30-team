@@ -24,6 +24,19 @@ test('collapse preserves manager but hides whole subtree; descendants are exclud
   assert.deepEqual(orgChartLayout(roots, new Set([2])).nodes.map((node) => node.id), [1, 2, 3]);
   assert.deepEqual([...orgDescendantIds(roots[0].children[0])], [2, 4]);
 });
+test('expanded details reserve space for descendants and wrapped roots without overlaps', () => {
+  const forest = [...roots, ...Array.from({ length: 8 }, (_, index) => ({ id: index + 10, children: [] }))];
+  const compact = orgChartLayout(forest);
+  const expanded = orgChartLayout(forest, new Set(), new Set([1, 2, 10]));
+  assert.ok(expanded.nodes.find((node) => node.id === 4).y > compact.nodes.find((node) => node.id === 4).y);
+  for (const { from, to } of expanded.edges) assert.ok(to.y > from.y + from.height);
+  for (const a of expanded.nodes) for (const b of expanded.nodes) {
+    if (a.id === b.id) continue;
+    assert.ok(a.x + ORG_CARD_WIDTH <= b.x || b.x + ORG_CARD_WIDTH <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y);
+  }
+  assert.deepEqual(orgChartLayout(forest), compact);
+  assert.deepEqual(orgChartLayout(roots, new Set([1]), new Set([1, 2])).nodes.map((node) => node.id), [1]);
+});
 test('disconnected roots wrap and deep employees remain visible', () => {
   const forest = Array.from({ length: 200 }, (_, id) => ({ id, children: [] }));
   const layout = orgChartLayout(forest);

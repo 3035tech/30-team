@@ -259,7 +259,9 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
     };
     if (password.trim()) body.password = password;
     else body.sendInvite = true;
-    if (Array.isArray(step2.modules)) body.modules = step2.modules;
+    // This create dialog promises role defaults when no override is selected.
+    // An explicit [] means deny-all to the API and must remain valid for edits.
+    if (Array.isArray(step2.modules) && step2.modules.length) body.modules = step2.modules;
 
     setLoading(true);
     setError('');

@@ -617,7 +617,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                               {workspace.recruiters.map((recruiter) => <option key={recruiter.id} value={recruiter.id}>{recruiter.name}</option>)}
                             </SelectField>
                           </label>
-                          <label className="mt-2 block md:hidden">
+                          <label className="mt-2 block">
                             <span className="sr-only">{t(locale, 'recruiting.moveToStage')}</span>
                             <SelectField
                               className="ui-select w-full min-h-touch rounded-control border border-ink/12 bg-canvas px-2 py-1.5 font-mono text-2xs text-ink"

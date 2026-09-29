@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
-import { flattenOrgChart, orgChartLayout, orgDescendantIds, ORG_CARD_WIDTH, ORG_CARD_HEIGHT, filterOrgPeople } from '../../lib/people/org-chart-layout';
+import { flattenOrgChart, orgChartLayout, orgDescendantIds, ORG_CARD_WIDTH, filterOrgPeople } from '../../lib/people/org-chart-layout';
 import { S } from '../dashboard/dashboard-shared';
 import { AppLoading } from './AppLoading';
 import { EmptyState } from './EmptyState';
@@ -22,6 +22,7 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [collapsed, setCollapsed] = useState(new Set());
+  const [expandedDetails, setExpandedDetails] = useState(new Set());
   const [zoom, setZoom] = useState(1);
   const [search, setSearch] = useState('');
   const viewport = useRef(null);
@@ -44,13 +45,13 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
     }
   }, [companyId, locale]);
   useEffect(() => {
-    setSelectedId(null); setCollapsed(new Set());
+    setSelectedId(null); setCollapsed(new Set()); setExpandedDetails(new Set());
     if (companyId) void load(); else setLoading(false);
     return () => { requestVersion.current += 1; };
   }, [companyId, load]);
 
   const people = useMemo(() => flattenOrgChart(data?.roots || []), [data]);
-  const layout = useMemo(() => orgChartLayout(data?.roots || [], collapsed), [data, collapsed]);
+  const layout = useMemo(() => orgChartLayout(data?.roots || [], collapsed, expandedDetails), [data, collapsed, expandedDetails]);
   const selected = people.find((person) => person.id === selectedId);
   const excluded = useMemo(() => orgDescendantIds(selected), [selected]);
   const choices = people.filter((person) => !excluded.has(person.id));
@@ -144,18 +145,27 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
             <div className="relative origin-top-left" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
               <svg className="pointer-events-none absolute inset-0 text-brand-500/50" width={layout.width} height={layout.height} aria-hidden="true">
                 {layout.edges.map(({ from, to }) => {
-                  const x1 = from.x + ORG_CARD_WIDTH / 2, y1 = from.y + ORG_CARD_HEIGHT, x2 = to.x + ORG_CARD_WIDTH / 2, y2 = to.y;
+                  const x1 = from.x + ORG_CARD_WIDTH / 2, y1 = from.y + from.height, x2 = to.x + ORG_CARD_WIDTH / 2, y2 = to.y;
                   return <path key={to.id} d={`M ${x1} ${y1} V ${(y1 + y2) / 2} H ${x2} V ${y2}`} fill="none" stroke="currentColor" strokeWidth="2" />;
                 })}
               </svg>
-              {layout.nodes.map((person) => <article key={person.id} data-person-id={person.id} className={cn('absolute flex flex-col overflow-hidden rounded-card border bg-surface shadow-sm', selectedId === person.id ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-ink/15')} style={{ left: person.x, top: person.y, width: ORG_CARD_WIDTH, height: ORG_CARD_HEIGHT }}>
-                <button type="button" disabled={saving} aria-pressed={selectedId === person.id} aria-label={msg('selectPerson', { name: person.name })} className="flex min-h-0 flex-1 flex-col gap-2 border-0 bg-transparent px-4 py-3 text-left hover:bg-brand-500/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" onClick={() => select(person)}>
-                  <span className="flex w-full items-center justify-between gap-2"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 font-ui text-xs font-semibold text-brand-700" aria-hidden="true">{person.name.split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('')}</span><span className="font-ui text-xs text-ink-muted">{msg('level', { n: person.depth + 1 })}</span></span>
-                  <span className="line-clamp-2 font-ui text-sm font-semibold leading-snug text-ink" title={person.name}>{person.name}</span>
-                  <span className="w-full truncate font-ui text-xs text-ink-muted" title={person.jobRoleName || ''}>{person.jobRoleName || msg('noRole')}</span>
-                  <span className="w-full truncate font-ui text-xs text-ink-faint">{person.orgUnitName || t(locale, 'panel.orgUnits.none')}</span>
+              {layout.nodes.map((person) => <article key={person.id} data-person-id={person.id} className={cn('absolute flex flex-col overflow-hidden rounded-card border bg-surface shadow-sm', selectedId === person.id ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-ink/15')} style={{ left: person.x, top: person.y, width: ORG_CARD_WIDTH, height: person.height }}>
+                <button type="button" disabled={saving} aria-pressed={selectedId === person.id} aria-label={msg('selectPerson', { name: person.name })} className="flex min-h-0 flex-1 items-start gap-2 border-0 bg-transparent px-3 py-2.5 text-left hover:bg-brand-500/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" onClick={() => select(person)}>
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 font-ui text-2xs font-semibold text-brand-700" aria-hidden="true">{person.name.split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('')}</span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="line-clamp-2 font-ui text-xs font-semibold leading-snug text-ink" title={person.name}>{person.name}</span>
+                    <span className="truncate font-ui text-2xs text-ink-muted" title={person.jobRoleName || ''}>{person.jobRoleName || msg('noRole')}</span>
+                  </span>
                 </button>
-                {person.children?.length ? <button type="button" className="min-h-9 border-0 border-t border-solid border-ink/10 bg-brand-500/[0.04] px-3 font-ui text-xs text-brand-700" aria-expanded={!collapsed.has(person.id)} aria-label={msg(collapsed.has(person.id) ? 'expandPerson' : 'collapsePerson', { name: person.name })} onClick={() => setCollapsed((previous) => { const next = new Set(previous); if (next.has(person.id)) next.delete(person.id); else next.add(person.id); return next; })}>{msg('reportsCount', { n: person.children.length })} {collapsed.has(person.id) ? '+' : '−'}</button> : null}
+                {expandedDetails.has(person.id) ? <div id={`org-details-${person.id}`} className="flex h-[68px] shrink-0 flex-col justify-center gap-1 border-t border-ink/10 px-3 font-ui text-xs text-ink-muted">
+                  <span>{msg('level', { n: person.depth + 1 })}</span>
+                  <span className="truncate" title={person.orgUnitName || ''}>{person.orgUnitName || t(locale, 'panel.orgUnits.none')}</span>
+                  <span>{msg('reportsCount', { n: person.children?.length || 0 })}</span>
+                </div> : null}
+                <div className="flex h-8 shrink-0 border-t border-ink/10 bg-brand-500/[0.04]">
+                  <button type="button" className="min-w-0 flex-1 border-0 bg-transparent px-2 font-ui text-2xs text-brand-700 hover:bg-brand-500/10" aria-expanded={expandedDetails.has(person.id)} aria-controls={expandedDetails.has(person.id) ? `org-details-${person.id}` : undefined} aria-label={msg(expandedDetails.has(person.id) ? 'hidePersonDetails' : 'showPersonDetails', { name: person.name })} onClick={() => setExpandedDetails((previous) => { const next = new Set(previous); if (next.has(person.id)) next.delete(person.id); else next.add(person.id); return next; })}>{msg(expandedDetails.has(person.id) ? 'lessDetails' : 'moreDetails')}</button>
+                  {person.children?.length ? <button type="button" className="min-w-0 flex-1 border-0 border-l border-solid border-ink/10 bg-transparent px-2 font-ui text-2xs text-brand-700 hover:bg-brand-500/10" aria-expanded={!collapsed.has(person.id)} aria-label={msg(collapsed.has(person.id) ? 'expandPerson' : 'collapsePerson', { name: person.name })} onClick={() => setCollapsed((previous) => { const next = new Set(previous); if (next.has(person.id)) next.delete(person.id); else next.add(person.id); return next; })}>{msg('teamCount', { n: person.children.length })} {collapsed.has(person.id) ? '+' : '−'}</button> : null}
+                </div>
               </article>)}
             </div>
           </div>
