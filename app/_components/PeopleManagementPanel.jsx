@@ -107,7 +107,6 @@ export function PeopleManagementPanel({
   const hypotheses = management?.hypotheses || [];
   const prompts = management?.oneOnOnePrompts || [];
   const signals = management?.retentionSignals || [];
-  const topMot = management?.motivators?.top || [];
   const pdiSeedIdeas = management?.synthesis?.pdiIdeas || [];
   const showJourney = section === 'all' || section === 'journey';
   const showContext = section === 'all' || section === 'context';
@@ -452,34 +451,6 @@ export function PeopleManagementPanel({
               </div>
             ))}
         </div>
-      ) : null}
-
-      {section !== 'oneOnOne' && topMot.length > 0 ? (
-        <CollapsibleBlock
-          locale={locale}
-          title={t(locale, 'panel.team.peopleTopMotivators')}
-          defaultOpen={false}
-          count={topMot.length}
-          className="border-t border-ink/10"
-        >
-          <div className="flex flex-wrap gap-1.5">
-            {topMot.map((d) => (
-              <span
-                key={d.key}
-                className={cn(
-                  'inline-flex min-h-8 items-center rounded-control border bg-surface px-2.5 text-prose text-ink',
-                  !d.color && 'border-ink/12'
-                )}
-                style={d.color ? { borderColor: d.color } : undefined}
-              >
-                {d.label} · {Math.round(d.score)}
-              </span>
-            ))}
-          </div>
-          <p className="mb-0 mt-2 font-ui text-prose text-ink/75">
-            {t(locale, 'panel.team.motivatorsRadarSeeStyle')}
-          </p>
-        </CollapsibleBlock>
       ) : null}
 
       {signals.length > 0 ? (

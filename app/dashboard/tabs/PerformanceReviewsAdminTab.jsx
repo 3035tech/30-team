@@ -534,7 +534,7 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
       />
 
       {mode === 'nine-box' ? <NineBoxBlock locale={locale} companyId={companyId} /> : mode === 'catalog' ? <CompetencyCatalogBlock locale={locale} companyId={companyId} /> : mode === 'formal' ? (
-        <FormalCompetencyReviewsBlock locale={locale} companyId={companyId} />
+        <FormalCompetencyReviewsBlock locale={locale} companyId={companyId} onOpenCatalog={() => setMode('catalog')} />
       ) : (
       <>
       <AdminPageHeader

@@ -95,7 +95,6 @@ export function EntitySearchSelect({
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error('search failed');
         setItems(Array.isArray(data.items) ? data.items : []);
-        setOpen(true);
       } catch (e) {
         if (e?.name === 'AbortError') return;
         setItems([]);
@@ -128,7 +127,16 @@ export function EntitySearchSelect({
   }
 
   return (
-    <div ref={wrapRef} className={cn('relative mt-1.5', className)}>
+    <div ref={wrapRef} className={cn('relative mt-1.5', className)}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && open) {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpen(false);
+          wrapRef.current?.querySelector('input')?.focus();
+        }
+      }}
+    >
       <div className="flex gap-1.5">
         <input
           type="text"

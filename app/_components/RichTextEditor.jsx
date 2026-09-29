@@ -192,7 +192,7 @@ export function RichTextEditor({
       </div>
       <div className="relative">
         {isEmpty ? (
-          <span className="pointer-events-none absolute left-3.5 top-3 font-display text-prose text-ink-faint">
+          <span className="pointer-events-none absolute left-3.5 top-3 font-ui text-prose text-ink-muted">
             {ph}
           </span>
         ) : null}
@@ -207,7 +207,7 @@ export function RichTextEditor({
           onBlur={emit}
           onKeyDown={onKeyDown}
           className={cn(
-            'rich-text-body px-3.5 py-3 font-display text-sm leading-[1.55] text-ink outline-none',
+            'rich-text-body px-3.5 py-3 font-ui text-base sm:text-sm leading-[1.55] text-ink outline-none',
             disabled ? 'cursor-wait' : 'cursor-text'
           )}
           style={{ minHeight }}

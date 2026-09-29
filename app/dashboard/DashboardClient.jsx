@@ -1059,7 +1059,7 @@ function DashboardClientContent({
                       <NavLink id="pdi" icon="clipboard" label={t(locale, 'dashboard.pdi')} />
                     ) : null}
                     {showPerformance ? (
-                      <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'performanceReviews.title')} />
+                      <NavLink id="performance-reviews" icon="clipboard" label={t(locale, 'dashboard.performanceReviews')} />
                     ) : null}
                     {showPerformance ? (
                       <NavLink id="okr" icon="okr" label={t(locale, 'dashboard.okr')} />

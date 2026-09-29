@@ -138,7 +138,7 @@ function ScoresMatrix({ locale, review }) {
   );
 }
 
-export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
+export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOpenCatalog }) {
   const { promptForm, toast, confirm } = useAppFeedback();
   const [loading, setLoading] = useState(() => Boolean(companyId));
   const [competencies, setCompetencies] = useState([]);
@@ -267,6 +267,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
     const choices = [...competencies, ...(draft?.questionnaire || []).filter(item => !competencies.some(c => String(c.id) === String(item.competencyId))).map(item => ({ id: item.competencyId, name: item.label, description: item.description, selfDescription: item.selfDescription }))];
     const values = await promptForm({
       title: draft ? (locale.startsWith('en') ? 'Edit draft' : 'Editar rascunho') : tf(locale, 'createCycle'),
+      message: choices.length === 0 ? tf(locale, 'catalogEmptyHint') : undefined,
       fields: [
         { name: 'title', label: t(locale, 'performanceReviews.cycleTitle'), type: 'text', required: true, defaultValue: draft?.title || '' },
         { name: 'description', label: t(locale, 'performanceReviews.cycleDescription'), type: 'textarea', defaultValue: draft?.description || '' },
@@ -838,6 +839,14 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId }) {
           actions={<AdminCreateButton label={tf(locale, 'createCycle')} onClick={createCycle} disabled={busy} />}
         />
 
+        {competencies.length === 0 ? (
+          <EmptyState
+            title={tf(locale, 'catalogEmptyTitle')}
+            message={tf(locale, 'catalogEmptyHint')}
+            actionLabel={tf(locale, 'openCatalog')}
+            onAction={onOpenCatalog}
+          />
+        ) : null}
         <h3 className={S.cardSection}>{tf(locale, 'cyclesTitle')}</h3>
         {cycles.length === 0 ? (
           <EmptyState message={tf(locale, 'cyclesEmpty')} />

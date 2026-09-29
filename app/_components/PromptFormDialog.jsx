@@ -178,7 +178,7 @@ export function PromptFormDialog({
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape' && !submitLockRef.current) onCancel?.();
+      if (e.key === 'Escape' && !e.defaultPrevented && !submitLockRef.current) onCancel?.();
     };
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';

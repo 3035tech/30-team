@@ -61,7 +61,7 @@ export function AdminRichFormDrawer({
     const frame = !withinShell ? requestAnimationFrame(focusFirst) : null;
     const onKey = (e) => {
       if (!isTop()) return;
-      if (e.key === 'Escape') closeRef.current?.();
+      if (e.key === 'Escape' && !e.defaultPrevented) closeRef.current?.();
       if (withinShell || e.key !== 'Tab' || e.defaultPrevented) return;
       const items = focusable(), first = items[0], last = items.at(-1);
       if (!items.length || !panel.contains(document.activeElement) ||

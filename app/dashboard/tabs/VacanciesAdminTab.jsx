@@ -1071,7 +1071,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         fullPage={Boolean(editingVacancy)}
         backLabel={locale === 'en' ? 'Back to vacancies' : 'Voltar para vagas'}
         closeLabel={locale === 'en' ? 'Close vacancy editor' : 'Fechar editor da vaga'}
-        eyebrow={locale === 'en' ? 'RECRUITMENT / VACANCIES' : 'RECRUTAMENTO / VAGAS'}
+        eyebrow={locale === 'en' ? 'Recruitment / Vacancies' : 'Recrutamento / Vagas'}
         onClose={() => void closeVacancyEditor()}
         footer={(
           <>
