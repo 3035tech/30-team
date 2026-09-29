@@ -1,11 +1,11 @@
 # ── Stage 1: deps ────────────────────────────────────────────────────────────
-FROM public.ecr.aws/docker/library/node:22-alpine AS deps
+FROM docker.io/library/node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 # ── Stage 2: builder ─────────────────────────────────────────────────────────
-FROM public.ecr.aws/docker/library/node:22-alpine AS builder
+FROM docker.io/library/node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -17,7 +17,7 @@ RUN npm run test:security
 RUN npm run build
 
 # ── Stage 3: runner ──────────────────────────────────────────────────────────
-FROM public.ecr.aws/docker/library/node:22-alpine AS runner
+FROM docker.io/library/node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
