@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { DateField } from '../../../app/_components/DateField.jsx';
 import { PromptFormDialog } from '../../../app/_components/PromptFormDialog.jsx';
 import { SelectField } from '../../../app/_components/SelectField.jsx';
+import LanguageSelect from '../../../app/_components/LanguageSelect.jsx';
 import { PrivateAttachment } from '../../../app/_components/PrivateAttachment.jsx';
 export default function Preview() {
  const [date, setDate] = useState('2026-09-19');
@@ -14,7 +15,9 @@ export default function Preview() {
  const [calls, setCalls] = useState(0);
  const [rowCalls, setRowCalls] = useState(0);
  const selectRef = useRef(null);
+ const [locale, setLocale] = useState('pt-BR');
  return <main className="mx-auto max-w-3xl space-y-6 p-6">
+ <div className="flex justify-end"><LanguageSelect locale={locale} onChange={setLocale} /></div>
  <section aria-label="Anexo privado">
  <PrivateAttachment href="/api/employee/dp/documents/address_proof/file" fileName="Comprovante de endereço.pdf" />
  </section>

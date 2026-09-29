@@ -1,4 +1,21 @@
 const { test, expect } = require('@playwright/test');
+test('language options fit their content and stay inside the viewport', async ({ page }) => {
+  await page.goto('/');
+  for (const width of [375, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const language = page.getByRole('combobox', { name: 'Idioma', exact: true });
+    await language.click();
+    const menu = page.getByRole('listbox');
+    await expect(menu).toBeVisible();
+    const bounds = await menu.boundingBox();
+    expect(bounds.x).toBeGreaterThanOrEqual(8);
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual(width - 8);
+    expect(bounds.width).toBeGreaterThan((await language.boundingBox()).width);
+    expect(await menu.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    await page.screenshot({ path: test.info().outputPath(`language-${width}.png`) });
+    await language.press('Escape');
+  }
+});
 test('custom selection: keyboard, disabled options, escape, form/reset and small screen', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));

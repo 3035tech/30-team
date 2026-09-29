@@ -1,6 +1,6 @@
 'use client';
 
-import { Children, Fragment, isValidElement, useEffect, useId, useImperativeHandle, useRef, useState } from 'react';
+import { Children, Fragment, isValidElement, useEffect, useId, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../../lib/cn';
 import { fieldSelectClass } from './form-control-styles';
@@ -28,7 +28,7 @@ function optionList(children, group = '', groupDisabled = false) {
  */
 export function SelectField({
   children, value, defaultValue, onChange, onBlur, onFocus, onInvalid, onClick, onKeyDown, ref: forwardedRef,
-  id, name, form, required, disabled, className, style, title,
+  id, name, form, required, disabled, className, style, title, fitMenuToContent = false,
   'aria-label': ariaLabel, 'aria-labelledby': labelledBy,
   'aria-describedby': describedBy, 'aria-invalid': ariaInvalid, ...rest
 }) {
@@ -88,6 +88,11 @@ export function SelectField({
         position: 'fixed',
         left: Math.max(VIEWPORT_MARGIN, Math.min(rect.left, window.innerWidth - rect.width - VIEWPORT_MARGIN)),
         width: Math.min(rect.width, window.innerWidth - VIEWPORT_MARGIN * 2),
+        ...(fitMenuToContent ? {
+          width: 'max-content',
+          minWidth: Math.min(rect.width, window.innerWidth - VIEWPORT_MARGIN * 2),
+          maxWidth: window.innerWidth - VIEWPORT_MARGIN * 2,
+        } : {}),
         maxHeight: Math.max(0, Math.min(MENU_MAX_HEIGHT, (upward ? above : below) - MENU_GAP)),
         ...(upward ? { bottom: window.innerHeight - rect.top + MENU_GAP } : { top: rect.bottom + MENU_GAP }),
       });
@@ -104,7 +109,14 @@ export function SelectField({
       window.removeEventListener('scroll', reposition, true);
       document.removeEventListener('pointerdown', outside);
     };
-  }, [open]);
+  }, [open, fitMenuToContent]);
+
+  useLayoutEffect(() => {
+    if (!open || !fitMenuToContent || !position || !menuRef.current) return;
+    const width = menuRef.current.getBoundingClientRect().width;
+    const left = Math.max(VIEWPORT_MARGIN, Math.min(buttonRef.current.getBoundingClientRect().left, window.innerWidth - width - VIEWPORT_MARGIN));
+    if (left !== position.left) setPosition({ ...position, left });
+  }, [open, fitMenuToContent, position]);
 
   useEffect(() => {
     if (open) document.getElementById(`${listId}-${active}`)?.scrollIntoView({ block: 'nearest' });
@@ -156,8 +168,8 @@ export function SelectField({
           aria-label={option.accessibleLabel || option.label}
           className={cn('flex min-h-touch cursor-pointer items-center justify-between gap-3 rounded-control px-3 py-2 font-ui text-prose',
             option.disabled ? 'cursor-default text-ink-faint' : active === index ? 'bg-brand-500/10 text-brand-700' : 'text-ink hover:bg-ink/[0.04]')}>
-          <span className="whitespace-nowrap">{option.group ? <span className="mr-2 text-xs text-ink-muted">{option.group}:</span> : null}{option.label}</span>
-          {selected?.value === option.value ? <span aria-hidden="true">✓</span> : null}
+          <span className={fitMenuToContent ? 'min-w-0 whitespace-normal [overflow-wrap:anywhere]' : 'whitespace-nowrap'}>{option.group ? <span className="mr-2 text-xs text-ink-muted">{option.group}:</span> : null}{option.label}</span>
+          {selected?.value === option.value ? <span className="shrink-0" aria-hidden="true">✓</span> : null}
         </li>
       ))}
     </ul>

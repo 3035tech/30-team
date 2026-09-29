@@ -3,14 +3,20 @@
  * Only the bootstrap administrator is seeded. Business records are created in UI.
  * Run only against DTOV; synthetic records remain for diagnosis until DTOV reset.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect as baseExpect } from '@playwright/test';
 import { dismissManagerOnboarding, fillLogin, uniqueCandidateEmail } from './fixtures.js';
+
+// Local Next dev compiles each first-visited route on demand.
+const expect = baseExpect.configure({ timeout: 60_000 });
 
 async function choose(page, label, option) {
   await page.getByRole('combobox', { name: label, exact: true }).click();
   await page.getByRole('option', { name: option, exact: true }).click();
 }
 async function logout(page) {
+  // Next dev's issue badge can overlap the sidebar footer at this viewport.
+  const devBadge = page.getByRole('button', { name: 'Collapse issues badge', exact: true });
+  if (await devBadge.isVisible()) await devBadge.click();
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
   await page.getByRole('button', { name: 'Encerrar sessão', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Email', exact: true })).toBeVisible();
@@ -22,7 +28,8 @@ async function login(page, credentials) {
 }
 
 test('MVP-03 creates a company and manager, recruits and hires the same candidate', async ({ page, context, baseURL }, testInfo) => {
-  test.setTimeout(300_000);
+  test.setTimeout(600_000);
+  page.setDefaultTimeout(60_000);
   expect(process.env.DTOV, 'This mutating journey requires DTOV=1').toBe('1');
   expect(['127.0.0.1', 'localhost']).toContain(new URL(baseURL).hostname);
   const stamp = `${Date.now()}-${testInfo.retry}`;
@@ -35,6 +42,8 @@ test('MVP-03 creates a company and manager, recruits and hires the same candidat
 
   await test.step('Create a company and select only the necessary modules', async () => {
     await login(page, { email: process.env.DTOV_ADMIN_EMAIL || 'admin@3035tech.com', password: process.env.DTOV_ADMIN_PASSWORD || 'TroqueEstaSenha123!' });
+    await dismissManagerOnboarding(page);
+    await page.getByRole('button', { name: 'Administração', exact: true }).click();
     await page.getByRole('button', { name: 'Empresas', exact: true }).click();
     await page.getByRole('button', { name: 'Nova empresa', exact: true }).first().click();
     await expect(page.getByRole('button', { name: 'Criar', exact: true })).toBeDisabled();
@@ -68,6 +77,7 @@ test('MVP-03 creates a company and manager, recruits and hires the same candidat
     await logout(page);
     await login(page, manager);
     await dismissManagerOnboarding(page);
+    await page.locator('#dashboard-sidebar').getByRole('button', { name: 'Pessoas', exact: true }).click();
     await expect(page.locator('#dashboard-sidebar').getByRole('button', { name: 'Equipe', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Administração', exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Recrutamento', exact: true })).toBeVisible();
@@ -121,6 +131,7 @@ test('MVP-03 creates a company and manager, recruits and hires the same candidat
       await candidate.getByRole('checkbox').check();
       await candidate.getByRole('button', { name: 'Enviar candidatura', exact: true }).click();
       await expect(candidate.getByText('Candidatura registrada. A equipe entrará em contato se precisar de mais etapas.', { exact: true })).toBeVisible();
+      await expect(page.getByRole('tab', { name: 'Candidatos', exact: true })).toBeVisible();
       await page.getByRole('tab', { name: 'Candidatos', exact: true }).click();
       await page.getByRole('button', { name: 'Convidar por e-mail', exact: true }).click();
       const dialog = page.getByRole('dialog');
