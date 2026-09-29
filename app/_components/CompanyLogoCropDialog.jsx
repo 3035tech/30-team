@@ -194,7 +194,7 @@ export function CompanyLogoCropDialog({ open, file, locale = 'pt-BR', onCancel, 
         className="w-full max-w-[420px] rounded-card border border-ink/12 bg-white px-[26px] py-6 shadow-dialog"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="company-logo-crop-title" className="m-0 font-display text-lg text-ink">
+        <h2 id="company-logo-crop-title" className="m-0 font-display text-lg font-semibold text-ink">
           {t(locale, 'panel.admin.companyLogoCropTitle')}
         </h2>
         <p className="mb-4 mt-2 text-sm leading-snug text-ink-muted">

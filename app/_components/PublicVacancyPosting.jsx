@@ -83,7 +83,7 @@ function RelatedVacanciesList({ locale, items, heading }) {
     <section aria-labelledby="public-related-heading" className="mt-7">
       <h2
         id="public-related-heading"
-className="mb-3.5 mt-0 font-display text-lg font-normal"
+className="mb-3.5 mt-0 font-display text-lg font-semibold"
       >
         {heading}
       </h2>
@@ -376,7 +376,7 @@ className="mb-2.5 mt-0 font-mono text-xs tracking-wide text-ink-muted"
                 <section aria-labelledby="public-desc-heading">
                   <h2
                     id="public-desc-heading"
-                    className="mb-3 mt-0 font-display text-lg font-normal"
+                    className="mb-3 mt-0 font-display text-lg font-semibold"
                   >
                     {t(locale, 'publicVacancy.descriptionHeading')}
                   </h2>
@@ -825,7 +825,7 @@ className="mt-5 flex flex-wrap items-center justify-between gap-3"
 
         {showJobAlert ? (
         <section className={cn(SC.card, 'mt-4')}>
-          <h2 className="mb-1.5 mt-0 font-display text-lg font-normal text-ink">
+          <h2 className="mb-1.5 mt-0 font-display text-lg font-semibold text-ink">
             {t(locale, 'publicVacancy.alertTitle')}
           </h2>
           <p className="mb-4 mt-0 text-prose leading-relaxed text-ink-muted">

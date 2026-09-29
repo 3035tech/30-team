@@ -71,7 +71,9 @@ module.exports = {
           'sans-serif',
         ],
         display: uiFont,
-        mono: [
+        // Labels/meta/dense CTAs: same Inter family (tabular numbers in globals.css). True code uses font-code.
+        mono: uiFont,
+        code: [
           'ui-monospace',
           'SF Mono',
           'Menlo',

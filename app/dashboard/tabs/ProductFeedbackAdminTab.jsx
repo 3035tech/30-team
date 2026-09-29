@@ -205,7 +205,7 @@ export function ProductFeedbackAdminTab({ locale = 'pt-BR', navigateDashboard })
           onChange={setQDraft}
           onSubmit={(v) => pushFilters({ q: String(v || '').trim(), page: 1 })}
           placeholder={t(locale, 'panel.productFeedback.searchPh')}
-          className="min-w-[200px] flex-1 items-end self-end"
+          className="min-w-[200px] flex-1"
           inputClassName="w-full max-w-none"
         />
         <AdminListFilterSelect

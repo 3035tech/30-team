@@ -225,7 +225,7 @@ export function CompensationAdminTab({ locale = 'pt-BR', companyId, navigateDash
           onChange={setQDraft}
           onSubmit={() => commitSearch()}
           placeholder={t(locale, 'panel.compensationRoster.searchPh')}
-          className="min-w-[12rem] flex-1 items-end self-end"
+          className="min-w-[12rem] flex-1"
           inputClassName="w-full max-w-none"
         />
         <AdminListFilterSelect

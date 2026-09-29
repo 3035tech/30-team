@@ -595,7 +595,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
             />
           ) : (
             <div className="flex flex-col gap-4">
-              <div className={cn(S.cardTight, 'p-4')}>
+              <div className={cn(S.cardShell, 'p-4')}>
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <FormField
                     label={t(locale, 'panel.okr.cycleSelectLabel')}
@@ -682,7 +682,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
               ) : (
                 <ul className="m-0 flex list-none flex-col gap-3 p-0">
                   {(cycle.areas || []).map((area) => (
-                    <li key={area.id} className={cn(S.cardTight, 'bg-canvas/40 p-3 sm:p-4')}>
+                    <li key={area.id} className={cn(S.cardShell, 'bg-canvas/40 p-3 sm:p-4')}>
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <h3 className={cn(S.cardTitle, 'm-0 break-words')}>{area.title}</h3>

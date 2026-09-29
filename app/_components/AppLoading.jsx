@@ -61,8 +61,8 @@ export function PanelPageSkeleton({ locale = 'pt-BR', label }) {
       aria-live="polite"
       className="ui-content-enter w-full min-h-[200px] space-y-4 py-2"
     >
-      <div className="flex items-center gap-2.5 font-display text-base text-ink-muted">
-        <Spinner size={18} className="text-brand-500" />
+      <div className="flex items-center gap-2 font-ui text-prose text-ink-muted">
+        <Spinner size={16} className="text-brand-500" />
         <span>{text}</span>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

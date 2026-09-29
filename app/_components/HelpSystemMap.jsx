@@ -94,7 +94,7 @@ export function HelpSystemMap({ locale, onNavigate }) {
           <p className="m-0 font-mono text-2xs font-semibold uppercase tracking-[0.14em] text-brand-700">
             {t(locale, selectedGroup.labelKey)}
           </p>
-          <h3 className="mb-0 mt-1 font-display text-xl font-normal text-ink">
+          <h3 className="mb-0 mt-1 font-display text-xl font-semibold text-ink">
             {t(locale, selectedModule.labelKey)}
           </h3>
           <p className="mb-0 mt-1 text-xs leading-5 text-ink-muted">
@@ -125,7 +125,7 @@ export function HelpSystemMap({ locale, onNavigate }) {
                 <span className="font-ui text-sm font-medium text-ink">
                   {t(locale, `panel.help.systemMapLinkName_${key}`)}
                 </span>
-                <code className="break-all font-mono text-2xs text-brand-700">
+                <code className="break-all font-code text-2xs text-brand-700">
                   {t(locale, `panel.help.systemMapLinkUrl_${key}`)}
                 </code>
               </div>

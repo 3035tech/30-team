@@ -107,7 +107,7 @@ export function CopyableLink({
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-w-0 max-w-full break-all font-mono text-xs text-brand-500 underline underline-offset-2"
+              className="min-w-0 max-w-full break-all font-code text-xs text-brand-500 underline underline-offset-2"
               title={openText}
             >
               {href}
@@ -115,7 +115,7 @@ export function CopyableLink({
           ) : (
             <span
               className={cn(
-                'min-w-0 max-w-full break-all font-mono text-xs',
+                'min-w-0 max-w-full break-all font-code text-xs',
                 canUse ? 'text-ink-muted' : 'text-ink-faint'
               )}
             >

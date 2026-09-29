@@ -141,7 +141,7 @@ export function VacancyReferralBlock({ vacancyId, locale, publicPagePath, appUrl
 
   if (loading) {
     return (
-      <div className={cn(S.card, 'flex items-center gap-2.5 p-5')}>
+      <div className={cn(S.cardShell, 'flex items-center gap-2.5 p-5')}>
         <Spinner size={18} />
         <span className="text-prose text-ink-muted">{t(locale, 'common.loading')}</span>
       </div>

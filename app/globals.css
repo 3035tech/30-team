@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* font-mono is Inter now: keep numbers aligned in dense meta, tables and counters. */
+.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -250,10 +255,16 @@ textarea:focus-visible {
     touch-action: none;
   }
   .db-main {
-    padding: 56px 14px 40px !important;
+    padding: 12px 14px 40px !important;
+    padding-top: max(12px, env(safe-area-inset-top, 0px)) !important;
     padding-bottom: max(40px, env(safe-area-inset-bottom, 0px)) !important;
     width: 100%;
     box-sizing: border-box;
+  }
+  /* Share the row with the fixed hamburger (44px + 12px gap) instead of stacking below it. */
+  .db-top-row {
+    min-height: 44px;
+    padding-left: 56px;
   }
   .emp-main {
     padding-bottom: max(24px, env(safe-area-inset-bottom, 0px));

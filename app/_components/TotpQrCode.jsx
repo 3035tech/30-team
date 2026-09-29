@@ -70,7 +70,7 @@ export function TotpQrCode({
           <details className="mt-4 rounded-control border border-ink/10 bg-canvas/50 px-3">
             <summary className="flex min-h-touch cursor-pointer items-center py-2.5 font-ui text-sm font-medium text-ink">{manualLabel}</summary>
             <div className="border-t border-ink/10 py-3">
-              <code className="block break-all rounded-control bg-white px-3 py-2.5 font-mono text-xs leading-5 text-ink">{secret}</code>
+              <code className="block break-all rounded-control bg-white px-3 py-2.5 font-code text-xs leading-5 text-ink">{secret}</code>
               <button type="button" onClick={copySecret} className="mt-2 inline-flex min-h-touch items-center gap-2 rounded-control border border-ink/12 bg-white px-3 py-2 font-ui text-sm font-medium text-ink hover:border-brand-300 hover:text-brand-700">
                 <Icon name={copied ? 'check' : 'copy'} className="h-4 w-4" />
                 {copied ? copiedLabel : copyLabel}

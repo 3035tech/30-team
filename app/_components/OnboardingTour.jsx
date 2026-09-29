@@ -78,7 +78,7 @@ export function OnboardingTour({ onComplete }) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4">
         <div className="w-full max-w-md rounded-card border border-ink/10 bg-surface p-6 shadow-dialog">
-          <h2 className="m-0 mb-2 font-display text-xl text-ink">
+          <h2 className="m-0 mb-2 font-display text-xl font-semibold text-ink">
             {t(locale, 'panel.tour.welcomeTitle')}
           </h2>
           <p className="m-0 mb-6 text-sm text-ink-muted">{t(locale, 'panel.tour.welcomeBody')}</p>
@@ -118,7 +118,7 @@ export function OnboardingTour({ onComplete }) {
                       total: TOUR_STEP_DEFS.length,
                     })}
                   </div>
-                  <h3 className="m-0 font-display text-lg text-ink">{t(locale, step.titleKey)}</h3>
+                  <h3 className="m-0 font-display text-lg font-semibold text-ink">{t(locale, step.titleKey)}</h3>
                 </div>
                 <button
                   type="button"

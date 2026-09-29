@@ -329,7 +329,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
 
   return (
     <div className="space-y-6">
-      <div className={cn(S.card, 'overflow-hidden p-0')}>
+      <div className={cn(S.cardShell, 'overflow-hidden')}>
         <div className="border-b border-ink/10 px-5 pb-0 pt-6 sm:px-7 sm:pt-7">
           <p className="m-0 max-w-3xl font-ui text-sm leading-6 text-ink-muted">{t(locale, 'panel.analytics.intro')}</p>
           <PanelSubNav
@@ -350,7 +350,7 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
         <div className="px-5 py-6 sm:px-7 sm:py-7">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-2xl">
-            <h2 className="m-0 font-display text-2xl font-normal text-ink">{viewTitle}</h2>
+            <h2 className="m-0 font-display text-2xl font-semibold text-ink">{viewTitle}</h2>
             <p className="mb-0 mt-1.5 font-ui text-sm leading-6 text-ink-muted">{viewDescription}</p>
           </div>
           {activeView !== 'compare' ? (

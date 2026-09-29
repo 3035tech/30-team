@@ -277,7 +277,7 @@ export function AuditAdminTab({
                           </button>
                         ) : null}
                         {open && row.metadata ? (
-                          <pre className="mt-1 max-w-md overflow-x-auto rounded-control border border-ink/10 bg-ink/[0.03] p-2 font-mono text-2xs text-ink-muted">
+                          <pre className="mt-1 max-w-md overflow-x-auto rounded-control border border-ink/10 bg-ink/[0.03] p-2 font-code text-2xs text-ink-muted">
                             {JSON.stringify(row.metadata, null, 2)}
                           </pre>
                         ) : null}

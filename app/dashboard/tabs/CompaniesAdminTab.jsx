@@ -694,8 +694,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                   const createdAt = c.createdAt ? new Date(c.createdAt) : null;
                   return (
                     <tr key={c.id} className="border-b border-ink/[0.07]">
-                      <td className="px-3 py-2 align-middle font-mono text-ink-faint">#{c.id}</td>
-                      <td className="px-3 py-2 align-middle text-ink">
+                      <td className="px-4 py-2 align-middle font-mono text-ink-faint">#{c.id}</td>
+                      <td className="px-4 py-2 align-middle text-ink">
                         <div className="flex items-center gap-2">
                           {c.logoUrl ? (
                             <img
@@ -709,8 +709,8 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                           <span className="whitespace-nowrap">{c.name}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-2 align-middle font-mono text-ink-muted whitespace-nowrap">{c.slug}</td>
-                      <td className="px-3 py-2 align-middle font-mono text-ink-muted">
+                      <td className="px-4 py-2 align-middle font-mono text-ink-muted whitespace-nowrap">{c.slug}</td>
+                      <td className="px-4 py-2 align-middle font-mono text-ink-muted">
                         {c.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 align-middle font-mono text-ink-faint">
@@ -718,7 +718,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                           ? createdAt.toLocaleDateString(dateLocale)
                           : t(locale, 'panel.common.notApplicable')}
                       </td>
-                      <td className="px-3 py-2 align-middle">
+                      <td className="px-4 py-2 align-middle">
                         {token ? (
                           <CopyableLink
                             url={link}
@@ -739,7 +739,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-2 align-middle">
+                      <td className="px-4 py-2 align-middle">
                         {publicOn && careersUrl ? (
                           <CopyableLink
                             url={careersUrl}
@@ -755,7 +755,7 @@ export function CompaniesAdminTab({ navigateDashboard, locale }) {
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-2 align-middle text-right">
+                      <td className="px-4 py-2 align-middle text-right">
                         <AdminActionsCell>
                           <AdminViewButton
                             label={t(locale, 'panel.admin.view')}

@@ -442,7 +442,7 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter, onCreateInvit
               const canShareLink = ['sent', 'opened'].includes(row.status) && Boolean(inviteUrl);
               return (
               <tr key={row.id} className="border-t border-ink/12">
-                <td className="px-3 py-2.5">
+                <td className="px-4 py-2.5">
                   <div>{row.candidateName}</div>
                   <div className="text-2xs text-ink-muted">{row.candidateEmail}</div>
                   {canShareLink ? (
@@ -457,14 +457,14 @@ function InvitesList({ locale, refreshKey, isAdmin, companyFilter, onCreateInvit
                     </div>
                   ) : null}
                 </td>
-                <td className="px-3 py-2.5">{statusBadge(locale, row.status)}</td>
-                <td className="px-3 py-2.5 text-ink-muted">
+                <td className="px-4 py-2.5">{statusBadge(locale, row.status)}</td>
+                <td className="px-4 py-2.5 text-ink-muted">
                   {formatDisplayDate(row.sentAt, locale, { fallback: t(locale, 'panel.common.notApplicable') })}
                 </td>
-                <td className="px-3 py-2.5 text-ink-muted">
+                <td className="px-4 py-2.5 text-ink-muted">
                   {formatDisplayDate(row.expiresAt, locale, { fallback: t(locale, 'panel.common.notApplicable') })}
                 </td>
-                <td className="px-3 py-2.5 text-right">
+                <td className="px-4 py-2.5 text-right">
                   {['sent', 'opened'].includes(row.status) ? (
                     <AdminActionsCell>
                       <AdminIconButton
@@ -645,14 +645,14 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
             <tbody>
               {items.map((row) => (
                 <tr key={row.id} className="border-t border-ink/12">
-                  <td className="px-3 py-2.5">
+                  <td className="px-4 py-2.5">
                     <div>{row.candidateName}</div>
                     <div className="text-2xs text-ink-muted">{row.areaLabel || t(locale, 'panel.common.notApplicable')}</div>
                   </td>
-                  <td className="px-3 py-2.5 text-ink-muted">
+                  <td className="px-4 py-2.5 text-ink-muted">
                     {formatDisplayDate(row.completedAt, locale, { fallback: t(locale, 'panel.common.notApplicable') })}
                   </td>
-                  <td className="px-3 py-2.5 text-right">
+                  <td className="px-4 py-2.5 text-right">
                     <AdminActionsCell>
                       <AdminViewButton
                         label={t(locale, 'panel.motivatorsAdmin.results.view')}

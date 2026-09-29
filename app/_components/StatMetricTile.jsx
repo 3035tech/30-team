@@ -27,7 +27,7 @@ export function StatMetricTile({
       )}
     >
       <div
-        className={cn(hero ? S.cardMetricHero : S.cardMetric, 'text-ink')}
+        className={cn(hero ? S.cardMetricHero : S.cardMetricLg, 'text-ink')}
         style={color ? { color } : undefined}
       >
         {value}

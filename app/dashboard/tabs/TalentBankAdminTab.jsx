@@ -281,7 +281,7 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
           onChange={setQDraft}
           onSubmit={() => applySearch()}
           placeholder={t(locale, 'panel.talentBank.searchPh')}
-          className="min-w-[200px] flex-1 items-end self-end"
+          className="min-w-[200px] flex-1"
           inputClassName="w-full max-w-none"
         />
         <AdminListFilterSelect
@@ -416,28 +416,28 @@ export function TalentBankAdminTab({ locale = 'pt-BR', companyId }) {
               <tbody>
                 {items.map((row) => (
                   <tr key={row.id} className="border-b border-ink/6 align-middle last:border-0">
-                    <td className="px-3 py-3">
+                    <td className="px-4 py-3">
                       <div className="font-medium text-ink">{row.fullName || '—'}</div>
                       <div className="font-mono text-2xs text-ink-faint">#{row.id}</div>
                     </td>
-                    <td className="px-3 py-3 text-sm text-ink-muted">{row.email || '—'}</td>
-                    <td className="px-3 py-3 text-sm text-ink">
+                    <td className="px-4 py-3 text-sm text-ink-muted">{row.email || '—'}</td>
+                    <td className="px-4 py-3 text-sm text-ink">
                       {row.vacancyTitle || (row.vacancyId ? `#${row.vacancyId}` : '—')}
                     </td>
-                    <td className="px-3 py-3 text-sm text-ink-muted">
+                    <td className="px-4 py-3 text-sm text-ink-muted">
                       {stageLabel(locale, row.stage)}
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-4 py-3">
                       {row.topType ? (
                         <TypeBadge type={row.topType} locale={locale} compact />
                       ) : (
                         <span className="text-ink-faint">—</span>
                       )}
                     </td>
-                    <td className="px-3 py-3 text-xs text-ink-muted whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-ink-muted whitespace-nowrap">
                       {formatDate(row.lastActivityAt)}
                     </td>
-                    <td className="px-3 py-3 text-right">
+                    <td className="px-4 py-3 text-right">
                       <AdminActionsCell>
                         <AdminIconButton
                           href={`/dashboard?tab=team&candidate=${row.id}`}

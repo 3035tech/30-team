@@ -130,7 +130,7 @@ export function EmployeePdiClient({ locale = 'pt-BR' }) {
               const done = items.filter((item) => item.status === DEVELOPMENT_PLAN_ITEM_STATUS.DONE).length;
               const pct = items.length ? Math.round((done / items.length) * 100) : 0;
               return (
-                <section key={plan.id} className={cn(S.card, 'p-4 sm:p-5')}>
+                <section key={plan.id} className={cn(S.cardShell, 'p-4 sm:p-5')}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className={cn(S.cardSection, 'm-0')}>{plan.title}</h2>

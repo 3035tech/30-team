@@ -32,6 +32,8 @@ import { getDashboardTabNav } from '../../lib/dashboard-navigation';
 const S = {
   label:
     `mb-2 block ${UI_TYPE.label}`,
+  /** Card chrome without padding. `cn()` does not merge classes, so custom padding must start here, not from `card`. */
+  cardShell: 'rounded-card border border-line bg-surface',
   card: 'rounded-card border border-line bg-surface p-4 sm:p-6',
   cardTight: 'rounded-card border border-line bg-surface p-4 sm:p-5',
   /** Native select — custom chevron via `.ui-select` (globals.css). */
@@ -81,6 +83,8 @@ const S = {
   cardChip:
     'inline-flex items-center gap-1 rounded-control border border-brand-500/20 bg-brand-500/[0.08] px-1.5 py-0.5 font-ui text-xs text-ink-muted',
   cardMetric: 'font-ui text-sm font-semibold tabular-nums',
+  /** KPI tile value (`StatMetricTile`); `cardMetric` stays inline-sized. */
+  cardMetricLg: 'font-ui text-xl font-semibold leading-tight tabular-nums',
   cardMetricHero: 'font-ui text-3xl font-bold tabular-nums',
   /** Dashboard page H1 */
   pageTitle: `m-0 break-words ${UI_TYPE.page}`,
@@ -167,7 +171,7 @@ function SortableTh({ children, columnKey, sortKey, dir, onSort, align = 'left' 
         }
       }}
       className={cn(
-        'cursor-pointer select-none border-b border-ink/12 px-3 py-2.5 font-ui text-prose font-semibold normal-case focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/35',
+        'cursor-pointer select-none border-b border-ink/12 px-4 py-2.5 font-ui text-prose font-semibold normal-case focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/35',
         active ? 'text-brand-600' : 'text-ink-muted',
         align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
       )}
@@ -572,13 +576,14 @@ function createLabelText(label) {
  * Primary create CTA for admin listagens — brand + plus icon.
  * Reference: Exit Analysis / Benefícios / Academy.
  */
-function AdminCreateButton({ label, onClick, disabled = false, className }) {
+/** `variant="secondary"` for create actions of a sub-section (one primary CTA per screen). */
+function AdminCreateButton({ label, onClick, disabled = false, className, variant = 'primary' }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={cn(S.btnPrimary, className)}
+      className={cn(variant === 'secondary' ? cn(S.btnGhost, 'text-ink') : S.btnPrimary, className)}
     >
       <Icon name="plus" className="h-3.5 w-3.5 shrink-0" aria-hidden />
       {createLabelText(label)}
@@ -596,7 +601,7 @@ function AdminEditButton({ label, onClick, disabled = false, className }) {
         disabled={disabled}
         className={cn(
           S.btnRowIcon,
-          'border-brand-500/35 bg-brand-500/[0.09] text-brand-600',
+          ADMIN_ICON_TINT.brand,
           className
         )}
         aria-label={label}
@@ -618,7 +623,7 @@ function AdminDeleteButton({ label, onClick, disabled = false, className }) {
         disabled={disabled}
         className={cn(
           S.btnRowIcon,
-          'border-danger/35 bg-danger/[0.08] text-danger',
+          ADMIN_ICON_TINT.danger,
           className
         )}
         aria-label={label}
@@ -665,7 +670,7 @@ function AdminViewButton({
         disabled={disabled}
         className={cn(
           S.btnRowIcon,
-          'border-info/35 bg-info/[0.08] text-info',
+          ADMIN_ICON_TINT.info,
           className
         )}
         aria-label={label}
@@ -677,13 +682,14 @@ function AdminViewButton({
   );
 }
 
+/* Neutral at rest (icon carries the tint); the tinted wash only appears on hover/focus. */
 const ADMIN_ICON_TINT = {
-  brand: 'border-brand-500/35 bg-brand-500/[0.09] text-brand-600 hover:bg-brand-500/[0.15]',
-  info: 'border-info/35 bg-info/[0.08] text-info hover:bg-info/[0.14]',
-  muted: 'border-ink/15 bg-ink/[0.04] text-ink-muted hover:bg-ink/[0.08] hover:text-ink',
-  warning: 'border-warning/40 bg-warning/[0.1] text-warning hover:bg-warning/[0.16]',
-  danger: 'border-danger/35 bg-danger/[0.08] text-danger hover:bg-danger/[0.14]',
-  success: 'border-success/35 bg-success/[0.08] text-success hover:bg-success/[0.14]',
+  brand: 'border-line bg-surface text-brand-700 hover:border-brand-500/40 hover:bg-brand-500/[0.08]',
+  info: 'border-line bg-surface text-info hover:border-info/40 hover:bg-info/[0.08]',
+  muted: 'border-line bg-surface text-ink-muted hover:bg-ink/[0.05] hover:text-ink',
+  warning: 'border-line bg-surface text-warning hover:border-warning/40 hover:bg-warning/[0.08]',
+  danger: 'border-line bg-surface text-danger hover:border-danger/40 hover:bg-danger/[0.08]',
+  success: 'border-line bg-surface text-success hover:border-success/40 hover:bg-success/[0.08]',
 };
 
 /**
@@ -858,7 +864,7 @@ function AdminListSearch({
 }) {
   const fieldLabel = label || t(locale, 'panel.common.search');
   return (
-    <FormField label={fieldLabel} className={cn('min-w-[12rem] max-w-md shrink-0 grow', className)}>
+    <FormField label={fieldLabel} className={cn('min-w-[12rem] max-w-md shrink grow basis-64', className)}>
       <input
         type="search"
         name="search"

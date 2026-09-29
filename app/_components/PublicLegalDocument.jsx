@@ -23,7 +23,7 @@ export function PublicLegalDocument({ copy }) {
           <article className="overflow-hidden rounded-card border border-ink/10 bg-surface shadow-card">
             <header className="border-b border-ink/8 px-6 py-8 sm:px-10 sm:py-10">
               <p className="m-0 font-mono text-2xs uppercase tracking-[0.2em] text-brand-600">30Grow · 3035Tech</p>
-              <h1 className="mb-0 mt-4 font-display text-4xl font-normal leading-tight tracking-[-0.025em] text-ink sm:text-5xl">{copy.document.title}</h1>
+              <h1 className="mb-0 mt-4 font-display text-4xl font-semibold leading-tight tracking-[-0.025em] text-ink sm:text-5xl">{copy.document.title}</h1>
               <p className="mb-0 mt-4 max-w-3xl text-base leading-7 text-ink-muted">{copy.document.intro}</p>
               <p className="mb-0 mt-5 font-mono text-xs text-ink-faint">{copy.common.version}</p>
             </header>
@@ -32,7 +32,7 @@ export function PublicLegalDocument({ copy }) {
               <div className="space-y-10">
                 {copy.document.sections.map((section) => (
                   <section key={section.title}>
-                    <h2 className="m-0 font-display text-2xl font-normal text-ink">{section.title}</h2>
+                    <h2 className="m-0 font-display text-2xl font-semibold text-ink">{section.title}</h2>
                     {section.paragraphs?.map((paragraph) => (
                       <p key={paragraph} className="mb-0 mt-4 text-sm leading-7 text-ink-muted">{paragraph}</p>
                     ))}

@@ -123,7 +123,7 @@ export function EmployeeHourBankSection({ locale = 'pt-BR' }) {
         })}
       </InlineCallout>
 
-      <div className={cn(S.cardTight, 'mb-4 p-3')}>
+      <div className={cn(S.cardShell, 'mb-4 p-3')}>
         <p className={cn(S.label, 'mb-2')}>{t(locale, 'employeeHome.hourBank.requestTitle')}</p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-start">
           <FormField label={t(locale, 'employeeHome.hourBank.minutesLabel')}>

@@ -196,7 +196,7 @@ export function VacancyInterviewSlotsBlock({
       className="mb-3"
       bordered={false}
     >
-    <div className={cn(S.cardTight, 'p-3.5')}>
+    <div className={cn(S.cardShell, 'p-3.5')}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => shiftWeek(-1)} className={cn(S.btnGhost, 'min-h-touch px-2')}>

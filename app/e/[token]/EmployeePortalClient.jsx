@@ -161,7 +161,7 @@ export default function EmployeePortalClient({ token, locale = 'pt-BR' }) {
       <p className={cn(S.faint, 'm-0 text-2xs uppercase tracking-wide')}>
         {t(locale, 'panel.employeePortal.eyebrow')}
       </p>
-      <h1 className="m-0 mt-1 font-display text-2xl text-ink">
+      <h1 className="m-0 mt-1 font-display text-2xl font-semibold text-ink">
         {t(locale, 'panel.employeePortal.hello', { name: data?.personName || '' })}
       </h1>
       <p className={cn(S.muted, 'mt-2 text-sm')}>{t(locale, 'panel.employeePortal.hint')}</p>

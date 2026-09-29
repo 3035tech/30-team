@@ -577,7 +577,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
             { id: 'profile', label: t(locale, 'panel.dp.profileTitle') },
           ].map(tab => ({ ...tab, tabId: `employee-dp-tab-${tab.id}`, panelId: `employee-dp-panel-${tab.id}` }))}
         />
-        <div role="tabpanel" id="employee-dp-panel-profile" aria-labelledby="employee-dp-tab-profile" hidden={activePanel !== 'profile'} className={cn(S.card, 'p-4 sm:p-5')}>
+        <div role="tabpanel" id="employee-dp-panel-profile" aria-labelledby="employee-dp-tab-profile" hidden={activePanel !== 'profile'} className={cn(S.cardShell, 'p-4 sm:p-5')}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <h2 className={cn(S.cardSection, 'm-0')}>{t(locale, 'panel.dp.profileTitle')}</h2>
             <button
@@ -631,7 +631,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
           </dl>
         </div>
 
-        <div role="tabpanel" id="employee-dp-panel-documents" aria-labelledby="employee-dp-tab-documents" hidden={activePanel !== 'documents'} className={cn(S.card, 'p-4 sm:p-5')}>
+        <div role="tabpanel" id="employee-dp-panel-documents" aria-labelledby="employee-dp-tab-documents" hidden={activePanel !== 'documents'} className={cn(S.cardShell, 'p-4 sm:p-5')}>
           <h2 className={cn(S.cardSection, 'mb-2 mt-0')}>{t(locale, 'panel.dp.docsTitle')}</h2>
           <p className={cn(S.muted, 'mb-3 mt-0 text-xs')}>{t(locale, 'employeeHome.dpDocsUploadHint')}</p>
           <InlineCallout tone="info" className="mb-3">
@@ -842,7 +842,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
           )}
         </div>
 
-        <div role="tabpanel" id="employee-dp-panel-leave" aria-labelledby="employee-dp-tab-leave" hidden={activePanel !== 'leave'} className={cn(S.card, 'p-4 sm:p-5')}>
+        <div role="tabpanel" id="employee-dp-panel-leave" aria-labelledby="employee-dp-tab-leave" hidden={activePanel !== 'leave'} className={cn(S.cardShell, 'p-4 sm:p-5')}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <h2 className={cn(S.cardSection, 'm-0')}>{t(locale, 'panel.dp.leaveTitle')}</h2>
             <button

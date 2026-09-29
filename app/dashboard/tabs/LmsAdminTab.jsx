@@ -982,7 +982,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
 
             <ContentEnter animKey={detailSection}>
             {detailSection === 'content' ? (
-            <section className={cn(S.card, 'p-4 sm:p-5')}>
+            <section className={cn(S.cardShell, 'p-4 sm:p-5')}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h3 className="m-0 font-ui text-base font-semibold text-ink">
                   {t(locale, 'panel.lms.lessonsTitle')}

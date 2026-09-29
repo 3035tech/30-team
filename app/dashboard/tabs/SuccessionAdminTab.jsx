@@ -887,6 +887,7 @@ export function SuccessionAdminTab({ locale = 'pt-BR', companyId }) {
                         <td colSpan={4} className="bg-canvas-alt/40 px-4 py-3">
                           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                             <AdminCreateButton
+                              variant="secondary"
                               label={t('assignSuccessor')}
                               onClick={() => handleAssignSuccessor(role)}
                             />

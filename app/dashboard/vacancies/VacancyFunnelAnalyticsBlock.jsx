@@ -48,7 +48,7 @@ export function VacancyFunnelAnalyticsBlock({ vacancyId, locale, publicPagePath,
     return <AppLoading variant="panel" label={t(locale, 'panel.common.loading')} />;
   }
   if (err) {
-    return <div className={cn(S.card, 'p-4 text-prose text-danger')}>{err}</div>;
+    return <div className={cn(S.cardShell, 'p-4 text-prose text-danger')}>{err}</div>;
   }
 
   const views = Number(data?.views) || 0;

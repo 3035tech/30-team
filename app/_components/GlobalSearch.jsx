@@ -165,7 +165,7 @@ export function GlobalSearch({ locale = 'pt-BR', open: openProp, onOpenChange })
           {isLoading ? (
             <span className="font-mono text-2xs text-ink-faint">{t(locale, 'panel.common.loading')}</span>
           ) : null}
-          <kbd className="hidden rounded-control border border-ink/12 bg-canvas px-2 py-1 font-mono text-2xs text-ink-muted sm:inline">
+          <kbd className="hidden rounded-control border border-ink/12 bg-canvas px-2 py-1 font-code text-2xs text-ink-muted sm:inline">
             Esc
           </kbd>
         </div>
@@ -247,7 +247,7 @@ export function GlobalSearchTrigger({ locale = 'pt-BR' }) {
       >
         <Icon name="search" className="h-4 w-4 shrink-0" />
         <span className="hidden sm:inline">{t(locale, 'dashboard.cmdSearch.trigger')}</span>
-        <kbd className="hidden rounded border border-ink/12 bg-surface px-1.5 py-0.5 font-mono text-2xs sm:inline">
+        <kbd className="hidden rounded border border-ink/12 bg-surface px-1.5 py-0.5 font-code text-2xs sm:inline">
           {shortcut}
         </kbd>
       </button>

@@ -593,12 +593,12 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                   const createdAt = u.createdAt ? new Date(u.createdAt) : null;
                   return (
                     <tr key={u.id} className="border-b border-ink/[0.07]">
-                      <td className="px-3 py-3 font-mono text-ink-faint">#{u.id}</td>
-                      <td className="px-3 py-3 text-ink">
+                      <td className="px-4 py-3 font-mono text-ink-faint">#{u.id}</td>
+                      <td className="px-4 py-3 text-ink">
                         {u.displayName || t(locale, 'panel.common.notApplicable')}
                       </td>
-                      <td className="px-3 py-3 text-ink">{u.email}</td>
-                      <td className="px-3 py-3">
+                      <td className="px-4 py-3 text-ink">{u.email}</td>
+                      <td className="px-4 py-3">
                         <StatusToneChip tone="neutral">{u.role}</StatusToneChip>
                         {u.capabilitiesCustomized ? (
                           <StatusToneChip
@@ -619,7 +619,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                           </StatusToneChip>
                         ) : null}
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-4 py-3">
                         <StatusToneChip
                           tone={u.origin === 'admin' || !u.origin ? 'neutral' : 'info'}
                           title={t(locale, `panel.admin.originHint.${u.origin || 'admin'}`)}
@@ -632,12 +632,12 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                           </div>
                         ) : null}
                       </td>
-                      <td className="px-3 py-3 font-mono text-ink-muted">{companyLabel}</td>
-                      <td className="px-3 py-3 font-mono text-ink-muted">{u.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
+                      <td className="px-4 py-3 font-mono text-ink-muted">{companyLabel}</td>
+                      <td className="px-4 py-3 font-mono text-ink-muted">{u.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
                       <td className="whitespace-nowrap px-3 py-3 font-mono text-ink-faint">
                         {createdAt ? createdAt.toLocaleString(dateLocale) : t(locale, 'panel.common.notApplicable')}
                       </td>
-                      <td className="px-3 py-3 text-right">
+                      <td className="px-4 py-3 text-right">
                         <AdminActionsCell>
                           {u.passwordSetupPending ? (
                             <AdminIconButton

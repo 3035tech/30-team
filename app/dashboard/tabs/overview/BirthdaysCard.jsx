@@ -110,7 +110,7 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
       {empty ? (
         <p className="m-0 text-prose italic text-ink-faint">{t(locale, 'panel.birthdays.empty')}</p>
       ) : (
-        <ul className="m-0 list-none divide-y divide-ink/8 p-0">
+        <ul className="m-0 max-h-[20rem] list-none divide-y divide-ink/8 overflow-y-auto p-0 pr-1">
           {items.map((row) => (
             <li
               key={`${row.kind}-${row.candidateId}-${row.nextOn}`}

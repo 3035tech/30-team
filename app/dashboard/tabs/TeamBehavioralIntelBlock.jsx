@@ -212,7 +212,7 @@ export function TeamBehavioralIntelBlock({
       <div className={S.cardTight}>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h2 id="bci-heading" className="m-0 font-display text-lg font-normal text-ink">
+            <h2 id="bci-heading" className="m-0 font-display text-lg font-semibold text-ink">
               {t(locale, 'panel.overview.bci.title')}
             </h2>
             <p className="mt-1 mb-0 max-w-2xl text-prose leading-snug text-ink-muted">

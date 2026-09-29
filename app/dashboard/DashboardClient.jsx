@@ -108,12 +108,10 @@ function ExportCsvButton({ href, locale }) {
       type="button"
       onClick={onExport}
       disabled={busy}
-      className={cn(
-        'inline-flex min-h-touch items-center gap-1.5 whitespace-nowrap rounded-control border border-brand-500/25 bg-brand-500/10 px-4 py-2.5 font-ui text-prose text-brand-500',
-        busy ? 'cursor-wait opacity-70' : 'cursor-pointer'
-      )}
+      className={cn(S.btnGhost, 'whitespace-nowrap text-prose', busy && 'cursor-wait opacity-70')}
     >
-      ↓ {t(locale, 'dashboard.exportCsv')}
+      <Icon name="download" className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      {t(locale, 'dashboard.exportCsv')}
     </button>
   );
 }
@@ -1195,7 +1193,7 @@ function DashboardClientContent({
               }}
               placeholder={t(locale, 'dashboard.searchPlaceholder')}
               aria-label={t(locale, 'dashboard.searchAriaLabel')}
-              className="box-border w-full rounded-xl border border-ink/12 bg-ink/[0.03] py-3 pl-[42px] pr-4 font-ui text-sm text-ink"
+              className="box-border w-full rounded-control border border-ink/12 bg-ink/[0.03] py-3 pl-[42px] pr-4 font-ui text-sm text-ink"
             />
             <span className="pointer-events-none absolute left-[15px] top-1/2 inline-flex -translate-y-1/2 text-ink-faint"><Icon name="search" /></span>
             {selectedSearch && (

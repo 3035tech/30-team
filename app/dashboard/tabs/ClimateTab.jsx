@@ -275,7 +275,7 @@ function ClimateCompareBars({ surveys, locale }) {
                 <span className="truncate font-ui text-xs text-ink" title={s.title}>
                   {s.title}
                 </span>
-                <span className="shrink-0 font-display text-lg text-ink">{s.overallMean}</span>
+                <span className="shrink-0 font-display text-lg font-semibold text-ink">{s.overallMean}</span>
               </div>
               <MeterBar
                 percent={Math.max(6, pct)}
@@ -311,7 +311,7 @@ function OverallScoreHero({ mean, locale, responseCount, minResponses }) {
             {t(locale, 'panel.climate.satisfactionTitle')}
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="font-display text-4xl leading-none text-ink">{mean}</span>
+            <span className="font-display text-4xl font-semibold leading-none text-ink">{mean}</span>
             <span className="font-mono text-sm text-ink-faint">/ 5</span>
           </div>
           <div className={cn('mt-2 font-mono text-xs', TONE_TEXT[level.tone])}>
@@ -924,7 +924,7 @@ export function ClimateTab({ locale, isAdmin, companies = [], section, navigateD
                         ) : null}
                         {bm?.overallMean != null ? (
                           <div className="mt-2 flex items-center gap-2">
-                            <span className="font-display text-lg text-ink">{bm.overallMean}</span>
+                            <span className="font-display text-lg font-semibold text-ink">{bm.overallMean}</span>
                             <div className="min-w-0 flex-1">
                               <ClimateMeanMeter
                                 mean={bm.overallMean}

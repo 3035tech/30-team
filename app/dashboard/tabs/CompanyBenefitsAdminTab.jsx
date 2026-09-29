@@ -512,7 +512,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId }) {
       <section className={S.cardTight}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-ink">{t('manageCategories')}</h3>
-          <AdminCreateButton label={t('newCategory')} onClick={handleCreateCategory} />
+          <AdminCreateButton variant="secondary" label={t('newCategory')} onClick={handleCreateCategory} />
         </div>
         {categories.length === 0 ? (
           <p className="text-sm text-ink-muted">{t('noCategories')}</p>

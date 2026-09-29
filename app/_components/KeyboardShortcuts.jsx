@@ -157,7 +157,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, locale = 'pt-BR' }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ink/10 bg-surface px-5 py-4">
-          <h2 className="font-display text-lg text-ink">{t(locale, 'panel.shortcuts.title')}</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{t(locale, 'panel.shortcuts.title')}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -178,7 +178,7 @@ export function KeyboardShortcutsHelp({ isOpen, onClose, locale = 'pt-BR' }) {
                     <span className="font-ui text-prose text-ink-muted">
                       {t(locale, shortcut.descriptionKey)}
                     </span>
-                    <kbd className="rounded-control border border-ink/12 bg-canvas px-2.5 py-1 font-mono text-2xs text-ink">
+                    <kbd className="rounded-control border border-ink/12 bg-canvas px-2.5 py-1 font-code text-2xs text-ink">
                       {isMac ? shortcut.mac : shortcut.windows}
                     </kbd>
                   </div>
@@ -207,7 +207,7 @@ export function GModePending({ isActive, locale = 'pt-BR' }) {
   return (
     <div className="fixed bottom-4 right-4 z-50">
       <div className="flex items-center gap-2 rounded-control bg-action px-4 py-2 text-action-ink shadow-md">
-        <kbd className="rounded-control bg-brand-700 px-2 py-1 font-mono text-xs">g</kbd>
+        <kbd className="rounded-control bg-brand-700 px-2 py-1 font-code text-xs">g</kbd>
         <span className="font-ui text-prose">{t(locale, 'panel.shortcuts.waitingKey')}</span>
       </div>
     </div>

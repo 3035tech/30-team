@@ -132,7 +132,7 @@ export function LeadsAdminTab({ navigateDashboard, locale }) {
           onChange={setQDraft}
           onSubmit={(v) => pushFilters({ q: String(v || '').trim(), page: 1 })}
           placeholder={t(locale, 'panel.leads.searchPh')}
-          className="min-w-[200px] flex-1 items-end self-end"
+          className="min-w-[200px] flex-1"
           inputClassName="w-full max-w-none"
         />
         <AdminListFilterSelect

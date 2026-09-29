@@ -473,7 +473,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
                 const rubricKeys = Object.keys(rubric).filter((k) => Number(rubric[k]) > 0);
                 return (
                   <tr key={role.id} className="hover:bg-canvas-alt/50">
-                    <td className="px-3 py-2 align-middle text-sm font-medium text-ink whitespace-nowrap">
+                    <td className="px-4 py-2 align-middle text-sm font-medium text-ink whitespace-nowrap">
                       {role.name}
                     </td>
                     <td className="max-w-[280px] px-3 py-2 align-middle text-prose text-ink-muted">
@@ -490,18 +490,18 @@ export function JobRolesAdminTab({ locale, companyId }) {
                           : '—'}
                       </span>
                     </td>
-                    <td className="px-3 py-2 align-middle font-ui text-prose text-ink-muted whitespace-nowrap">
+                    <td className="px-4 py-2 align-middle font-ui text-prose text-ink-muted whitespace-nowrap">
                       {formatVacancySalaryRangeDisplay(
                         role.marketSalaryMin,
                         role.marketSalaryMax
                       ) || '—'}
                     </td>
-                    <td className="px-3 py-2 align-middle font-ui text-prose text-ink/75 whitespace-nowrap">
+                    <td className="px-4 py-2 align-middle font-ui text-prose text-ink/75 whitespace-nowrap">
                       {rubricKeys.length > 0
                         ? `${rubricKeys.length} ${t(locale, 'jobRoles.rubricTypesCount')}`
                         : t(locale, 'jobRoles.rubricEmpty')}
                     </td>
-                    <td className="px-3 py-2 align-middle whitespace-nowrap">
+                    <td className="px-4 py-2 align-middle whitespace-nowrap">
                       {role.active ? (
                         <span className="font-ui text-prose text-ink-muted">
                           {t(locale, 'panel.common.yes')}
@@ -512,7 +512,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2 align-middle text-right">
+                    <td className="px-4 py-2 align-middle text-right">
                       {role.active ? (
                         <AdminActionsCell>
                           <AdminViewButton

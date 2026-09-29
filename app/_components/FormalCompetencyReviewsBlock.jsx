@@ -756,7 +756,7 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
                 {selectedCycle.status === FORMAL_REVIEW_CYCLE_STATUS.DRAFT ? <button type="button" className={S.btnGhost} disabled={busy} onClick={() => createCycle(selectedCycle)}>{locale.startsWith('en') ? 'Edit draft' : 'Editar rascunho'}</button> : null}
                 {selectedCycle.status === FORMAL_REVIEW_CYCLE_STATUS.DRAFT ? <button type="button" className={S.btnPrimary} disabled={busy || !reviews.length || !selectedCycle.questionnaire?.length} onClick={publishCycle}>{locale.startsWith('en') ? 'Publish cycle' : 'Publicar ciclo'}</button> : null}
                 {selectedCycle.status !== FORMAL_REVIEW_CYCLE_STATUS.CLOSED ? (
-                  <AdminCreateButton label={tf(locale, 'addPerson')} onClick={addPerson} disabled={busy} />
+                  <AdminCreateButton variant="secondary" label={tf(locale, 'addPerson')} onClick={addPerson} disabled={busy} />
                 ) : null}
               </div>
             }

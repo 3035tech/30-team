@@ -209,7 +209,7 @@ export function CompatTab({
                 boxShadow: active ? `0 0 0 2px ${x.c}22` : 'none',
               }}
             >
-              <div className="mb-1 font-display text-3xl" style={{ color: x.c }}>{x.n}</div>
+              <div className="mb-1 font-display text-3xl font-semibold" style={{ color: x.c }}>{x.n}</div>
               <div className="mb-1.5 font-mono text-2xs uppercase tracking-wide text-ink-muted">
                 {x.l}
               </div>

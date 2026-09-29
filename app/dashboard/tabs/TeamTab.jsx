@@ -1130,7 +1130,7 @@ export function TeamTab({
         return (
           <div
             key={id}
-            className={cn(S.cardTight, 'overflow-visible p-0')}
+            className={cn(S.cardShell, 'overflow-visible')}
             style={{
               border: isSelected ? `1px solid ${d.color}44` : undefined,
             }}

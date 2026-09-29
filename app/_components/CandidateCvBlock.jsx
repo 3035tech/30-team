@@ -147,7 +147,7 @@ export function CandidateCvBlock({
 
   const wrapClass = embedded
     ? 'rounded-control border border-ink/12 bg-ink/[0.02] p-3.5'
-    : cn(S.cardTight, 'p-3.5');
+    : cn(S.cardShell, 'p-3.5');
 
   return (
     <div className={wrapClass}>

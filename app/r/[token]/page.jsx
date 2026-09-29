@@ -531,7 +531,7 @@ function ReportInner() {
       {rubricSummary?.hasRubric ? <FitCompareChart candidates={candidates} locale={locale} /> : null}
 
       <section className="mb-7">
-        <h2 className="mb-3 mt-0 font-display text-lg text-ink">
+        <h2 className="mb-3 mt-0 font-display text-lg font-semibold text-ink">
           {t(locale, 'panel.report.shortlistTitle', { n: candidates.length })}
         </h2>
         <div className="overflow-x-auto rounded-xl border border-ink/12 bg-white">
@@ -573,7 +573,7 @@ function ReportInner() {
       </section>
 
       <section>
-        <h2 className="mb-3.5 mt-0 font-display text-lg text-ink">{t(locale, 'panel.report.profilesTitle')}</h2>
+        <h2 className="mb-3.5 mt-0 font-display text-lg font-semibold text-ink">{t(locale, 'panel.report.profilesTitle')}</h2>
         <div className="flex flex-col gap-[18px]">
           {candidates.map((c, i) => (
             <CandidateCard

@@ -57,29 +57,10 @@ const PRIORITY_CLASS = {
   },
 };
 
-function filterChips(locale, filters = {}) {
-  const chips = [];
-  if (filters.companyLabel) chips.push(filters.companyLabel);
-  if (filters.area && filters.area !== 'all') chips.push(filters.areaLabel || filters.area);
-  if (filters.vacancy && filters.vacancy !== 'all') chips.push(filters.vacancyLabel || filters.vacancy);
-  if (filters.dateFrom || filters.dateTo) {
-    const na = t(locale, 'panel.common.notApplicable');
-    chips.push(
-      t(locale, 'panel.overview.dateRangeChip', {
-        from: filters.dateFrom || na,
-        to: filters.dateTo || na,
-      })
-    );
-  }
-  if (filters.search) chips.push(`"${filters.search}"`);
-  return chips;
-}
-
 export function OverviewTab({
   overview = null,
   locale = 'pt-BR',
   companyId = null,
-  filters = {},
   navigateDashboard,
   onboardingProgress = null,
 }) {
@@ -157,8 +138,6 @@ export function OverviewTab({
     if (typeof navigateDashboard === 'function') navigateDashboard(opts);
   };
 
-  const chips = filterChips(locale, filters);
-
   if (data.needsCompanyScope) {
     return (
       <div className={S.stack}>
@@ -183,26 +162,13 @@ export function OverviewTab({
       {data.error ? (
         <p className="m-0 text-danger">{t(locale, 'panel.overview.loadError')}</p>
       ) : null}
-      {chips.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {chips.map((c) => (
-            <span
-              key={c}
-              className="rounded-full border border-ink/12 bg-ink/[0.03] px-2.5 py-1 font-mono text-2xs text-ink-muted"
-            >
-              {c}
-            </span>
-          ))}
-        </div>
-      ) : null}
-
       {/* Onboarding Checklist */}
       {onboardingProgress && onboardingProgress.progress < 100 && (
         <OnboardingChecklist locale={locale} initialProgress={onboardingProgress} />
       )}
 
       <div className={cn('grid grid-cols-1 gap-4', companyId && 'xl:grid-cols-12 xl:items-start')}>
-        <div className={cn(S.card, 'h-full', companyId && 'xl:col-span-8')}>
+        <div className={cn(S.card, companyId && 'xl:col-span-8')}>
           <div className="mb-3 flex items-center justify-between gap-3">
             <span className={cn(S.label, 'mb-0')}>
               {t(locale, 'panel.overview.attentionTitle')}
@@ -247,7 +213,7 @@ export function OverviewTab({
                     type="button"
                     onClick={() => item.nav && go(item.nav)}
                     className={cn(
-                      'grid w-full grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1 rounded-xl border px-3.5 py-2.5 text-left transition-colors sm:grid-cols-[56px_minmax(160px,0.9fr)_minmax(180px,1.1fr)_auto]',
+                      'grid w-full grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1 rounded-control border px-3.5 py-2.5 text-left transition-colors sm:grid-cols-[56px_minmax(160px,0.9fr)_minmax(180px,1.1fr)_auto]',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35',
                       pr.card,
                       item.nav ? 'cursor-pointer hover:border-ink/20' : 'cursor-default'

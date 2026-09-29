@@ -101,13 +101,13 @@ export function EmployeeLmsCertificateClient({ locale = 'pt-BR' }) {
           <p className="m-0 font-mono text-2xs uppercase tracking-wider text-ink-faint">
             {cert.companyName}
           </p>
-          <h1 className="mt-3 font-display text-2xl text-ink">
+          <h1 className="mt-3 font-display text-2xl font-semibold text-ink">
             {t(locale, 'employeeHome.lmsCertTitle')}
           </h1>
           <p className="mt-6 mb-0 font-ui text-prose text-ink-muted">
             {t(locale, 'employeeHome.lmsCertBody', { name: cert.candidateName })}
           </p>
-          <p className="mt-4 mb-0 font-display text-xl text-ink">{cert.courseTitle}</p>
+          <p className="mt-4 mb-0 font-display text-xl font-semibold text-ink">{cert.courseTitle}</p>
           <p className="mt-6 mb-0 font-mono text-2xs text-ink-faint">
             {t(locale, 'employeeHome.lmsCertDate', {
               date: formatCertDate(cert.completedAt, locale),
