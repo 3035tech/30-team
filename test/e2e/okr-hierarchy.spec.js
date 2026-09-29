@@ -60,6 +60,7 @@ test('OKR: area → objective → measured KR, history, employee check-in and cl
     await dialog.getByRole('spinbutton',{name:'Meta',exact:true}).fill('5');
     await dialog.getByRole('button',{name:'Salvar',exact:true}).click();
     const kr=objective.getByRole('listitem',{name:'Resultado-chave: Reduzir prazo de venda',exact:true});
+    await kr.getByRole('button',{name:'Ver detalhes',exact:true}).click();
     await expect(kr.getByRole('definition').nth(2)).toContainText('10');
     await kr.getByRole('button',{name:'Registrar check-in',exact:true}).click();
     await page.getByRole('dialog').getByLabel('Valor atual (dias)',{exact:true}).fill('7.5');
@@ -121,6 +122,7 @@ test('OKR: area → objective → measured KR, history, employee check-in and cl
     await page.getByRole('combobox',{name:'Ciclo OKR ativo'}).click();
     await page.getByRole('option',{name:cycle.title,exact:true}).click();
     await expect(kr.getByRole('button',{name:'Registrar check-in',exact:true})).toBeDisabled();
+    await kr.getByRole('button',{name:'Ver detalhes',exact:true}).click();
     await kr.getByRole('button',{name:'Histórico',exact:true}).click();
     await expect(kr.getByRole('list',{name:'Histórico de medições'})).toContainText('Employee measurement');
     await expect(kr.getByRole('list',{name:'Histórico de medições'})).toContainText('Mobile measurement');

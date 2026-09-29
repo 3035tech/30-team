@@ -39,6 +39,7 @@ test('OKR workspace remains legible with several areas and objectives', async ({
   const data = cycle(1, 'Crescimento sustentável • 2026');
   data.progressPct = 45;
   data.areas = ['Comercial', 'Produto'].map((title, i) => ({id:i+1,title,progressPct:45,activities:[],objectives:[1,2].map(n => ({id:i*10+n,title:n===1?'Aumentar a previsibilidade das vendas':'Melhorar a experiência dos clientes',description:'Acompanhar resultados mensuráveis durante o ciclo.',ownerName:'Mariana Costa',periodEnd:'2026-12-31',progressPct:45,keyResults:[{id:i*100+n,title:'Reduzir o tempo médio de negociação',unit:'dias',startValue:30,targetValue:10,currentValue:21,weight:2,progressPct:45,deadline:'2026-11-30',assignees:[{candidateId:1,fullName:'Mariana Costa'}]}]}))}));
+  data.areas[0].objectives[0].keyResults.push({...data.areas[0].objectives[0].keyResults[0],id:999,title:'Elevar a taxa de conversão'});
   await page.route('**/api/admin/okr/hierarchy?*', route => route.fulfill({json:{cycles:[data]}}));
   await page.goto('/okr');
   await expect(page.getByRole('combobox',{name:'Ciclo OKR ativo'})).toBeVisible();
@@ -54,6 +55,16 @@ test('OKR workspace remains legible with several areas and objectives', async ({
   await collapsed.click();
   await area.click();
   await page.getByRole('option',{name:'Todas as áreas',exact:true}).click();
+  const commercial = page.getByRole('region',{name:'Área: Comercial',exact:true});
+  const rows = commercial.getByRole('listitem');
+  await expect(commercial.getByRole('definition')).toHaveCount(0);
+  await expect(rows.first().getByRole('button',{name:'Registrar check-in',exact:true})).toBeVisible();
+  await rows.first().getByRole('button',{name:'Ver detalhes',exact:true}).click();
+  await expect(rows.first().getByRole('definition')).toHaveCount(3);
+  await rows.nth(1).getByRole('button',{name:'Ver detalhes',exact:true}).click();
+  await expect(rows.first().getByRole('definition')).toHaveCount(0);
+  await expect(rows.nth(1).getByRole('definition')).toHaveCount(3);
+  await rows.nth(1).getByRole('button',{name:'Fechar detalhes',exact:true}).click();
   for(const width of [1440,390]) {
     await page.setViewportSize({width,height:900});
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

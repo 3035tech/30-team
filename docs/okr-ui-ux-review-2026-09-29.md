@@ -35,3 +35,15 @@ Não converter toda a hierarquia numa tabela plana: perderia o vínculo visual e
 - Três cenários Playwright isolados aprovados: resposta atrasada ao trocar empresa; gravação bem-sucedida seguida de falha de recarga; filtro de área, expandir/recolher e apresentação em 1440/390px.
 - Capturas desktop/mobile inspecionadas visualmente.
 - Fluxo integrado local `test/e2e/okr-hierarchy.spec.js` aprovado: criação/edição, check-in do RH e colaborador, histórico, API mobile e ciclo encerrado. A primeira execução perdeu o ciclo selecionado durante a sessão de desenvolvimento; a repetição com as páginas compiladas passou. Nenhum deploy realizado.
+
+## Segunda revisão — densidade dentro do objetivo
+
+Feedback: mesmo recolhendo objetivos, o conteúdo expandido ainda dificultava localizar cada resultado.
+
+- Resultados-chave passam a linhas compactas: título, atual/meta, prazo, situação, progresso e duas ações (check-in e detalhes).
+- Apenas um resultado detalhado por vez. Baseline, peso, responsáveis, histórico e configuração ficam nesse detalhe.
+- Check-in continua disponível diretamente na linha, sem etapa extra.
+- Descrição longa do objetivo fica em “Sobre este objetivo”.
+- Desktop mantém colunas alinhadas; mobile reorganiza cada linha sem rolagem lateral.
+- Três cenários Playwright isolados aprovados, incluindo detalhes exclusivos, filtros e capturas 1440/390px inspecionadas.
+- Fluxo integrado local aprovado após adaptar o roteiro para abrir detalhes também depois de recarregar: check-in RH/colaborador/mobile, edição, histórico e bloqueio de ciclo encerrado preservados.
