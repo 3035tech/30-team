@@ -140,20 +140,19 @@ describe('module hardening', () => {
 
   it('keeps logout available in the fixed sidebar footer', () => {
     const dashboard = source('app/dashboard/DashboardClient.jsx');
-    assert.match(dashboard, /border-t border-ink\/\[0\.08\] pt-2\.5/);
-    assert.match(dashboard, /Icon name="logout"/);
-    assert.match(dashboard, /onClick=\{\(\) => void logout\(\)\}/);
-    assert.match(dashboard, /!navCollapsed \? <span>\{t\(locale, 'dashboard\.logout'\)\}/);
+    const rail = source('app/_components/SidebarRail.jsx');
+    assert.match(rail, /\{footer \? <div className="flex flex-shrink-0 flex-col/);
+    assert.match(dashboard, /footer=\{[\s\S]*icon="logout"[\s\S]*label=\{t\(locale, 'dashboard\.logout'\)\}[\s\S]*onClick=\{\(\) => void logout\(\)\}/);
   });
 
   it('keeps the sidebar focused on destinations and utility actions', () => {
     const dashboard = source('app/dashboard/DashboardClient.jsx');
     assert.doesNotMatch(dashboard, /dashboard\.workShortcuts/);
-    assert.match(dashboard, /<NavLink id="help" icon="help"/);
+    assert.match(dashboard, /<SidebarRailButton\s+icon="help"\s+label=\{t\(locale, 'dashboard\.help'\)\}/);
     assert.match(dashboard, /DASHBOARD_NAV_SECTION\.DEVELOPMENT/);
     assert.match(dashboard, /DASHBOARD_NAV_SECTION\.CULTURE_HR/);
-    assert.match(dashboard, /text-left font-ui text-prose font-semibold normal-case tracking-normal/);
-    assert.match(dashboard, /mx-2 my-1 h-px bg-ink\/\[0\.07\]/);
+    assert.match(dashboard, /navSections\.map\(\(section\) => \(\s*<SidebarRailButton/);
+    assert.match(dashboard, /className="db-sidebar-panel /);
   });
 
   it('organizes the vacancy workspace around recruiter tasks', () => {
