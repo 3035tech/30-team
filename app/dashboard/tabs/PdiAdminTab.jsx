@@ -9,6 +9,9 @@ import { SelectField } from '../../_components/SelectField';
 import { Icon } from '../../_components/Icon';
 import { StatMetricTile } from '../../_components/StatMetricTile';
 import {
+  AdminTableShell,
+  AdminTh,
+  AdminActionsTh,
   AdminListPager,
   AdminListSearch,
   AdminPageHeader,
@@ -284,54 +287,45 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                 message={view === 'no-plan' ? copy.noPlanBody : copy.noDataBody}
               />
             ) : (
-              <div className="flex flex-col gap-2">
-                {rows.map((row) => {
-                  const hasPlan = Boolean(row.planId);
-                  const flagged = !hasPlan || row.periodOverdue || row.overdueItemCount > 0;
-                  const periodEndLabel = dateLabel(row.periodEnd, locale);
-                  return (
-                    <article key={row.candidateId} className={cn('rounded-control border px-3.5 py-3', flagged ? 'border-warning/25 bg-warning/[0.035]' : 'border-ink/10 bg-ink/[0.015]')}>
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h2 className="m-0 text-sm font-medium text-ink">{row.candidateName}</h2>
-                            {!hasPlan ? <span className="rounded-full bg-warning/10 px-2 py-1 font-ui text-prose text-amber-800 dark:text-warning">{copy.noPlanStatus}</span> : null}
-                            {row.periodOverdue ? <span className="rounded-full bg-danger/10 px-2 py-1 font-ui text-prose text-red-800 dark:text-danger">{copy.overduePlan}</span> : null}
-                          </div>
-                          {hasPlan ? (
-                          <p className="m-0 mt-1 text-prose text-ink-muted">
-                            {row.planTitle}
-                              {periodEndLabel ? ` · ${periodEndLabel}` : ''}
-                            {row.overdueItemCount > 0
-                              ? ` · ${row.overdueItemCount} ${row.overdueItemCount === 1 ? copy.overdueItem : copy.overdueItems}`
-                              : ''}
-                          </p>
-                          ) : (
-                            <p className="m-0 mt-1 text-prose text-ink-muted">{copy.noPlanRowDetail}</p>
-                          )}
-                        </div>
-                        <div className="flex shrink-0 items-center gap-3">
-                          {hasPlan ? (
-                            <div className="min-w-[120px]">
-                              <div className="mb-1 flex justify-between font-ui text-prose text-ink/75">
-                                <span>{row.doneCount}/{row.itemCount || 0} {copy.done}</span>
-                                <span>{row.donePct ?? 0}%</span>
-                              </div>
-                              <div className="h-1.5 overflow-hidden rounded-full bg-ink/10">
-                                <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.min(100, row.donePct || 0)}%` }} />
-                              </div>
+              <AdminTableShell locale={locale} ariaLabel={copy.title} minWidth="860px">
+                <thead><tr>
+                  {['person', 'plan', 'deadline', 'status', 'progress'].map((key) => <AdminTh key={key}>{t(locale, `panel.common.listColumns.${key}`)}</AdminTh>)}
+                  <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
+                </tr></thead>
+                <tbody className="divide-y divide-ink/5">
+                  {rows.map((row) => {
+                    const hasPlan = Boolean(row.planId);
+                    const flagged = !hasPlan || row.periodOverdue || row.overdueItemCount > 0;
+                    const progress = Math.max(0, Math.min(100, Number(row.donePct) || 0));
+                    return (
+                      <tr key={row.candidateId} className={cn('hover:bg-canvas-alt/50', flagged && 'bg-warning/[0.035]')}>
+                        <th scope="row" className="px-4 py-3 text-left text-sm font-medium text-ink">{row.candidateName}</th>
+                        <td className="max-w-[280px] px-4 py-3 text-ink-muted">{hasPlan ? row.planTitle : copy.noPlanRowDetail}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-ink-muted">{hasPlan ? dateLabel(row.periodEnd, locale) || '—' : '—'}</td>
+                        <td className="px-4 py-3">
+                          <span className={cn('inline-block rounded-full px-2 py-1', flagged ? 'bg-warning/10 text-amber-800 dark:text-warning' : 'bg-ink/5 text-ink-muted')}>
+                            {!hasPlan ? copy.noPlanStatus : row.periodOverdue ? copy.overduePlan : t(locale, 'panel.common.listColumns.active')}
+                          </span>
+                          {row.overdueItemCount > 0 ? <p className="m-0 mt-1 text-ink-muted">{row.overdueItemCount} {row.overdueItemCount === 1 ? copy.overdueItem : copy.overdueItems}</p> : null}
+                        </td>
+                        <td className="px-4 py-3">
+                          {hasPlan ? <div className="min-w-[140px]">
+                            <div className="mb-1 flex justify-between gap-3 text-ink-muted"><span>{row.doneCount}/{row.itemCount || 0} {copy.done}</span><span>{progress}%</span></div>
+                            <div role="progressbar" aria-label={row.planTitle || row.candidateName} aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} className="h-1.5 overflow-hidden rounded-full bg-ink/10">
+                              <div className="h-full rounded-full bg-brand-500" style={{ width: `${progress}%` }} />
                             </div>
-                          ) : null}
+                          </div> : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-right">
                           <button type="button" onClick={() => openPerson(row)} className={cn(S.btnBrandSoft, 'min-h-touch whitespace-nowrap text-prose')}>
-                            <Icon name={hasPlan ? 'externalLink' : 'plus'} className="h-3.5 w-3.5" />
-                            {hasPlan ? copy.open : copy.create}
+                            <Icon name={hasPlan ? 'externalLink' : 'plus'} className="h-3.5 w-3.5" />{hasPlan ? copy.open : copy.create}
                           </button>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </AdminTableShell>
             )}
             <AdminListPager
               locale={locale}

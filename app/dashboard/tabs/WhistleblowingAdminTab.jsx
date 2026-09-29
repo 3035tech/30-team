@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import {
+  AdminTableShell,
+  AdminTh,
+  AdminActionsTh,
   AdminCreateButton,
   AdminPageHeader,
   S,
@@ -319,27 +322,20 @@ export function WhistleblowingAdminTab({ locale = 'pt-BR', companyId }) {
                 description={t(locale, 'panel.whistleblowing.noChannelsHint')}
               />
             ) : (
-              <ul className="m-0 list-none space-y-2 p-0">
-                {channels.map((ch) => (
-                  <li
-                    key={ch.id}
-                    className="rounded-control border border-ink/12 bg-canvas px-3 py-2.5"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className={cn(S.cardTitle, 'm-0 truncate')}>{ch.title}</p>
-                        <p className={cn(S.faint, 'm-0 mt-0.5')}>
-                          {t(locale, 'panel.whistleblowing.dueDaysMeta', { n: ch.dueDays })}
-                          {!ch.active
-                            ? ` · ${t(locale, 'panel.whistleblowing.inactive')}`
-                            : ''}
-                        </p>
-                      </div>
-                      <CopyableLink href={ch.publicPath} locale={locale} iconOnly />
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <AdminTableShell locale={locale} minWidth="580px" ariaLabel={t(locale, 'panel.whistleblowing.channelsTitle')}>
+                <thead><tr>
+                  {['channel', 'deadline', 'status'].map((key) => <AdminTh key={key}>{t(locale, `panel.common.listColumns.${key}`)}</AdminTh>)}
+                  <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
+                </tr></thead>
+                <tbody className="divide-y divide-ink/5">
+                  {channels.map((ch) => <tr key={ch.id} className="hover:bg-canvas-alt/50">
+                    <th scope="row" className="px-4 py-3 text-left font-medium text-ink">{ch.title}</th>
+                    <td className="px-4 py-3 text-ink-muted">{t(locale, 'panel.whistleblowing.dueDaysMeta', { n: ch.dueDays })}</td>
+                    <td className="px-4 py-3 text-ink-muted">{t(locale, ch.active ? 'panel.common.listColumns.active' : 'panel.whistleblowing.inactive')}</td>
+                    <td className="px-4 py-3 text-right"><CopyableLink href={ch.publicPath} locale={locale} iconOnly /></td>
+                  </tr>)}
+                </tbody>
+              </AdminTableShell>
             )}
           </CollapsibleBlock>
 

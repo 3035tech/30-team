@@ -5,6 +5,7 @@ import { cn } from '../../../lib/cn';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
+import { AdminTableShell, AdminTh, AdminActionsTh } from '../dashboard-shared';
 import { inviteStatusLabel } from './vacancy-admin-shared';
 
 export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
@@ -90,21 +91,24 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
       {err ? (
         <p className="mb-2 mt-0 font-mono text-xs text-danger">{err}</p>
       ) : null}
-      <div className="flex max-h-[260px] flex-col gap-1.5 overflow-y-auto">
+      <AdminTableShell locale={locale} minWidth="680px" className="max-h-[360px] overflow-y-auto">
+        <thead><tr>
+          {['candidate', 'status', 'reminders'].map((key) => <AdminTh key={key}>{t(locale, `panel.common.listColumns.${key}`)}</AdminTh>)}
+          <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
+        </tr></thead>
+        <tbody className="divide-y divide-ink/5">
         {rows.map((inv) => {
           const lastReminder = inv.lastReminderAt ? new Date(inv.lastReminderAt) : null;
           const reminderCount = inv.reminderCount ?? 0;
           const canRemind = ['sent', 'opened'].includes(String(inv.status || ''));
           return (
-            <div
-              key={inv.id}
-              className="flex flex-wrap items-start gap-2 rounded-lg border border-ink/12 bg-ink/[0.02] px-3 py-2.5 font-mono text-xs"
-            >
-              <div className="min-w-0 flex-1">
+            <tr key={inv.id} className="hover:bg-canvas-alt/50">
+              <td className="px-4 py-3">
                 <div className="font-medium text-ink">{inv.candidateName}</div>
                 <div className="text-2xs text-ink-muted">{inv.candidateEmail}</div>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <span className="text-brand-600">{inviteStatusLabel(locale, inv.status)}</span>
+              </td>
+              <td className="px-4 py-3 text-brand-600">{inviteStatusLabel(locale, inv.status)}</td>
+              <td className="px-4 py-3">
                   {reminderCount > 0 && (
                     <span className="text-2xs text-ink-faint">
                       {t(locale, 'recruiting.reminderSentCount', { n: reminderCount })}
@@ -115,9 +119,9 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
                         : ''}
                     </span>
                   )}
-                </div>
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                  {reminderCount === 0 ? '—' : null}
+              </td>
+              <td className="px-4 py-3 text-right"><div className="inline-flex items-center gap-1.5 whitespace-nowrap">
                 {canRemind ? (
                   <button
                     type="button"
@@ -147,11 +151,12 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
                     ? <><span className="spinner" />{t(locale, 'recruiting.removingShort')}</>
                     : t(locale, 'recruiting.inviteRemove')}
                 </button>
-              </div>
-            </div>
+              </div></td>
+            </tr>
           );
         })}
-      </div>
+        </tbody>
+      </AdminTableShell>
     </div>
   );
 }

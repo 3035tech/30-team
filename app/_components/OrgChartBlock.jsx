@@ -20,6 +20,9 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
   const [selectedId, setSelectedId] = useState(null);
   const [manager, setManager] = useState('');
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const [draggedId, setDraggedId] = useState(null);
+  const [dropTarget, setDropTarget] = useState(null);
   const [saveError, setSaveError] = useState('');
   const [collapsed, setCollapsed] = useState(new Set());
   const [expandedDetails, setExpandedDetails] = useState(new Set());
@@ -38,14 +41,16 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
       const json = await response.json();
       if (!response.ok) throw new Error(json.error || t(locale, 'panel.orgChart.loadError'));
       if (version === requestVersion.current) setData(json);
+      return true;
     } catch (e) {
       if (version === requestVersion.current) { setError(e.message); setData(null); }
+      return false;
     } finally {
       if (version === requestVersion.current) setLoading(false);
     }
   }, [companyId, locale]);
   useEffect(() => {
-    setSelectedId(null); setCollapsed(new Set()); setExpandedDetails(new Set());
+    setDraggedId(null); setDropTarget(null); setSelectedId(null); setCollapsed(new Set()); setExpandedDetails(new Set());
     if (companyId) void load(); else setLoading(false);
     return () => { requestVersion.current += 1; };
   }, [companyId, load]);
@@ -57,6 +62,30 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
   const choices = people.filter((person) => !excluded.has(person.id));
   const currentManager = people.find((person) => person.id === selected?.managerCandidateId);
   const dirty = selected && manager !== String(selected.managerCandidateId ?? '');
+
+  const dragged = people.find((person) => person.id === draggedId);
+  const forbiddenTargets = useMemo(() => orgDescendantIds(dragged), [dragged]);
+  function canDrop(managerId) {
+    return Boolean(dragged) && !savingRef.current && !forbiddenTargets.has(managerId)
+      && (dragged.managerCandidateId ?? null) !== managerId;
+  }
+  function endDrag() { setDraggedId(null); setDropTarget(null); }
+  function dragOver(event, managerId) {
+    if (!dragged) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = canDrop(managerId) ? 'move' : 'none';
+    setDropTarget(canDrop(managerId) ? (managerId ?? 'root') : null);
+  }
+  async function drop(event, managerId) {
+    event.preventDefault();
+    event.stopPropagation();
+    const person = dragged;
+    const allowed = canDrop(managerId);
+    endDrag();
+    if (!allowed) return;
+    if (dirty && !await confirm({ title: msg('discardTitle'), message: msg('discardMessage'), confirmLabel: msg('discardConfirm'), cancelLabel: msg('keepEditing') })) return;
+    await saveManager(person, managerId);
+  }
 
   const matches = useMemo(() => filterOrgPeople(people, search), [people, search]);
 
@@ -96,30 +125,38 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
     if (bounds.top < visible.top || bounds.bottom > visible.bottom) {
       canvas.scrollTop += bounds.top - visible.top - (canvas.clientHeight - bounds.height) / 2;
     }
-  }, [selectedId, collapsed]);
+  }, [selectedId, collapsed, data]);
 
-  async function save(event) {
-    event.preventDefault();
-    if (!selected || !dirty || saving) return;
+  async function saveManager(person, managerId) {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true); setSaveError('');
     try {
       const response = await fetch('/api/admin/org-chart', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ companyId: Number(companyId), candidateId: selected.id, managerCandidateId: manager ? Number(manager) : null }),
+        body: JSON.stringify({ companyId: Number(companyId), candidateId: person.id, managerCandidateId: managerId }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || msg('managerError'));
+      setSelectedId(person.id);
+      setManager(String(managerId ?? ''));
       setCollapsed(new Set());
-      await load();
-      toast(msg('managerSaved'), 'ok');
+      if (await load()) toast(msg('managerSaved'), 'ok');
     } catch (e) { setSaveError(e.message); }
-    finally { setSaving(false); }
+    finally { savingRef.current = false; setSaving(false); }
+  }
+  async function save(event) {
+    event.preventDefault();
+    if (!selected || !dirty) return;
+    await saveManager(selected, manager ? Number(manager) : null);
   }
 
   if (!companyId) return null;
   return <CollapsibleBlock locale={locale} title={msg('title')} count={data?.total || null} defaultOpen variant="card" collapsedHint={msg('hint')}>
     {loading ? <AppLoading locale={locale} variant="panel" /> : error ? <InlineCallout tone="danger" role="alert">{error}<button type="button" className={S.btnGhost} onClick={load}>{t(locale, 'panel.common.retry')}</button></InlineCallout> : !people.length ? <EmptyState title={msg('empty')} description={msg('emptyHint')} /> : <>
       <p className={cn(S.muted, 'mb-3')}>{msg('hint')}</p>
+      <p className={cn(S.faint, 'mb-3')}>{msg('dragHint')}</p>
+      {saveError ? <InlineCallout tone="danger" role="alert">{saveError}</InlineCallout> : null}
       {data.capped ? <InlineCallout tone="info">{msg('capped')}</InlineCallout> : null}
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <label className="flex min-w-0 flex-1 flex-col gap-1 font-ui text-sm sm:max-w-sm">
@@ -139,6 +176,10 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
         {matches.map((person) => <button key={person.id} type="button" disabled={saving} className={S.btnGhost} onClick={() => reveal(person)}>{person.name}</button>)}
         {!matches.length ? <p className={S.muted}>{msg('noResults')}</p> : null}
       </div> : null}
+      <div data-org-root-drop onDragOver={(event) => dragOver(event, null)} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setDropTarget(null); }} onDrop={(event) => drop(event, null)} className={cn('mb-3 rounded-control border border-dashed px-4 py-3 font-ui text-sm', dropTarget === 'root' ? 'border-brand-500 bg-brand-500/10 text-brand-700' : 'border-ink/20 text-ink-muted')}>
+        {msg('rootDrop')}
+      </div>
+      <div role="status" className="sr-only">{dragged ? msg('dragging', { name: dragged.name }) : saving ? t(locale, 'panel.orgUnits.saving') : ''}</div>
       <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div ref={viewport} role="region" tabIndex={0} aria-label={msg('canvas')} className="relative max-h-[640px] min-h-72 min-w-0 overflow-auto overscroll-contain rounded-card border border-ink/15 bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" style={{ backgroundImage: 'radial-gradient(var(--color-ink-faint, #b4acbf) 0.6px, transparent 0.6px)', backgroundSize: '20px 20px' }}>
           <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
@@ -149,8 +190,13 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
                   return <path key={to.id} d={`M ${x1} ${y1} V ${(y1 + y2) / 2} H ${x2} V ${y2}`} fill="none" stroke="currentColor" strokeWidth="2" />;
                 })}
               </svg>
-              {layout.nodes.map((person) => <article key={person.id} data-person-id={person.id} className={cn('absolute flex flex-col overflow-hidden rounded-card border bg-surface shadow-sm', selectedId === person.id ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-ink/15')} style={{ left: person.x, top: person.y, width: ORG_CARD_WIDTH, height: person.height }}>
-                <button type="button" disabled={saving} aria-pressed={selectedId === person.id} aria-label={msg('selectPerson', { name: person.name })} className="flex min-h-0 flex-1 items-start gap-2 border-0 bg-transparent px-3 py-2.5 text-left hover:bg-brand-500/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" onClick={() => select(person)}>
+              {layout.nodes.map((person) => <article key={person.id} data-person-id={person.id} onDragOver={(event) => dragOver(event, person.id)} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setDropTarget(null); }} onDrop={(event) => drop(event, person.id)} className={cn('absolute flex flex-col overflow-hidden rounded-card border bg-surface shadow-sm', draggedId === person.id && 'opacity-50', dropTarget === person.id && 'ring-4 ring-brand-500/50', dragged && forbiddenTargets.has(person.id) && 'cursor-not-allowed', selectedId === person.id ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-ink/15')} style={{ left: person.x, top: person.y, width: ORG_CARD_WIDTH, height: person.height }}>
+                <button type="button" draggable={!saving} onDragStart={(event) => {
+                  if (savingRef.current) { event.preventDefault(); return; }
+                  event.dataTransfer.effectAllowed = 'move';
+                  event.dataTransfer.setData('text/plain', String(person.id));
+                  setDraggedId(person.id); setSaveError('');
+                }} onDragEnd={endDrag} title={msg('dragPerson', { name: person.name })} disabled={saving} aria-pressed={selectedId === person.id} aria-label={msg('selectPerson', { name: person.name })} className="flex min-h-0 flex-1 cursor-grab active:cursor-grabbing items-start gap-2 border-0 bg-transparent px-3 py-2.5 text-left hover:bg-brand-500/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" onClick={() => select(person)}>
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 font-ui text-2xs font-semibold text-brand-700" aria-hidden="true">{person.name.split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('')}</span>
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="line-clamp-2 font-ui text-xs font-semibold leading-snug text-ink" title={person.name}>{person.name}</span>
@@ -180,7 +226,6 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
               {choices.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}
             </SelectField></label>
             <p className={cn(S.faint, 'mt-3')}>{msg('moveHint')}</p>
-            {saveError ? <InlineCallout tone="danger" role="alert">{saveError}</InlineCallout> : null}
             <div className="mt-4 flex flex-wrap gap-2"><button type="submit" className={S.btnPrimary} disabled={saving || !dirty}>{t(locale, saving ? 'panel.orgUnits.saving' : 'panel.common.save')}</button><button type="button" className={S.btnGhost} disabled={saving || !dirty} onClick={() => { setManager(String(selected.managerCandidateId ?? '')); setSaveError(''); }}>{t(locale, 'panel.common.cancel')}</button></div>
             {navigateDashboard ? <button type="button" className={cn(S.btnGhost, 'mt-3')} disabled={saving} onClick={async () => { if (!dirty || await confirm({ title: msg('discardTitle'), message: msg('discardMessage'), confirmLabel: msg('discardConfirm'), cancelLabel: msg('keepEditing') })) navigateDashboard({ tab: 'team', candidate: String(selected.id), roster: 'internal' }); }}>{msg('viewProfile')}</button> : null}
           </form>}

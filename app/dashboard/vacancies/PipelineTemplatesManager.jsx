@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { EmptyState } from '../../_components/EmptyState';
 import { useAppFeedback } from '../../_components/AppFeedback';
-import { AdminCreateButton, AdminDeleteButton, AdminEditButton, AdminIconButton, S } from '../dashboard-shared';
+import { AdminTableShell, AdminTh, AdminActionsTh, AdminCreateButton, AdminDeleteButton, AdminEditButton, AdminIconButton, S } from '../dashboard-shared';
 import { PipelineStagesEditor } from './PipelineStagesEditor';
 
 export function PipelineTemplatesManager({ locale, companyId, templates, loading, onChanged }) {
@@ -205,22 +205,20 @@ export function PipelineTemplatesManager({ locale, companyId, templates, loading
       {!templates?.length ? (
         <EmptyState message={t(locale, 'panel.pipelineTemplates.empty')} actionLabel={t(locale, 'panel.pipelineTemplates.createAction')} onAction={createTemplate} />
       ) : (
-      <div className="overflow-hidden rounded-control border border-ink/10 bg-surface">
+      <AdminTableShell locale={locale} minWidth="720px">
+        <thead><tr>
+          <AdminTh>{t(locale, 'panel.common.listColumns.model')}</AdminTh>
+          <AdminTh>{t(locale, 'panel.common.listColumns.usage')}</AdminTh>
+          <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
+        </tr></thead>
+        <tbody className="divide-y divide-ink/5">
         {templates.map((template) => {
           const busy = busyId === template.id;
           const warnings = templateWarnings(template);
           return (
-            <article
-              key={template.id}
-              className={cn(
-                'flex flex-col gap-3 border-b border-ink/8 px-3.5 py-3 last:border-b-0 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between',
-                template.isDefault && 'border-l-2 border-l-brand-500 bg-brand-500/[0.025]'
-              )}
-            >
-              <div className="flex min-w-0 flex-1 items-center gap-3">
-                <div className="flex h-9 w-9 flex-none items-center justify-center rounded-control border border-ink/10 bg-ink/[0.035] font-mono text-2xs text-ink-muted">
-                  {template.stageCount}
-                </div>
+            <Fragment key={template.id}>
+            <tr className={cn('hover:bg-canvas-alt/50', template.isDefault && 'bg-brand-500/[0.025]')}>
+              <td className="px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h4 className="m-0 truncate font-ui text-sm font-semibold text-ink">{template.name}</h4>
@@ -230,20 +228,22 @@ export function PipelineTemplatesManager({ locale, companyId, templates, loading
                       </span>
                     ) : null}
                   </div>
-                  <p className={cn(S.faint, 'mb-0 mt-0.5')}>
-                    {t(locale, 'panel.pipelineTemplates.usage', {
-                      stages: template.stageCount,
-                      vacancies: template.vacancyCount,
-                    })}
-                  </p>
                   {warnings.length ? (
                     <div className="mt-1.5 flex flex-wrap gap-1">
                       {warnings.map((warning) => <span key={warning} className="rounded-full bg-warning/10 px-2 py-0.5 font-ui text-[11px] text-warning">{warning}</span>)}
                     </div>
                   ) : null}
               </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5 sm:flex-none sm:justify-end">
+              </td>
+              <td className="whitespace-nowrap px-4 py-3">
+                  <p className={cn(S.faint, 'mb-0 mt-0.5')}>
+                    {t(locale, 'panel.pipelineTemplates.usage', {
+                      stages: template.stageCount,
+                      vacancies: template.vacancyCount,
+                    })}
+                  </p>
+              </td>
+              <td className="px-4 py-3 text-right"><div className="inline-flex items-center gap-1.5 whitespace-nowrap">
                 <button
                   type="button"
                   className="min-h-touch rounded-control px-2.5 font-ui text-xs text-ink-muted hover:bg-ink/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
@@ -260,16 +260,18 @@ export function PipelineTemplatesManager({ locale, companyId, templates, loading
                   <AdminIconButton icon="check" label={t(locale, 'panel.pipelineTemplates.makeDefault')} disabled={busy} onClick={() => mutate(template, 'default')} />
                 ) : null}
                 <AdminDeleteButton label={t(locale, 'panel.pipelineTemplates.archive')} disabled={busy} onClick={() => mutate(template, 'archive')} />
-              </div>
+              </div></td>
+            </tr>
               {expandedId === template.id ? (
-                <div className="w-full border-t border-ink/8 pt-3 sm:basis-full" aria-label={t(locale, 'panel.pipelineTemplates.previewLabel')}>
+                <tr><td colSpan={3} className="px-4 py-3"><div aria-label={t(locale, 'panel.pipelineTemplates.previewLabel')}>
                   <PipelineStagesEditor locale={locale} companyId={companyId} templateId={template.id} />
-                </div>
+                </div></td></tr>
               ) : null}
-            </article>
+            </Fragment>
           );
         })}
-      </div>
+        </tbody>
+      </AdminTableShell>
       )}
     </ContentEnter>
   );
