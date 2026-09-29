@@ -221,7 +221,7 @@ export function PipelineTemplatesManager({ locale, companyId, templates, loading
               <td className="px-4 py-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h4 className="m-0 truncate font-ui text-sm font-semibold text-ink">{template.name}</h4>
+                    <h4 className="m-0 break-words font-ui text-sm font-semibold text-ink">{template.name}</h4>
                     {template.isDefault ? (
                       <span className="rounded-full bg-brand-500/10 px-2 py-0.5 font-mono text-2xs text-brand-600">
                         {t(locale, 'panel.pipelineTemplates.defaultBadge')}
@@ -248,6 +248,7 @@ export function PipelineTemplatesManager({ locale, companyId, templates, loading
                   type="button"
                   className="min-h-touch rounded-control px-2.5 font-ui text-xs text-ink-muted hover:bg-ink/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
                   aria-expanded={expandedId === template.id}
+                  aria-controls={expandedId === template.id ? `pipeline-preview-${template.id}` : undefined}
                   onClick={() => setExpandedId((current) => current === template.id ? null : template.id)}
                 >
                   {expandedId === template.id
@@ -263,7 +264,7 @@ export function PipelineTemplatesManager({ locale, companyId, templates, loading
               </div></td>
             </tr>
               {expandedId === template.id ? (
-                <tr><td colSpan={3} className="px-4 py-3"><div aria-label={t(locale, 'panel.pipelineTemplates.previewLabel')}>
+                <tr><td colSpan={3} className="px-4 py-3"><div id={`pipeline-preview-${template.id}`} aria-label={t(locale, 'panel.pipelineTemplates.previewLabel')}>
                   <PipelineStagesEditor locale={locale} companyId={companyId} templateId={template.id} />
                 </div></td></tr>
               ) : null}

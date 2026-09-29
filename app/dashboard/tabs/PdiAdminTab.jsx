@@ -309,12 +309,12 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                           {row.overdueItemCount > 0 ? <p className="m-0 mt-1 text-ink-muted">{row.overdueItemCount} {row.overdueItemCount === 1 ? copy.overdueItem : copy.overdueItems}</p> : null}
                         </td>
                         <td className="px-4 py-3">
-                          {hasPlan ? <div className="min-w-[140px]">
-                            <div className="mb-1 flex justify-between gap-3 text-ink-muted"><span>{row.doneCount}/{row.itemCount || 0} {copy.done}</span><span>{progress}%</span></div>
+                          {hasPlan && row.itemCount > 0 ? <div className="min-w-[140px]">
+                            <div className="mb-1 flex justify-between gap-3 text-ink-muted"><span>{row.doneCount || 0}/{row.itemCount || 0} {copy.done}</span><span>{progress}%</span></div>
                             <div role="progressbar" aria-label={row.planTitle || row.candidateName} aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} className="h-1.5 overflow-hidden rounded-full bg-ink/10">
                               <div className="h-full rounded-full bg-brand-500" style={{ width: `${progress}%` }} />
                             </div>
-                          </div> : '—'}
+                          </div> : hasPlan ? <span className="text-ink-muted">{copy.noItems}</span> : '—'}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button type="button" onClick={() => openPerson(row)} className={cn(S.btnBrandSoft, 'min-h-touch whitespace-nowrap text-prose')}>

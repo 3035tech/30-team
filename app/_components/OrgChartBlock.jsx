@@ -50,6 +50,7 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
     }
   }, [companyId, locale]);
   useEffect(() => {
+    setData(null); setSaveError('');
     setDraggedId(null); setDropTarget(null); setSelectedId(null); setCollapsed(new Set()); setExpandedDetails(new Set());
     if (companyId) void load(); else setLoading(false);
     return () => { requestVersion.current += 1; };
@@ -129,6 +130,7 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
 
   async function saveManager(person, managerId) {
     if (savingRef.current) return;
+    const version = requestVersion.current;
     savingRef.current = true;
     setSaving(true); setSaveError('');
     try {
@@ -137,12 +139,13 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
         body: JSON.stringify({ companyId: Number(companyId), candidateId: person.id, managerCandidateId: managerId }),
       });
       const result = await response.json();
+      if (version !== requestVersion.current) return;
       if (!response.ok) throw new Error(result.error || msg('managerError'));
       setSelectedId(person.id);
       setManager(String(managerId ?? ''));
       setCollapsed(new Set());
       if (await load()) toast(msg('managerSaved'), 'ok');
-    } catch (e) { setSaveError(e.message); }
+    } catch (e) { if (version === requestVersion.current) setSaveError(e.message); }
     finally { savingRef.current = false; setSaving(false); }
   }
   async function save(event) {
@@ -153,9 +156,8 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
 
   if (!companyId) return null;
   return <CollapsibleBlock locale={locale} title={msg('title')} count={data?.total || null} defaultOpen variant="card" collapsedHint={msg('hint')}>
-    {loading ? <AppLoading locale={locale} variant="panel" /> : error ? <InlineCallout tone="danger" role="alert">{error}<button type="button" className={S.btnGhost} onClick={load}>{t(locale, 'panel.common.retry')}</button></InlineCallout> : !people.length ? <EmptyState title={msg('empty')} description={msg('emptyHint')} /> : <>
-      <p className={cn(S.muted, 'mb-3')}>{msg('hint')}</p>
-      <p className={cn(S.faint, 'mb-3')}>{msg('dragHint')}</p>
+    {loading && !data ? <AppLoading locale={locale} variant="panel" /> : error ? <InlineCallout tone="danger" role="alert">{error}<button type="button" className={S.btnGhost} onClick={load}>{t(locale, 'panel.common.retry')}</button></InlineCallout> : !people.length ? <EmptyState title={msg('empty')} description={msg('emptyHint')} /> : <>
+      <p className={cn(S.muted, 'mb-3')}>{msg('dragHint')}</p>
       {saveError ? <InlineCallout tone="danger" role="alert">{saveError}</InlineCallout> : null}
       {data.capped ? <InlineCallout tone="info">{msg('capped')}</InlineCallout> : null}
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
@@ -181,7 +183,14 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
       </div>
       <div role="status" className="sr-only">{dragged ? msg('dragging', { name: dragged.name }) : saving ? t(locale, 'panel.orgUnits.saving') : ''}</div>
       <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
-        <div ref={viewport} role="region" tabIndex={0} aria-label={msg('canvas')} className="relative max-h-[640px] min-h-72 min-w-0 overflow-auto overscroll-contain rounded-card border border-ink/15 bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" style={{ backgroundImage: 'radial-gradient(var(--color-ink-faint, #b4acbf) 0.6px, transparent 0.6px)', backgroundSize: '20px 20px' }}>
+        <div ref={viewport} aria-busy={saving || loading} onDragOver={(event) => {
+          if (!dragged) return;
+          const canvas = event.currentTarget;
+          const bounds = canvas.getBoundingClientRect();
+          const dx = event.clientX < bounds.left + 40 ? -20 : event.clientX > bounds.right - 40 ? 20 : 0;
+          const dy = event.clientY < bounds.top + 40 ? -20 : event.clientY > bounds.bottom - 40 ? 20 : 0;
+          if (dx || dy) canvas.scrollBy({ left: dx, top: dy, behavior: 'instant' });
+        }} role="region" tabIndex={0} aria-label={msg('canvas')} className="relative max-h-[640px] min-h-72 min-w-0 overflow-auto overscroll-contain rounded-card border border-ink/15 bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" style={{ backgroundImage: 'radial-gradient(var(--color-ink-faint, #b4acbf) 0.6px, transparent 0.6px)', backgroundSize: '20px 20px' }}>
           <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
             <div className="relative origin-top-left" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
               <svg className="pointer-events-none absolute inset-0 text-brand-500/50" width={layout.width} height={layout.height} aria-hidden="true">
@@ -209,8 +218,8 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
                   <span>{msg('reportsCount', { n: person.children?.length || 0 })}</span>
                 </div> : null}
                 <div className="flex h-8 shrink-0 border-t border-ink/10 bg-brand-500/[0.04]">
-                  <button type="button" className="min-w-0 flex-1 border-0 bg-transparent px-2 font-ui text-2xs text-brand-700 hover:bg-brand-500/10" aria-expanded={expandedDetails.has(person.id)} aria-controls={expandedDetails.has(person.id) ? `org-details-${person.id}` : undefined} aria-label={msg(expandedDetails.has(person.id) ? 'hidePersonDetails' : 'showPersonDetails', { name: person.name })} onClick={() => setExpandedDetails((previous) => { const next = new Set(previous); if (next.has(person.id)) next.delete(person.id); else next.add(person.id); return next; })}>{msg(expandedDetails.has(person.id) ? 'lessDetails' : 'moreDetails')}</button>
-                  {person.children?.length ? <button type="button" className="min-w-0 flex-1 border-0 border-l border-solid border-ink/10 bg-transparent px-2 font-ui text-2xs text-brand-700 hover:bg-brand-500/10" aria-expanded={!collapsed.has(person.id)} aria-label={msg(collapsed.has(person.id) ? 'expandPerson' : 'collapsePerson', { name: person.name })} onClick={() => setCollapsed((previous) => { const next = new Set(previous); if (next.has(person.id)) next.delete(person.id); else next.add(person.id); return next; })}>{msg('teamCount', { n: person.children.length })} {collapsed.has(person.id) ? '+' : '−'}</button> : null}
+                  <button type="button" disabled={saving} className="min-w-0 flex-1 border-0 bg-transparent px-2 font-ui text-2xs text-brand-700 hover:bg-brand-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" aria-expanded={expandedDetails.has(person.id)} aria-controls={expandedDetails.has(person.id) ? `org-details-${person.id}` : undefined} aria-label={msg(expandedDetails.has(person.id) ? 'hidePersonDetails' : 'showPersonDetails', { name: person.name })} onClick={() => setExpandedDetails((previous) => { const next = new Set(previous); if (next.has(person.id)) next.delete(person.id); else next.add(person.id); return next; })}>{msg(expandedDetails.has(person.id) ? 'lessDetails' : 'moreDetails')}</button>
+                  {person.children?.length ? <button type="button" disabled={saving} className="min-w-0 flex-1 border-0 border-l border-solid border-ink/10 bg-transparent px-2 font-ui text-2xs text-brand-700 hover:bg-brand-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" aria-expanded={!collapsed.has(person.id)} aria-label={msg(collapsed.has(person.id) ? 'expandPerson' : 'collapsePerson', { name: person.name })} onClick={() => setCollapsed((previous) => { const next = new Set(previous); if (next.has(person.id)) next.delete(person.id); else next.add(person.id); return next; })}>{msg('teamCount', { n: person.children.length })} {collapsed.has(person.id) ? '+' : '−'}</button> : null}
                 </div>
               </article>)}
             </div>

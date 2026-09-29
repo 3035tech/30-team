@@ -9,6 +9,8 @@ test('drop saves hierarchy with subtree, rejects cycles, clears manager and keep
   ];
   const writes = [];
   let fail = false;
+  let releaseRefresh;
+  const refreshGate = new Promise(resolve => { releaseRefresh = resolve; });
   await page.route('**/api/admin/org-chart**', async route => {
     if (route.request().method() === 'PATCH') {
       const body = route.request().postDataJSON();
@@ -17,6 +19,7 @@ test('drop saves hierarchy with subtree, rejects cycles, clears manager and keep
       people.find(p => p.id === body.candidateId).managerCandidateId = body.managerCandidateId;
       return route.fulfill({json: {ok: true, ...body}});
     }
+    if (writes.length === 1) await refreshGate;
     const nodes = people.map(p => ({...p, children: []}));
     for (const node of nodes) nodes.find(p => p.id === node.managerCandidateId)?.children.push(node);
     return route.fulfill({json: {roots: nodes.filter(p => !p.managerCandidateId), total: 3, withManager: nodes.filter(p => p.managerCandidateId).length}});
@@ -27,6 +30,11 @@ test('drop saves hierarchy with subtree, rejects cycles, clears manager and keep
   await expect(card(3)).toBeVisible();
   await handle(2).dragTo(handle(1));
   await expect.poll(() => writes.length).toBe(1);
+  await expect(card(2)).toBeVisible();
+  await expect(page.locator('[aria-busy="true"]')).toBeVisible();
+  await expect(handle(2)).toBeDisabled();
+  releaseRefresh();
+  await expect(handle(2)).toBeEnabled();
   expect(writes[0]).toMatchObject({candidateId: 2, managerCandidateId: 1, companyId: 1});
   await expect(card(3)).toBeVisible();
   expect((await card(3).boundingBox()).y).toBeGreaterThan((await card(2).boundingBox()).y);

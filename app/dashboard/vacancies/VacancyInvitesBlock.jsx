@@ -4,18 +4,21 @@ import { useEffect, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { useAppFeedback } from '../../_components/AppFeedback';
+import { AppLoading } from '../../_components/AppLoading';
 import { EmptyState } from '../../_components/EmptyState';
 import { AdminTableShell, AdminTh, AdminActionsTh } from '../dashboard-shared';
 import { inviteStatusLabel } from './vacancy-admin-shared';
 
 export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
   const { confirm } = useAppFeedback();
+  const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(null);
   const [err, setErr] = useState('');
 
   const fetchInvites = async (cancelled = { current: false }) => {
     setErr('');
+    setLoading(true);
     try {
       const res = await fetch(`/api/admin/vacancies/${encodeURIComponent(vacancyId)}/invites`);
       const data = await res.json().catch(() => ({}));
@@ -23,11 +26,14 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
       if (!cancelled.current) setRows(Array.isArray(data.invites) ? data.invites : []);
     } catch (e) {
       if (!cancelled.current) setErr(e?.message || t(locale, 'panel.common.error'));
+    } finally {
+      if (!cancelled.current) setLoading(false);
     }
   };
 
   useEffect(() => {
     const cancelled = { current: false };
+    setRows([]);
     fetchInvites(cancelled);
     return () => { cancelled.current = true; };
   }, [vacancyId, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -76,6 +82,8 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
     }
   };
 
+  if (loading && !rows.length) return <AppLoading locale={locale} variant="panel" />;
+
   if (!rows.length && !err) {
     return (
       <EmptyState
@@ -87,9 +95,9 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
   }
 
   return (
-    <div>
+    <div aria-busy={loading || Boolean(busy)}>
       {err ? (
-        <p className="mb-2 mt-0 font-mono text-xs text-danger">{err}</p>
+        <p role="alert" className="mb-2 mt-0 font-ui text-sm text-danger">{err}</p>
       ) : null}
       <AdminTableShell locale={locale} minWidth="680px" className="max-h-[360px] overflow-y-auto">
         <thead><tr>
@@ -110,7 +118,7 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
               <td className="px-4 py-3 text-brand-600">{inviteStatusLabel(locale, inv.status)}</td>
               <td className="px-4 py-3">
                   {reminderCount > 0 && (
-                    <span className="text-2xs text-ink-faint">
+                    <span className="text-prose text-ink-muted">
                       {t(locale, 'recruiting.reminderSentCount', { n: reminderCount })}
                       {lastReminder
                         ? t(locale, 'recruiting.lastReminderSuffix', {
@@ -125,10 +133,10 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
                 {canRemind ? (
                   <button
                     type="button"
-                    disabled={!!busy}
+                    disabled={!!busy || loading}
                     onClick={() => remind(inv.id)}
                     className={cn(
-                      'flex items-center gap-1.5 rounded-md border border-success/35 bg-success/[0.07] px-2.5 py-1.5 text-2xs text-success',
+                      'flex min-h-touch items-center gap-1.5 rounded-md border border-success/35 bg-success/[0.07] px-2.5 py-1.5 text-2xs text-success',
                       busy ? 'cursor-default' : 'cursor-pointer'
                     )}
                   >
@@ -139,11 +147,11 @@ export function VacancyInvitesBlock({ vacancyId, locale, refreshKey }) {
                 ) : null}
                 <button
                   type="button"
-                  disabled={!!busy}
+                  disabled={!!busy || loading}
                   onClick={() => removeInvite(inv)}
                   title={t(locale, 'recruiting.inviteDelete')}
                   className={cn(
-                    'flex items-center gap-1.5 rounded-md border border-danger/35 bg-danger/[0.08] px-2.5 py-1.5 text-2xs text-danger',
+                    'flex min-h-touch items-center gap-1.5 rounded-md border border-danger/35 bg-danger/[0.08] px-2.5 py-1.5 text-2xs text-danger',
                     busy ? 'cursor-default' : 'cursor-pointer'
                   )}
                 >
