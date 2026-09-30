@@ -68,6 +68,25 @@ exigem definição do mercado e do significado do campo antes de adaptação.
 6. Revisar telas completas em cada mercado após completar os catálogos,
    incluindo pluralização, erros, emails, ajuda e textos da landing page.
    A landing espanhola ainda compartilha conteúdo entre as duas variantes.
+7. Revisão nativa de francês (fr-FR) e alemão (de-DE): catálogo (6.853 strings)
+   e landing (288) foram traduzidos por máquina em 30/09/2026 e passaram só na
+   checagem estrutural (placeholders, HTML, quebras de linha, marcas, sem ` — `).
+
+## Tradução de fr-FR / de-DE
+
+`scripts/i18n-translate-catalog.mjs` traduz só as chaves que faltam a partir
+de `en-US` e da landing inglesa. Strings reprovadas na validação ficam em inglês
+(fallback em runtime).
+
+- Com `OPENAI_API_KEY` válida:
+  `node --env-file=.env scripts/i18n-translate-catalog.mjs --locale fr-FR`
+- Sem chave (tradutor humano ou agente): exporte, traduza cada `items` para um
+  arquivo irmão `.out.json` com os mesmos ids e importe. A importação aplica a
+  mesma validação:
+  `node scripts/i18n-translate-catalog.mjs --locale de-DE --export-pending /tmp/i18n`
+  `node scripts/i18n-translate-catalog.mjs --locale de-DE --import /tmp/i18n`
+
+Rode de novo após adicionar chaves em `en-US` para cobrir só o que é novo.
 
 ## Referências de uso real
 

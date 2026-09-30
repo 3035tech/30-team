@@ -38,6 +38,8 @@ export async function GET(request) {
     page: url.searchParams.get('page') || 1,
     pageSize: url.searchParams.get('pageSize') || 20,
     sortParams,
+    q: url.searchParams.get('q') || '',
+    statusFilter: String(url.searchParams.get('status') || 'all'),
   });
 
   return NextResponse.json(result);

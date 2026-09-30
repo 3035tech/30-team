@@ -8,12 +8,16 @@ describe('vacancy list card layout', () => {
     'utf8'
   );
 
-  it('places row actions beside vacancy information on desktop', async () => {
+  it('renders the list as a paged table with secondary columns only on wide screens', async () => {
     const source = await readSource();
 
-    assert.match(source, /md:grid-cols-\[minmax\(0,1fr\)_auto\]/);
-    assert.match(source, /md:border-t-0 md:pt-0/);
-    assert.match(source, /AdminActionsCell className="justify-start md:justify-end"/);
+    assert.match(source, /<AdminTableShell/);
+    assert.match(source, /<AdminListPager/);
+    assert.match(source, /<RowActionsMenu/);
+    assert.match(source, /className="hidden 2xl:table-cell"/);
+    assert.match(source, /tabular-nums text-ink-muted 2xl:hidden/);
+    assert.doesNotMatch(source, /\btext-(?:2xs|xs)\b|\btext-ink-faint\b/);
+    assert.doesNotMatch(source, /AdminViewButton\s+asText/);
   });
 
   it('uses the vacancy detail width for actions and both public links', async () => {

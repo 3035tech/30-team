@@ -12,13 +12,18 @@
  *   --force                  retranslate keys that already exist in the target
  *   --limit N                translate at most N strings (smoke runs)
  *   --concurrency N          parallel requests (default 4)
+ *   --export-pending DIR     write missing strings to DIR/<locale>-<target>-NNN.json (no API call)
+ *   --import DIR             merge DIR/<locale>-<target>-NNN.out.json back (same validation, no API call)
+ *
+ * Offline flow (translator or agent without an API key): export, translate each file's
+ * "items" values into a sibling .out.json with the same keys, then import.
  *
  * Only missing keys are sent, so reruns are incremental. Each result must keep
  * the source placeholders ({name}), HTML tags, line breaks and brand tokens, and
  * must not contain " — "; failures are skipped and fall back to English at runtime.
  * Env: OPENAI_API_KEY; model via OPENAI_TRANSLATE_MODEL (else OPENAI_RUBRIC_MODEL / gpt-4o-mini).
  */
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -59,6 +64,8 @@ function parseArgs(argv) {
     else if (arg === '--force') opts.force = true;
     else if (arg === '--limit') opts.limit = Number(argv[++i]) || Infinity;
     else if (arg === '--concurrency') opts.concurrency = Math.max(1, Number(argv[++i]) || 4);
+    else if (arg === '--export-pending') opts.exportDir = argv[++i];
+    else if (arg === '--import') opts.importDir = argv[++i];
   }
   return opts;
 }
@@ -180,14 +187,64 @@ async function runPool(tasks, concurrency) {
   await Promise.all(workers);
 }
 
-async function translateTree({ locale, label, source, existing, file, header, opts, ai }) {
+function prepareTree({ source, existing, opts }) {
   const sourceFlat = flatten(source);
   const translated = flatten(existing || {});
   for (const key of [...translated.keys()]) if (!sourceFlat.has(key)) translated.delete(key);
   const verbatim = (key) => !String(sourceFlat.get(key)).trim() || VERBATIM_KEYS.has(JSON.parse(key).at(-1));
   for (const key of sourceFlat.keys()) if (verbatim(key)) translated.set(key, sourceFlat.get(key));
   const pending = [...sourceFlat].filter(([key]) => !verbatim(key) && (opts.force || !translated.has(key))).slice(0, opts.limit);
-  console.log(`[${locale}] ${label}: ${sourceFlat.size} strings, ${pending.length} to translate`);
+  return { sourceFlat, translated, pending };
+}
+
+function exportPending({ locale, label, source, existing, opts }) {
+  const { pending } = prepareTree({ source, existing, opts });
+  mkdirSync(opts.exportDir, { recursive: true });
+  const batches = chunk(pending, 400, 24000);
+  batches.forEach((batch, index) => {
+    const file = path.join(opts.exportDir, `${locale}-${label}-${String(index + 1).padStart(3, '0')}.json`);
+    writeFileSync(file, `${JSON.stringify({
+      locale,
+      language: LOCALE_GUIDES[locale].language,
+      rules: systemPrompt(locale),
+      keys: batch.map(([key]) => key),
+      items: Object.fromEntries(batch.map(([, text], i) => [String(i), text])),
+    }, null, 2)}\n`);
+  });
+  console.log(`[${locale}] ${label}: ${pending.length} strings exported in ${batches.length} file(s) to ${opts.exportDir}`);
+}
+
+function importTranslations({ locale, label, source, existing, file, header, opts }) {
+  const { sourceFlat, translated } = prepareTree({ source, existing, opts: { ...opts, limit: Infinity } });
+  const prefix = `${locale}-${label}-`;
+  const files = existsSync(opts.importDir)
+    ? readdirSync(opts.importDir).filter((name) => name.startsWith(prefix) && name.endsWith('.out.json')).sort()
+    : [];
+  let applied = 0;
+  const rejected = [];
+  for (const name of files) {
+    const data = JSON.parse(readFileSync(path.join(opts.importDir, name), 'utf8'));
+    const exported = JSON.parse(readFileSync(path.join(opts.importDir, name.replace(/\.out\.json$/, '.json')), 'utf8'));
+    for (const [id, output] of Object.entries(data.items || data)) {
+      const key = exported.keys[Number(id)];
+      const text = sourceFlat.get(key);
+      if (typeof text !== 'string') continue;
+      const ok = validate(text, output);
+      if (ok == null) rejected.push([key, text]);
+      else {
+        translated.set(key, ok);
+        applied += 1;
+      }
+    }
+  }
+  writeModule(file, header, rebuild(source, translated));
+  console.log(`[${locale}] ${label}: ${files.length} file(s), ${applied} applied, ${rejected.length} rejected; wrote ${path.relative(ROOT, file)}`);
+  for (const [key, text] of rejected.slice(0, 20)) console.log(`  - ${JSON.parse(key).join('.')}: ${text.slice(0, 80)}`);
+}
+
+async function translateTree({ locale, label, source, existing, file, header, opts, ai }) {
+  const { translated, pending } = prepareTree({ source, existing, opts });
+  console.log(`[${locale}] ${label}: ${translated.size + pending.length} strings, ${pending.length} to translate`);
 
   const failed = [];
   let done = 0;
@@ -236,21 +293,30 @@ async function main() {
     console.error(`Usage: --locale ${Object.keys(LOCALE_GUIDES).join('|')} [--target catalog|landing|all] [--force] [--limit N]`);
     process.exit(1);
   }
-  if (process.env.OPENAI_TRANSLATE_MODEL) process.env.OPENAI_RUBRIC_MODEL = process.env.OPENAI_TRANSLATE_MODEL;
-  const ai = await import(pathToFileURL(path.join(ROOT, 'lib/openai-chat.js')).href);
-  if (ai.isOpenAiMock() || !ai.isOpenAiConfigured()) {
-    console.error('OPENAI_API_KEY missing or OPENAI_MOCK/DTOV set: refusing to write mock translations.');
-    process.exit(1);
-  }
   const load = async (rel) => {
     const file = path.join(ROOT, rel);
     return existsSync(file) ? (await import(`${pathToFileURL(file).href}?t=${Date.now()}`)).default : {};
   };
   const header = (what) => `// Generated by scripts/i18n-translate-catalog.mjs from the English ${what}. Machine translation: review before relying on wording.`;
 
+  let ai = null;
+  if (!opts.exportDir && !opts.importDir) {
+    if (process.env.OPENAI_TRANSLATE_MODEL) process.env.OPENAI_RUBRIC_MODEL = process.env.OPENAI_TRANSLATE_MODEL;
+    ai = await import(pathToFileURL(path.join(ROOT, 'lib/openai-chat.js')).href);
+    if (ai.isOpenAiMock() || !ai.isOpenAiConfigured()) {
+      console.error('OPENAI_API_KEY missing or OPENAI_MOCK/DTOV set: refusing to write mock translations.');
+      process.exit(1);
+    }
+  }
+  const run = (args) => {
+    if (opts.exportDir) return exportPending(args);
+    if (opts.importDir) return importTranslations(args);
+    return translateTree(args);
+  };
+
   if (opts.target === 'all' || opts.target === 'catalog') {
     const rel = `lib/i18n/catalogs/${opts.locale}.js`;
-    await translateTree({
+    await run({
       locale: opts.locale, label: 'catalog', opts, ai,
       source: await load('lib/i18n/catalogs/en-US.js'),
       existing: await load(rel),
@@ -261,7 +327,7 @@ async function main() {
   if (opts.target === 'all' || opts.target === 'landing') {
     const rel = `lib/i18n/landing/${opts.locale}.js`;
     const { PRODUCT_LANDING_SOURCE_COPY } = await import(pathToFileURL(path.join(ROOT, 'lib/product-landing-seo.js')).href);
-    await translateTree({
+    await run({
       locale: opts.locale, label: 'landing', opts, ai,
       source: PRODUCT_LANDING_SOURCE_COPY,
       existing: await load(rel),

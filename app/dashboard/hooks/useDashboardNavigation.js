@@ -160,6 +160,11 @@ export function useDashboardNavigation({
     const vacSortSt = parseVacanciesSort(merged, { isAdmin });
     p.set('vacanciesSort', vacSortSt.sort);
     p.set('vacanciesSortDir', vacSortSt.dir);
+    const vacanciesQ = opts.vacanciesQ !== undefined ? opts.vacanciesQ : urlParams.get('vacanciesQ') || '';
+    if (vacanciesQ) p.set('vacanciesQ', String(vacanciesQ));
+    const vacanciesStatus =
+      opts.vacanciesStatus !== undefined ? opts.vacanciesStatus : urlParams.get('vacanciesStatus') || 'all';
+    if (vacanciesStatus && vacanciesStatus !== 'all') p.set('vacanciesStatus', String(vacanciesStatus));
 
     const cmp = parseComparePagination(merged);
     const cPg = opts.comparePage != null ? opts.comparePage : cmp.page;

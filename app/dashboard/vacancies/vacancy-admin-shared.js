@@ -1,11 +1,23 @@
 import { t, localeHtmlLang } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
-import { formatSalaryBr } from '../../../lib/br-masks';
+import { formatSalaryBr, salaryAmountNumber } from '../../../lib/br-masks';
 import { PIPELINE_STAGE } from '../../../lib/pipeline.js';
 
-export function formatVacancySalaryRange(locale, min, max) {
-  const a = min ? formatSalaryBr(min) : '';
-  const b = max ? formatSalaryBr(max) : '';
+function formatSalaryCompact(locale, value, bare = false) {
+  const n = salaryAmountNumber(value);
+  if (n == null) return '';
+  return n.toLocaleString(localeHtmlLang(locale), {
+    ...(bare ? {} : { style: 'currency', currency: 'BRL' }),
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  });
+}
+
+/** `opts.compact` → "R$ 14 mil–22 mil" for dense tables (pair with the full value in `title`). */
+export function formatVacancySalaryRange(locale, min, max, opts = {}) {
+  const fmt = opts.compact ? (v) => formatSalaryCompact(locale, v) : formatSalaryBr;
+  const a = min ? fmt(min) : '';
+  const b = max ? (opts.compact && a ? formatSalaryCompact(locale, max, true) : fmt(max)) : '';
   if (a && b) return t(locale, 'recruiting.salaryRangeDisplay', { min: a, max: b });
   if (a) return t(locale, 'recruiting.salaryFromDisplay', { min: a });
   if (b) return t(locale, 'recruiting.salaryUpToDisplay', { max: b });

@@ -18,9 +18,21 @@ import {
   AdminCreateButton,
   AdminEditButton,
   AdminActionsCell,
+  AdminActionsTh,
+  AdminListPager,
+  AdminListSearch,
   AdminPageHeader,
+  AdminTableShell,
+  AdminTh,
   AdminViewButton,
+  SortableTh,
 } from '../dashboard-shared';
+import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
+import { InlineCallout } from '../../_components/InlineCallout';
+import { StatusToneChip } from '../../_components/StatusToneChip';
+import { MeterBar } from '../../_components/MeterBar';
+import { RowActionsMenu } from '../../_components/RowActionsMenu';
+import { IconActionTip } from '../../_components/IconActionTip';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { VacancyClientReportBlock } from '../VacancyClientReportBlock';
 import { RichTextEditor } from '../../_components/RichTextEditor';
@@ -151,6 +163,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const urlParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [vacancies, setVacancies] = useState([]);
+  const [vacLoaded, setVacLoaded] = useState(false);
   const [companies, setCompanies] = useState([]);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
@@ -174,6 +187,10 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const vacSortSt = parseVacanciesSort(Object.fromEntries(urlParams.entries()), { isAdmin });
   const vacFilterFromUrl = String(urlParams.get('vacancy') || 'all');
   const companyFilterFromUrl = String(urlParams.get('company') || 'all');
+  const vacQFromUrl = String(urlParams.get('vacanciesQ') || '').trim();
+  const vacStatusFromUrl = String(urlParams.get('vacanciesStatus') || 'all');
+  const [vacSearchDraft, setVacSearchDraft] = useState(vacQFromUrl);
+  const [vacSummary, setVacSummary] = useState(null);
   const [vacTotal, setVacTotal] = useState(0);
   const [vacTotalPages, setVacTotalPages] = useState(1);
 
@@ -302,6 +319,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         sortDir: vacSortSt.dir,
       });
       if (vacFilterFromUrl && vacFilterFromUrl !== 'all') qs.set('vacancy', vacFilterFromUrl);
+      if (vacQFromUrl) qs.set('q', vacQFromUrl);
+      if (vacStatusFromUrl !== 'all') qs.set('status', vacStatusFromUrl);
       if (isAdmin && companyFilterFromUrl && companyFilterFromUrl !== 'all') {
         qs.set('company', companyFilterFromUrl);
       }
@@ -314,6 +333,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
           ? data
           : [];
       setVacancies(rows);
+      setVacSummary(data?.summary || null);
       const total = typeof data?.total === 'number' ? data.total : rows.length;
       const tpg = typeof data?.totalPages === 'number'
         ? data.totalPages
@@ -323,6 +343,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     } catch (e) {
       setError(e?.message || t(locale, 'panel.common.error'));
     } finally {
+      setVacLoaded(true);
       setLoading(false);
     }
   };
@@ -396,7 +417,25 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   useEffect(() => {
     if (isDetailView) return;
     loadVacancies();
-  }, [vacPage, vacPageSize, vacSortSt.sort, vacSortSt.dir, vacFilterFromUrl, companyFilterFromUrl, isDetailView]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [vacPage, vacPageSize, vacSortSt.sort, vacSortSt.dir, vacFilterFromUrl, companyFilterFromUrl, vacQFromUrl, vacStatusFromUrl, isDetailView]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    setVacSearchDraft(vacQFromUrl);
+  }, [vacQFromUrl]);
+
+  const vacSearchNavRef = useRef({ navigate: navigateDashboard, q: vacQFromUrl });
+  vacSearchNavRef.current = { navigate: navigateDashboard, q: vacQFromUrl };
+
+  useEffect(() => {
+    const next = vacSearchDraft.trim();
+    if (next === vacQFromUrl) return undefined;
+    const timer = window.setTimeout(() => {
+      const latest = vacSearchNavRef.current;
+      if (next === latest.q) return;
+      latest.navigate({ tab: 'vacancies', vacanciesQ: next || null, vacanciesPage: 1, scroll: false });
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [vacSearchDraft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     loadCompanies();
@@ -448,8 +487,29 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     setDetailSection(normalizeVacancyDetailSection(urlParams.get('vacancySection')));
   }, [urlParams]);
 
-  const openVacancyDetail = (id) => {
-    navigateDashboard({ tab: 'vacancies', vacancyDetail: String(id), vacancySection: 'pipeline' });
+  const openVacancyDetail = (id, section = 'pipeline') => {
+    navigateDashboard({ tab: 'vacancies', vacancyDetail: String(id), vacancySection: section });
+  };
+
+  const listFiltered = Boolean(vacQFromUrl) || vacStatusFromUrl !== 'all';
+  const attentionCount = Number(vacSummary?.attention) || 0;
+  const todayIso = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })();
+
+  const pushVacanciesStatus = (next) => {
+    navigateDashboard({
+      tab: 'vacancies',
+      vacanciesStatus: next && next !== 'all' ? next : null,
+      vacanciesPage: 1,
+      scroll: false,
+    });
+  };
+
+  const clearVacancyListFilters = () => {
+    setVacSearchDraft('');
+    navigateDashboard({ tab: 'vacancies', vacanciesQ: null, vacanciesStatus: null, vacanciesPage: 1, scroll: false });
   };
 
   const backToVacanciesList = () => {
@@ -1903,7 +1963,9 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             </p>
           </div>
         ) : null}
-        {vacTotal === 0 ? (
+        {!vacLoaded ? (
+          <AppLoading variant="panel" locale={locale} label={t(locale, 'panel.common.loading')} />
+        ) : vacTotal === 0 && !listFiltered && !loading ? (
           <div className="mt-3">
             <EmptyState
               message={
@@ -1914,290 +1976,328 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               actionLabel={
                 vacFilterFromUrl === 'all' ? t(locale, 'recruiting.createVacancyOpen') : undefined
               }
-              onAction={
-                vacFilterFromUrl === 'all'
-                  ? () => {
-                      openCreate();
-                    }
-                  : undefined
-              }
+              onAction={vacFilterFromUrl === 'all' ? () => openCreate() : undefined}
               actionDisabled={loading}
             />
           </div>
         ) : (
           <>
-            <div
-              role="group"
-              aria-label={t(locale, 'recruiting.sortVacanciesAria')}
-              className="mt-3 flex flex-wrap items-center gap-2.5 rounded-xl border border-ink/12 bg-ink/[0.03] p-3"
-            >
-              <span className="font-ui text-prose normal-case tracking-normal text-ink/75">
-                {t(locale, 'recruiting.sortBy')}
-              </span>
-              {[
-                { k: 'id', label: 'ID' },
-                { k: 'title', label: t(locale, 'recruiting.sortTitle') },
-                { k: 'status', label: t(locale, 'recruiting.sortStatus') },
-                ...(isAdmin ? [{ k: 'companyName', label: t(locale, 'recruiting.sortCompany') }] : []),
-                { k: 'createdAt', label: t(locale, 'recruiting.sortCreated') },
-              ].map(({ k, label }) => {
-                const active = vacSortSt.sort === k;
-                return (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => pushVacanciesSort(k)}
-                    aria-pressed={active}
-                    className={cn(
-                      'cursor-pointer rounded-lg border px-3 py-1.5 font-ui text-prose',
-                      active
-                        ? 'border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
-                        : 'border-ink/12 bg-transparent text-ink-muted'
-                    )}
-                  >
-                    {label}
-                    {active ? (vacSortSt.dir === 'asc' ? ' ▲' : ' ▼') : ''}
-                  </button>
-                );
-              })}
-            </div>
-          <div className="mt-2.5 flex flex-col gap-2.5">
-            {vacancies.map((v) => {
-              const token = v.activeToken || '';
-              const link = token ? `${appUrl}/v/${token}` : '';
-              const linkState = getVacancyLinkState(v.activeTokenExpiresAt, locale);
-              const exp = linkState.date;
-              return (
-                <div
-                  key={v.id}
-                  className={cn(
-                    'grid gap-3 rounded-xl border bg-ink/[0.03] p-3.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start',
-                    linkState.expired ? 'border-warning/30' : 'border-ink/12'
-                  )}
+            {attentionCount > 0 ? (
+              <InlineCallout tone="warning" role="status" className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                <span className="min-w-0">
+                  <strong className="font-semibold">
+                    {attentionCount === 1
+                      ? i18nT(locale, 'ui.vacanciesAdminTab.attentionOne')
+                      : i18nT(locale, 'ui.vacanciesAdminTab.attentionMany', { n: attentionCount })}
+                  </strong>{' '}
+                  {i18nT(locale, 'ui.vacanciesAdminTab.attentionBody')}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => pushVacanciesStatus(vacStatusFromUrl === 'attention' ? 'all' : 'attention')}
+                  className="inline-flex min-h-touch shrink-0 cursor-pointer items-center rounded-control border border-warning/40 bg-surface px-3 py-1.5 font-ui text-sm font-medium text-amber-800 transition-colors hover:bg-warning/10 dark:text-warning"
                 >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-ink">
-                      <span className="font-mono text-prose text-ink/75">#{v.id}</span>
-                      <strong className="font-medium">{v.title}</strong>
-                      <span className="font-ui text-prose text-ink/75">{i18nT(locale, 'ui.vacanciesAdminTab.vacancy2')}</span>
-                      <span
+                  {vacStatusFromUrl === 'attention'
+                    ? i18nT(locale, 'ui.vacanciesAdminTab.attentionShowAll')
+                    : i18nT(locale, 'ui.vacanciesAdminTab.attentionShow')}
+                </button>
+              </InlineCallout>
+            ) : null}
+
+            <AdminListFilters
+              className="mt-4"
+              aria-label={t(locale, 'recruiting.vacanciesTitle')}
+              locale={locale}
+              onClear={clearVacancyListFilters}
+              clearEnabled={listFiltered}
+            >
+              <AdminListSearch
+                locale={locale}
+                value={vacSearchDraft}
+                onChange={setVacSearchDraft}
+                onSubmit={(value) =>
+                  navigateDashboard({
+                    tab: 'vacancies',
+                    vacanciesQ: String(value || '').trim() || null,
+                    vacanciesPage: 1,
+                    scroll: false,
+                  })
+                }
+                placeholder={i18nT(locale, 'ui.vacanciesAdminTab.searchPh')}
+              />
+              <AdminListFilterSelect
+                label={i18nT(locale, 'ui.vacanciesAdminTab.statusFilter')}
+                value={vacStatusFromUrl}
+                onChange={pushVacanciesStatus}
+                className="max-w-[16rem]"
+              >
+                <option value="all">{i18nT(locale, 'ui.vacanciesAdminTab.statusAll', { n: vacSummary?.all ?? 0 })}</option>
+                <option value={VACANCY_STATUS.OPEN}>{i18nT(locale, 'ui.vacanciesAdminTab.statusOpen', { n: vacSummary?.open ?? 0 })}</option>
+                <option value={VACANCY_STATUS.CLOSED}>{i18nT(locale, 'ui.vacanciesAdminTab.statusClosed', { n: vacSummary?.closed ?? 0 })}</option>
+                <option value="attention">{i18nT(locale, 'ui.vacanciesAdminTab.statusAttention', { n: vacSummary?.attention ?? 0 })}</option>
+              </AdminListFilterSelect>
+            </AdminListFilters>
+
+            {loading && vacancies.length === 0 ? (
+              <AppLoading variant="panel" locale={locale} label={t(locale, 'panel.common.loading')} />
+            ) : vacancies.length === 0 ? (
+              <EmptyState
+                message={i18nT(locale, 'ui.vacanciesAdminTab.noResults')}
+                actionLabel={t(locale, 'panel.common.clearFilters')}
+                onAction={clearVacancyListFilters}
+              />
+            ) : (
+              <AdminTableShell
+                locale={locale}
+                minWidth={isAdmin ? '1020px' : '900px'}
+                ariaLabel={t(locale, 'recruiting.vacanciesTitle')}
+                animKey={`vac-${vacStatusFromUrl}-${vacQFromUrl}-${vacPage}-${vacSortSt.sort}-${vacSortSt.dir}`}
+                className={cn('transition-opacity', loading && 'opacity-60')}
+              >
+                <thead>
+                  <tr className="bg-ink/[0.02]">
+                    <SortableTh columnKey="title" sortKey={vacSortSt.sort} dir={vacSortSt.dir} onSort={pushVacanciesSort}>
+                      {i18nT(locale, 'ui.vacanciesAdminTab.vacancy')}
+                    </SortableTh>
+                    {isAdmin ? (
+                      <SortableTh columnKey="companyName" sortKey={vacSortSt.sort} dir={vacSortSt.dir} onSort={pushVacanciesSort}>
+                        {i18nT(locale, 'ui.vacanciesAdminTab.colCompany')}
+                      </SortableTh>
+                    ) : null}
+                    <SortableTh columnKey="status" sortKey={vacSortSt.sort} dir={vacSortSt.dir} onSort={pushVacanciesSort}>
+                      {i18nT(locale, 'ui.vacanciesAdminTab.statusFilter')}
+                    </SortableTh>
+                    <AdminTh align="right">{i18nT(locale, 'ui.vacanciesAdminTab.colCandidates')}</AdminTh>
+                    <AdminTh>{i18nT(locale, 'ui.vacanciesAdminTab.colHires')}</AdminTh>
+                    <AdminTh>{i18nT(locale, 'ui.vacanciesAdminTab.deadline')}</AdminTh>
+                    <AdminTh className="hidden 2xl:table-cell">{i18nT(locale, 'ui.vacanciesAdminTab.salaryRange')}</AdminTh>
+                    <AdminTh>
+                      <span className="inline-flex items-center gap-1.5">
+                        {i18nT(locale, 'ui.vacanciesAdminTab.colLink')}
+                        <IconActionTip label={i18nT(locale, 'ui.vacanciesAdminTab.vacancyStatusDescribesRecruitingThis')}>
+                          <span tabIndex={0} className="inline-flex text-ink-muted" aria-label={i18nT(locale, 'ui.vacanciesAdminTab.vacancyStatusDescribesRecruitingThis')}>
+                            <Icon name="feedbackInfo" className="h-3.5 w-3.5" />
+                          </span>
+                        </IconActionTip>
+                      </span>
+                    </AdminTh>
+                    <SortableTh className="hidden 2xl:table-cell" columnKey="createdAt" sortKey={vacSortSt.sort} dir={vacSortSt.dir} onSort={pushVacanciesSort}>
+                      {i18nT(locale, 'ui.vacanciesAdminTab.colCreated')}
+                    </SortableTh>
+                    <AdminActionsTh />
+                  </tr>
+                </thead>
+                <tbody>
+                  {vacancies.map((v) => {
+                    const token = v.activeToken || '';
+                    const link = token ? `${appUrl}/v/${token}` : '';
+                    const linkState = getVacancyLinkState(v.activeTokenExpiresAt, locale);
+                    const exp = linkState.date;
+                    const isOpen = v.status === VACANCY_STATUS.OPEN;
+                    const deadlineIso = v.targetDate ? String(v.targetDate).slice(0, 10) : '';
+                    const overdue = isOpen && Boolean(deadlineIso) && deadlineIso < todayIso;
+                    const workplace = formatWorkplaceLabel(v, locale, i18nT);
+                    const salary = formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax, { compact: true });
+                    const salaryFull = salary ? formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) : '';
+                    const positions = Math.max(1, Number(v.positionsCount) || 1);
+                    const hired = Number(v.hiredCount) || 0;
+                    const candidates = Number(v.candidatesCount) || 0;
+                    const recent = Number(v.candidatesRecentCount) || 0;
+                    return (
+                      <tr
+                        key={v.id}
                         className={cn(
-                          'rounded-lg border px-2 py-0.5 font-ui text-prose',
-                          v.status === VACANCY_STATUS.OPEN
-                            ? 'border-success/30 bg-success/[0.12] text-success'
-                            : 'border-ink/12 bg-ink/[0.08] text-ink-muted'
+                          'border-t border-ink/10 transition-colors hover:bg-ink/[0.02]',
+                          v.needsAttention && 'bg-warning/[0.04]'
                         )}
                       >
-                        {v.status === VACANCY_STATUS.OPEN
-                          ? t(locale, 'recruiting.openStatus')
-                          : t(locale, 'recruiting.closedStatus')}
-                      </span>
-                      {isAdmin ? (
-                        <span className="font-mono text-prose text-ink/75">· {v.companyName}</span>
-                      ) : null}
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
-                      {v.positionsCount != null && v.positionsCount > 0 ? (
-                        <VacancyMetaItem
-                          label={i18nT(locale, 'ui.vacanciesAdminTab.openings')}
-                          value={t(locale, 'recruiting.positionsCount', { n: v.positionsCount })}
-                        />
-                      ) : null}
-                      {v.targetDate && formatPublicVacancyDate(v.targetDate, locale) ? (
-                        <VacancyMetaItem
-                          label={i18nT(locale, 'ui.vacanciesAdminTab.deadline')}
-                          value={t(locale, 'recruiting.targetDate', {
-                            date: formatPublicVacancyDate(v.targetDate, locale),
-                          })}
-                        />
-                      ) : null}
-                      {formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax) ? (
-                        <VacancyMetaItem
-                          label={i18nT(locale, 'ui.vacanciesAdminTab.salaryRange')}
-                          value={formatVacancySalaryRange(locale, v.salaryMin, v.salaryMax)}
-                        />
-                      ) : null}
-                      <VacancyMetaItem
-                        label={i18nT(locale, 'ui.vacanciesAdminTab.owner')}
-                        value={v.ownerName || (i18nT(locale, 'ui.vacanciesAdminTab.notAssigned'))}
-                        warning={!v.ownerName}
-                      />
-                    </div>
-
-                    {token ? (
-                      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-ink/8 pt-3">
-                        <span className="font-ui text-prose text-ink-muted">
-                          {i18nT(locale, 'ui.vacanciesAdminTab.candidateLinkAvailability')}
-                        </span>
-                        <span className={cn(
-                          'rounded-full border px-2 py-0.5 font-ui text-prose',
-                          linkState.expired
-                            ? 'border-warning/35 bg-warning/[0.10] text-amber-800 dark:text-warning'
-                            : 'border-success/30 bg-success/[0.08] text-success'
-                        )}>
-                          {linkState.label}
-                        </span>
-                        <CopyableLink
-                          url={link}
-                          locale={locale}
-                          label={t(locale, 'recruiting.enneagramLinkLabel')}
-                          iconOnly
-                          compact
-                          disabled={loading}
-                        />
-                        {exp ? (
-                          <span className={cn('font-ui text-prose text-ink/75', linkState.expired && 'text-amber-800 dark:text-warning')}>
-                            {linkState.expired
-                              ? i18nT(locale, 'ui.vacanciesAdminTab.expiredOn', { when: exp.toLocaleString(localeHtmlLang(locale)) })
-                              : t(locale, 'recruiting.expiresAt', {
-                                  when: exp.toLocaleString(localeHtmlLang(locale)),
-                                })}
-                          </span>
+                        <td className="min-w-[13rem] max-w-[24rem] px-4 py-3 align-middle">
+                          <button
+                            type="button"
+                            onClick={() => openVacancyDetail(v.id)}
+                            className="line-clamp-2 block max-w-full cursor-pointer border-none bg-transparent p-0 text-left font-ui text-sm font-medium text-ink hover:text-brand-600 hover:underline focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
+                            title={v.title}
+                          >
+                            {v.title}
+                          </button>
+                          <div className="mt-1 w-0 min-w-full truncate font-ui text-prose text-ink-muted" title={workplace || undefined}>
+                            <span className="font-mono tabular-nums">#{v.id}</span>
+                            {workplace ? ` · ${workplace}` : ''}
+                          </div>
+                          <div className="mt-0.5 w-0 min-w-full truncate font-ui text-prose">
+                            {v.ownerName ? (
+                              <span className="text-ink-muted">{i18nT(locale, 'ui.vacanciesAdminTab.ownerLine', { name: v.ownerName })}</span>
+                            ) : (
+                              <span className="text-amber-800 dark:text-warning">{i18nT(locale, 'ui.vacanciesAdminTab.noOwner')}</span>
+                            )}
+                          </div>
+                          {salary ? (
+                            <div className="mt-0.5 font-ui text-prose tabular-nums text-ink-muted 2xl:hidden" title={salaryFull}>
+                              {salary}
+                            </div>
+                          ) : null}
+                        </td>
+                        {isAdmin ? (
+                          <td className="px-4 py-3 align-middle font-ui text-prose text-ink-muted">{v.companyName}</td>
                         ) : null}
-                        {linkState.expired ? (
+                        <td className="whitespace-nowrap px-4 py-3 align-middle">
+                          <StatusToneChip tone={isOpen ? 'success' : 'neutral'}>
+                            {isOpen ? t(locale, 'recruiting.openStatus') : t(locale, 'recruiting.closedStatus')}
+                          </StatusToneChip>
+                        </td>
+                        <td className="px-4 py-3 text-right align-middle">
                           <button
                             type="button"
-                            onClick={() => rotateLink(v.id)}
-                            disabled={loading}
-                            className={cn(BTN_BRAND_SOFT, 'ml-auto', loading && 'opacity-60')}
+                            onClick={() => openVacancyDetail(v.id, 'candidates')}
+                            aria-label={i18nT(locale, 'ui.vacanciesAdminTab.openCandidatesAria', { title: v.title })}
+                            className="inline-flex min-h-9 cursor-pointer flex-col items-end justify-center whitespace-nowrap rounded-control border-none bg-transparent px-1.5 py-0.5 hover:bg-ink/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
+                            title={candidates ? undefined : i18nT(locale, 'ui.vacanciesAdminTab.noCandidates')}
                           >
-                            {i18nT(locale, 'ui.vacanciesAdminTab.renewLink')}
+                            <span className={cn('font-mono text-sm font-semibold tabular-nums', candidates ? 'text-ink' : 'text-ink-muted')}>
+                              {candidates.toLocaleString(localeHtmlLang(locale))}
+                            </span>
+                            {recent ? (
+                              <span className="font-ui text-prose text-success">
+                                {i18nT(locale, 'ui.vacanciesAdminTab.recentCandidates', { n: recent })}
+                              </span>
+                            ) : null}
                           </button>
-                        ) : null}
-                        {linkState.expired && v.status === VACANCY_STATUS.OPEN ? (
-                          <p className="basis-full m-0 rounded-control border border-warning/25 bg-warning/[0.06] px-3 py-2 text-prose text-amber-800 dark:text-warning" role="status">
-                            {i18nT(locale, 'ui.vacanciesAdminTab.thisVacancyIsOpenBut')}
-                          </p>
-                        ) : null}
-                        <span className="basis-full font-ui text-prose text-ink/75">
-                          {i18nT(locale, 'ui.vacanciesAdminTab.openClosedDescribesRecruitingActive')}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="mt-3 border-t border-ink/8 pt-3 font-ui text-prose text-ink/75">
-                        {t(locale, 'recruiting.noActiveLink')}
-                        <span className="ml-1">
-                          {i18nT(locale, 'ui.vacanciesAdminTab.separateFromRecruitingStatus')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 align-middle">
+                          <div
+                            className="flex w-20 flex-col gap-1.5"
+                            aria-label={i18nT(locale, 'ui.vacanciesAdminTab.hiresAria', { hired, total: positions })}
+                          >
+                            <span className="font-mono text-prose tabular-nums text-ink">
+                              {hired}/{positions}
+                            </span>
+                            <MeterBar value={hired} max={positions} height={4} toneClass="bg-success" />
+                          </div>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 align-middle font-ui text-prose">
+                          {deadlineIso ? (
+                            <div className="flex flex-col items-start">
+                              <span className={overdue ? 'font-medium text-amber-800 dark:text-warning' : 'text-ink'}>
+                                {formatPublicVacancyDate(v.targetDate, locale)}
+                              </span>
+                              {overdue ? (
+                                <span className="inline-flex items-center gap-1 font-ui text-prose font-semibold text-amber-800 dark:text-warning">
+                                  <Icon name="feedbackWarning" className="h-3 w-3" />
+                                  {i18nT(locale, 'ui.vacanciesAdminTab.overdue')}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <span className="text-ink-muted">{i18nT(locale, 'ui.vacanciesAdminTab.noDeadline')}</span>
+                          )}
+                        </td>
+                        <td className="hidden whitespace-nowrap px-4 py-3 align-middle font-ui text-prose 2xl:table-cell">
+                          {salary ? (
+                            <span className="tabular-nums text-ink" title={salaryFull}>{salary}</span>
+                          ) : (
+                            <span className="text-ink-muted">{i18nT(locale, 'ui.vacanciesAdminTab.noSalary')}</span>
+                          )}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 align-middle">
+                          {token ? (
+                            <div className="flex flex-col items-start gap-1">
+                              <div className="flex items-center gap-1.5">
+                                <StatusToneChip tone={linkState.expired ? 'warning' : 'success'}>{linkState.label}</StatusToneChip>
+                                {linkState.expired ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => rotateLink(v.id)}
+                                    disabled={loading}
+                                    className={cn(BTN_BRAND_SOFT, 'min-h-9 px-2.5 py-1 text-prose')}
+                                  >
+                                    {i18nT(locale, 'ui.vacanciesAdminTab.renewShort')}
+                                  </button>
+                                ) : (
+                                  <CopyableLink
+                                    url={link}
+                                    locale={locale}
+                                    label={t(locale, 'recruiting.enneagramLinkLabel')}
+                                    iconOnly
+                                    compact
+                                    disabled={loading}
+                                  />
+                                )}
+                              </div>
+                              {exp ? (
+                                <span
+                                  className={cn('font-ui text-prose', linkState.expired ? 'text-amber-800 dark:text-warning' : 'text-ink-muted')}
+                                  title={exp.toLocaleString(localeHtmlLang(locale))}
+                                >
+                                  {i18nT(
+                                    locale,
+                                    linkState.expired ? 'ui.vacanciesAdminTab.linkExpiredShort' : 'ui.vacanciesAdminTab.linkValidUntil',
+                                    { date: exp.toLocaleDateString(localeHtmlLang(locale)) }
+                                  )}
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <StatusToneChip tone="neutral">{i18nT(locale, 'ui.vacanciesAdminTab.noLink')}</StatusToneChip>
+                              <button
+                                type="button"
+                                onClick={() => rotateLink(v.id)}
+                                disabled={loading}
+                                className={cn(BTN_BRAND_SOFT, 'min-h-9 px-2.5 py-1 text-prose')}
+                              >
+                                {i18nT(locale, 'ui.vacanciesAdminTab.generateLink')}
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                        <td className="hidden whitespace-nowrap px-4 py-3 align-middle font-ui text-prose text-ink-muted 2xl:table-cell">
+                          {v.createdAt ? new Date(v.createdAt).toLocaleDateString(localeHtmlLang(locale)) : ''}
+                        </td>
+                        <td className="px-4 py-3 text-right align-middle">
+                          <AdminActionsCell>
+                            <AdminViewButton
+                              label={t(locale, 'recruiting.viewCandidates')}
+                              onClick={() => openVacancyDetail(v.id)}
+                            />
+                            <AdminEditButton
+                              label={t(locale, 'recruiting.editVacancy')}
+                              onClick={() => editVacancy(v)}
+                              disabled={loading}
+                            />
+                            <RowActionsMenu
+                              label={t(locale, 'recruiting.moreActions')}
+                              disabled={loading}
+                              items={[
+                                { id: 'clone', label: t(locale, 'recruiting.cloneVacancy'), onSelect: () => cloneVacancyAction(v) },
+                                { id: 'rotate', label: t(locale, 'recruiting.rotateLink'), onSelect: () => rotateLink(v.id) },
+                                {
+                                  id: 'status',
+                                  label: isOpen ? t(locale, 'recruiting.closeVacancy') : t(locale, 'recruiting.reopenVacancy'),
+                                  onSelect: () => setVacancyStatus(v.id, isOpen ? VACANCY_STATUS.CLOSED : VACANCY_STATUS.OPEN),
+                                },
+                                { id: 'archive', label: t(locale, 'recruiting.archiveVacancy'), danger: true, onSelect: () => archiveVacancy(v.id, v.title) },
+                              ]}
+                            />
+                          </AdminActionsCell>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </AdminTableShell>
+            )}
 
-                  <div className="flex items-center border-t border-ink/8 pt-3 md:border-t-0 md:pt-0">
-                    <AdminActionsCell className="justify-start md:justify-end">
-                      <AdminViewButton
-                        asText
-                        label={t(locale, 'recruiting.viewCandidates')}
-                        onClick={() => openVacancyDetail(v.id)}
-                        className={BTN_BRAND_SOFT}
-                      />
-                      <AdminEditButton
-                        label={t(locale, 'recruiting.editVacancy')}
-                        onClick={() => editVacancy(v)}
-                        disabled={loading}
-                      />
-                      <details className="group relative">
-                        <summary className={cn(BTN_GHOST, 'min-h-10 list-none px-2.5 [&::-webkit-details-marker]:hidden')}>
-                          <Icon name="moreHorizontal" className="h-4 w-4" />
-                          <span className="sr-only">{t(locale, 'recruiting.moreActions')}</span>
-                        </summary>
-                        <div className="absolute right-0 z-30 mt-1.5 grid min-w-[210px] gap-1 rounded-control border border-ink/12 bg-surface p-1.5 shadow-menu">
-                          <button
-                            type="button"
-                            onClick={() => cloneVacancyAction(v)}
-                            disabled={loading}
-                            className={cn(BTN_GHOST, 'w-full justify-start border-transparent text-left')}
-                          >
-                            {t(locale, 'recruiting.cloneVacancy')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => rotateLink(v.id)}
-                            disabled={loading}
-                            className={cn(BTN_GHOST, 'w-full justify-start border-transparent text-left')}
-                          >
-                            {t(locale, 'recruiting.rotateLink')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setVacancyStatus(
-                                v.id,
-                                v.status === VACANCY_STATUS.OPEN
-                                  ? VACANCY_STATUS.CLOSED
-                                  : VACANCY_STATUS.OPEN
-                              )
-                            }
-                            disabled={loading}
-                            className={cn(BTN_GHOST, 'w-full justify-start border-transparent text-left')}
-                          >
-                            {v.status === VACANCY_STATUS.OPEN
-                              ? t(locale, 'recruiting.closeVacancy')
-                              : t(locale, 'recruiting.reopenVacancy')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => archiveVacancy(v.id, v.title)}
-                            disabled={loading}
-                            className="min-h-touch w-full cursor-pointer rounded-control border border-transparent bg-transparent px-3 py-2 text-left font-ui text-sm text-red-800 dark:text-danger hover:bg-danger/[0.08] disabled:cursor-default disabled:opacity-60"
-                          >
-                            {t(locale, 'recruiting.archiveVacancy')}
-                          </button>
-                        </div>
-                      </details>
-                    </AdminActionsCell>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-ink/12 pt-3.5">
-              <span className={META}>
-                {t(locale, 'recruiting.vacanciesPage', { total: vacTotal, page: vacPage, pages: vacTotalPages })}
-              </span>
-              <div className="flex flex-wrap items-center gap-2">
-                <SelectField
-                  value={String(vacPageSize)}
-                  onChange={(e) => {
-                    const ps = parseInt(e.target.value, 10);
-                    navigateDashboard({ vacanciesPage: 1, vacanciesPageSize: ps, tab: 'vacancies' });
-                  }}
-                  disabled={loading}
-                  className={S.selectCompact}
-                >
-                  {PAGE_SIZE_OPTIONS.map((n) => (
-                    <option key={n} value={String(n)}>{t(locale, 'panel.compat.perPageShort', { n })}</option>
-                  ))}
-                </SelectField>
-                <button
-                  type="button"
-                  disabled={loading || vacPage <= 1}
-                  onClick={() => navigateDashboard({ vacanciesPage: Math.max(1, vacPage - 1), tab: 'vacancies' })}
-                  className={cn(
-                    'rounded-control border px-3 py-1.5 font-ui text-prose',
-                    vacPage <= 1
-                      ? 'cursor-default border-ink/12 bg-transparent text-ink/75'
-                      : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
-                  )}
-                >
-                  {t(locale, 'panel.admin.prev')}
-                </button>
-                <button
-                  type="button"
-                  disabled={loading || vacPage >= vacTotalPages}
-                  onClick={() => navigateDashboard({ vacanciesPage: Math.min(vacTotalPages, vacPage + 1), tab: 'vacancies' })}
-                  className={cn(
-                    'rounded-control border px-3 py-1.5 font-ui text-prose',
-                    vacPage >= vacTotalPages
-                      ? 'cursor-default border-ink/12 bg-transparent text-ink/75'
-                      : 'cursor-pointer border-brand-500/35 bg-brand-500/[0.09] text-brand-500'
-                  )}
-                >
-                  {t(locale, 'panel.admin.next')}
-                </button>
-              </div>
-            </div>
+            <AdminListPager
+              locale={locale}
+              page={vacPage}
+              pageSize={vacPageSize}
+              total={vacTotal}
+              loading={loading}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              countLabel={t(locale, 'recruiting.vacanciesPage', { total: vacTotal, page: vacPage, pages: vacTotalPages })}
+              onPageChange={(p) => navigateDashboard({ vacanciesPage: p, tab: 'vacancies' })}
+              onPageSizeChange={(ps) => navigateDashboard({ vacanciesPage: 1, vacanciesPageSize: ps, tab: 'vacancies' })}
+            />
           </>
         )}
       </div>

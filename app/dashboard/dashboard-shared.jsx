@@ -155,7 +155,7 @@ const TypeBadge = ({ type, locale = 'pt-BR', compact = false }) => {
   );
 };
 
-function SortableTh({ children, columnKey, sortKey, dir, onSort, align = 'left' }) {
+function SortableTh({ children, columnKey, sortKey, dir, onSort, align = 'left', className }) {
   const active = sortKey === columnKey;
   return (
     <th
@@ -173,7 +173,8 @@ function SortableTh({ children, columnKey, sortKey, dir, onSort, align = 'left' 
       className={cn(
         'cursor-pointer select-none border-b border-ink/12 px-4 py-2.5 font-ui text-prose font-semibold normal-case focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500/35',
         active ? 'text-brand-600' : 'text-ink-muted',
-        align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
+        align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left',
+        className
       )}
     >
       <span className="inline-flex items-center gap-1.5">
