@@ -96,3 +96,11 @@ do organograma foi observado. Nenhuma alteração feita em produção.
   de gestor ainda não salva; selecionar o mesmo cartão preserva o rascunho.
 - Carregamento e confirmações seguem o idioma selecionado. Terminologia pt-PT
   revisada; espanhol da Espanha e da América Latina continuam separados.
+
+### Organograma sem painel lateral (30/09/2026)
+
+- O painel "Editar hierarquia" saiu: o gestor direto é definido só arrastando o
+  cartão para o novo gestor (ou para a faixa "sem gestor"). API e regras iguais.
+- Cada cartão ganhou um ícone discreto de pessoa ("Abrir {nome} na Equipe") que
+  abre a ficha na aba Equipe. Clicar no cartão apenas o destaca.
+- Gestores fora do recorte de 200 pessoas continuam editáveis na ficha individual.

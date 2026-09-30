@@ -10,15 +10,15 @@ import { EmptyState } from './EmptyState';
 import { CollapsibleBlock } from './CollapsibleBlock';
 import { InlineCallout } from './InlineCallout';
 import { useAppFeedback } from './AppFeedback';
-import { SelectField } from './SelectField';
+import { Icon } from './Icon';
+import { IconActionTip } from './IconActionTip';
 
 export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard = null }) {
-  const { toast, confirm } = useAppFeedback();
+  const { toast } = useAppFeedback();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [selectedId, setSelectedId] = useState(null);
-  const [manager, setManager] = useState('');
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const [draggedId, setDraggedId] = useState(null);
@@ -58,11 +58,6 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
 
   const people = useMemo(() => flattenOrgChart(data?.roots || []), [data]);
   const layout = useMemo(() => orgChartLayout(data?.roots || [], collapsed, expandedDetails), [data, collapsed, expandedDetails]);
-  const selected = people.find((person) => person.id === selectedId);
-  const excluded = useMemo(() => orgDescendantIds(selected), [selected]);
-  const choices = people.filter((person) => !excluded.has(person.id));
-  const currentManager = people.find((person) => person.id === selected?.managerCandidateId);
-  const dirty = selected && manager !== String(selected.managerCandidateId ?? '');
 
   const dragged = people.find((person) => person.id === draggedId);
   const forbiddenTargets = useMemo(() => orgDescendantIds(dragged), [dragged]);
@@ -84,24 +79,13 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
     const allowed = canDrop(managerId);
     endDrag();
     if (!allowed) return;
-    if (dirty && !await confirm({ title: msg('discardTitle'), message: msg('discardMessage'), confirmLabel: msg('discardConfirm'), cancelLabel: msg('keepEditing') })) return;
     await saveManager(person, managerId);
   }
 
   const matches = useMemo(() => filterOrgPeople(people, search), [people, search]);
 
-  async function select(person) {
-    if (saving) return false;
-    if (person.id === selectedId) return true;
-    if (dirty && person.id !== selectedId && !await confirm({
-      title: msg('discardTitle'), message: msg('discardMessage'),
-      confirmLabel: msg('discardConfirm'), cancelLabel: msg('keepEditing'),
-    })) return false;
-    setSelectedId(person.id); setManager(String(person.managerCandidateId ?? '')); setSaveError('');
-    return true;
-  }
-  async function reveal(person) {
-    if (!await select(person)) return;
+  function reveal(person) {
+    setSelectedId(person.id);
     setCollapsed((previous) => {
       const next = new Set(previous);
       let current = person;
@@ -142,16 +126,10 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
       if (version !== requestVersion.current) return;
       if (!response.ok) throw new Error(result.error || msg('managerError'));
       setSelectedId(person.id);
-      setManager(String(managerId ?? ''));
       setCollapsed(new Set());
       if (await load()) toast(msg('managerSaved'), 'ok');
     } catch (e) { if (version === requestVersion.current) setSaveError(e.message); }
     finally { savingRef.current = false; setSaving(false); }
-  }
-  async function save(event) {
-    event.preventDefault();
-    if (!selected || !dirty) return;
-    await saveManager(selected, manager ? Number(manager) : null);
   }
 
   if (!companyId) return null;
@@ -182,8 +160,7 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
         {msg('rootDrop')}
       </div>
       <div role="status" className="sr-only">{dragged ? msg('dragging', { name: dragged.name }) : saving ? t(locale, 'panel.orgUnits.saving') : ''}</div>
-      <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
-        <div ref={viewport} aria-busy={saving || loading} onDragOver={(event) => {
+      <div ref={viewport} aria-busy={saving || loading} onDragOver={(event) => {
           if (!dragged) return;
           const canvas = event.currentTarget;
           const bounds = canvas.getBoundingClientRect();
@@ -200,18 +177,25 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
                 })}
               </svg>
               {layout.nodes.map((person) => <article key={person.id} data-person-id={person.id} onDragOver={(event) => dragOver(event, person.id)} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setDropTarget(null); }} onDrop={(event) => drop(event, person.id)} className={cn('absolute flex flex-col overflow-hidden rounded-card border bg-surface shadow-sm', draggedId === person.id && 'opacity-50', dropTarget === person.id && 'ring-4 ring-brand-500/50', dragged && forbiddenTargets.has(person.id) && 'cursor-not-allowed', selectedId === person.id ? 'border-brand-500 ring-2 ring-brand-500/20' : 'border-ink/15')} style={{ left: person.x, top: person.y, width: ORG_CARD_WIDTH, height: person.height }}>
+                <div className="relative flex min-h-0 flex-1">
                 <button type="button" draggable={!saving} onDragStart={(event) => {
                   if (savingRef.current) { event.preventDefault(); return; }
                   event.dataTransfer.effectAllowed = 'move';
                   event.dataTransfer.setData('text/plain', String(person.id));
                   setDraggedId(person.id); setSaveError('');
-                }} onDragEnd={endDrag} title={msg('dragPerson', { name: person.name })} disabled={saving} aria-pressed={selectedId === person.id} aria-label={msg('selectPerson', { name: person.name })} className="flex min-h-0 flex-1 cursor-grab active:cursor-grabbing items-start gap-2 border-0 bg-transparent px-3 py-2.5 text-left hover:bg-brand-500/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500" onClick={() => select(person)}>
+                }} onDragEnd={endDrag} title={msg('dragPerson', { name: person.name })} disabled={saving} aria-pressed={selectedId === person.id} aria-label={msg('selectPerson', { name: person.name })} className={cn('flex min-h-0 flex-1 cursor-grab active:cursor-grabbing items-start gap-2 border-0 bg-transparent py-2.5 pl-3 text-left hover:bg-brand-500/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500', navigateDashboard ? 'pr-9' : 'pr-3')} onClick={() => setSelectedId(person.id)}>
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 font-ui text-2xs font-semibold text-brand-700" aria-hidden="true">{person.name.split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('')}</span>
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="line-clamp-2 font-ui text-xs font-semibold leading-snug text-ink" title={person.name}>{person.name}</span>
                     <span className="truncate font-ui text-2xs text-ink-muted" title={person.jobRoleName || ''}>{person.jobRoleName || msg('noRole')}</span>
                   </span>
                 </button>
+                {navigateDashboard ? <IconActionTip label={msg('openPerson', { name: person.name })} className="absolute right-1 top-1.5">
+                  <button type="button" disabled={saving} aria-label={msg('openPerson', { name: person.name })} onClick={() => navigateDashboard({ tab: 'team', candidate: String(person.id), roster: 'internal' })} className="flex h-7 w-7 items-center justify-center rounded-control border-0 bg-transparent text-ink-faint hover:bg-brand-500/10 hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500 disabled:opacity-55">
+                    <Icon name="user" className="h-3.5 w-3.5" />
+                  </button>
+                </IconActionTip> : null}
+                </div>
                 {expandedDetails.has(person.id) ? <div id={`org-details-${person.id}`} className="flex h-[68px] shrink-0 flex-col justify-center gap-1 border-t border-ink/10 px-3 font-ui text-xs text-ink-muted">
                   <span>{msg('level', { n: person.depth + 1 })}</span>
                   <span className="truncate" title={person.orgUnitName || ''}>{person.orgUnitName || t(locale, 'panel.orgUnits.none')}</span>
@@ -224,21 +208,6 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
               </article>)}
             </div>
           </div>
-        </div>
-        <aside className="min-w-0 rounded-card border border-ink/10 bg-surface p-4" aria-label={msg('editHierarchy')}>
-          {!selected ? <><h3 className={S.cardTitle}>{msg('editHierarchy')}</h3><p className={S.muted}>{msg('selectHint')}</p></> : <form onSubmit={save}>
-            <h3 className={cn(S.cardTitle, 'break-words')}>{selected.name}</h3>
-            <p className={S.muted}>{msg('level', { n: selected.depth + 1 })}{currentManager ? ` · ${msg('managerHintNamed', { name: currentManager.name })}` : ` · ${(selected.managerCandidateId ? msg('outsideView') : msg('managerHintEmpty'))}`}</p>
-            <label className="flex flex-col gap-2 font-ui text-sm">{msg('managerTitle')}<SelectField aria-label={msg('managerTitle')} value={manager} disabled={saving} onChange={(event) => { setManager(event.target.value); setSaveError(''); }}>
-              <option value="">{msg('rootOption')}</option>
-              {selected.managerCandidateId && !people.some((person) => person.id === selected.managerCandidateId) ? <option value={selected.managerCandidateId} disabled>{msg('outsideView')}</option> : null}
-              {choices.map((person) => <option key={person.id} value={person.id}>{person.name}</option>)}
-            </SelectField></label>
-            <p className={cn(S.faint, 'mt-3')}>{msg('moveHint')}</p>
-            <div className="mt-4 flex flex-wrap gap-2"><button type="submit" className={S.btnPrimary} disabled={saving || !dirty}>{t(locale, saving ? 'panel.orgUnits.saving' : 'panel.common.save')}</button><button type="button" className={S.btnGhost} disabled={saving || !dirty} onClick={() => { setManager(String(selected.managerCandidateId ?? '')); setSaveError(''); }}>{t(locale, 'panel.common.cancel')}</button></div>
-            {navigateDashboard ? <button type="button" className={cn(S.btnGhost, 'mt-3')} disabled={saving} onClick={async () => { if (!dirty || await confirm({ title: msg('discardTitle'), message: msg('discardMessage'), confirmLabel: msg('discardConfirm'), cancelLabel: msg('keepEditing') })) navigateDashboard({ tab: 'team', candidate: String(selected.id), roster: 'internal' }); }}>{msg('viewProfile')}</button> : null}
-          </form>}
-        </aside>
       </div>
       <p className={cn(S.faint, 'mb-0 mt-3')} role="status">{msg('meta', { total: data.total, linked: data.withManager })}</p>
     </>}

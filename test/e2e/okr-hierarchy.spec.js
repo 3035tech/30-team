@@ -5,9 +5,8 @@ async function openMenuItem(page, trigger, name) {
   const item=page.getByRole('menuitem',{name,exact:true});
   await expect(async()=>{
     if (!(await item.isVisible())) await trigger.click();
-    await expect(item).toBeVisible({timeout:1000});
+    await item.click({timeout:1000});
   }).toPass({timeout:15000});
-  await item.click();
 }
 
 test('OKR: area → objective → measured KR, history, employee check-in and closed-cycle enforcement', async ({page,browser,baseURL}) => {
@@ -92,9 +91,8 @@ test('OKR: area → objective → measured KR, history, employee check-in and cl
     const employeePage=await employeeContext.newPage();
     const login=await employeePage.request.post('/api/auth/employee/login',{data:{email:'colaborador@todos-os-dados.demo',password:HR.password}});
     expect(login.ok()).toBeTruthy();
-    await employeePage.goto('/employee');
-    await employeePage.locator('#okr').getByRole('button',{name:/Meus OKRs/}).click();
-    const employeeKr=employeePage.locator('#okr li').filter({hasText:'Reduzir prazo de venda'});
+    await employeePage.goto('/employee#okr');
+    const employeeKr=employeePage.locator('#okr li').filter({hasText:'Reduzir prazo de venda'}).filter({hasText:`Comercial ${stamp}`});
     await expect(employeeKr).toContainText('Acelerar vendas');
     await employeeKr.getByRole('button',{name:'Check-in',exact:true}).click();
     await employeePage.getByRole('dialog').getByLabel('Valor atual (dias)',{exact:true}).fill('6');
