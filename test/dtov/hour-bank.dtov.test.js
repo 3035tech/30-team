@@ -151,7 +151,7 @@ async function main() {
 
   const balances = await listHourBankBalances({ query }, { companyId, q: 'colaborador' });
   assert.equal(balances.ok, true);
-  assert.ok(balances.items.some((i) => i.candidateId === candidateId && i.balanceMinutes === 240));
+  assert.ok(balances.items.some((i) => Number(i.candidateId) === Number(candidateId) && i.balanceMinutes === 240));
 
   const csv = await exportHourBankCsv({ query }, { companyId, month: '2030-07' });
   assert.equal(csv.ok, true, csv.errorCode);

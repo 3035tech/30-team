@@ -120,7 +120,7 @@ async function main() {
   let day = mirror.days.find((d) => d.day === workDay);
   assert.equal(day.workedMinutes, 420);
   assert.equal(day.missingMinutes, 60);
-  assert.equal(day.occurrence, TIME_DAY_OCCURRENCE.MISSING);
+  assert.equal(day.occurrence, TIME_DAY_OCCURRENCE.REVIEW, '17:00 out is flagged early_out');
 
   const huge = await getEmployeeTimeMirror({ query }, { companyId, candidateId, from: addDaysIso(to, -200), to });
   assert.equal(huge.ok, true);

@@ -581,6 +581,8 @@ Princípios: mesmo tenant `company_id` + hub `candidates`; CAP novas (`dp.ponto`
 2. Escala simples por empresa (turno fixo + tolerância); ajuste manual RH; export CSV.
 3. **Fora (fase 2):** facial / offline / WhatsApp ponto; folha (**B-2726**).
 4. Schema `091_time_clock.sql`; Guia → Ponto digital.
+5. **Visão do gestor (fase 1) ✅ ENTREGUE:** DP → Ponto com abas Controle de ponto (lista + espelho por período com extra/falta/saldo, ajuste que anula a marcação original com motivo e inclui a correta, justificativa de dia, histórico), Banco de horas (saldo com cargo/unidade, paginado) e Fechamento (período passado ≤ 92 dias, empresa ou unidade; trava ajustes/justificativas/revisão; cancelamento com motivo). Schema `137_time_clock_manager.sql`.
+6. **Fase 2 (pendente):** solicitação de ajuste pelo colaborador em `/employee` com aprovação do gestor; assinatura do espelho pelo colaborador; snapshot/resumo por fechamento (totais congelados + export); escala por colaborador/turno e calendário de feriados (hoje: seg–sex, escala única da empresa, tolerância = carência de atraso).
 
 ### B-2722 — Banco de horas / horas extras ✅ ENTREGUE
 1. Regras por empresa (ativar + teto de saldo); saldo por colaborador; lançamentos manuais + créditos derivados do ponto (**B-2721**, ≥15 min além da escala, idempotente por pessoa/dia).
