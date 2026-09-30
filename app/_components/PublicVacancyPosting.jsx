@@ -55,7 +55,7 @@ function trackJobFunnel(eventType, vacancyId) {
 
 /** Public careers chrome — inputs reuse dashboard field tokens (same height, no display font). */
 const SC = {
-  shell: 'relative box-border min-h-screen bg-canvas font-ui text-ink [color-scheme:light]',
+  shell: 'relative box-border min-h-screen bg-canvas font-ui text-ink',
   glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
   wrap: 'relative z-[1] mx-auto max-w-[760px] px-5 pb-16 pt-10',
   card: 'box-border rounded-card border border-ink/12 bg-surface px-5 py-6 shadow-card sm:px-7 sm:py-7',
@@ -94,7 +94,7 @@ className="m-0 flex list-none flex-col gap-2.5 p-0"
           <li key={item.vacancyId}>
             <Link
               href={item.path}
-className="block rounded-xl border border-ink/12 bg-white px-4 py-3.5 text-ink no-underline"
+className="block rounded-xl border border-ink/12 bg-surface px-4 py-3.5 text-ink no-underline"
             >
               <span className="block text-base leading-snug break-words">
                 {item.title}

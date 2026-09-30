@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { t } from '../../lib/i18n';
@@ -174,12 +174,19 @@ export function EmployeeSidebar({
     groupsWithItems.find((group) => group.id === activeGroupId) ||
     groupsWithItems[0];
 
+  const navRef = useRef(null);
+
   const onRailGroup = (group) => {
     if (navCollapsed) {
       goItem(group.items[0]);
       return;
     }
     setRailPick({ activeGroupId, group: group.id });
+    const container = navRef.current;
+    const target = document.getElementById(`emp-nav-group-${group.id}`);
+    if (!container || !target) return;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    container.scrollTo({ top: target.offsetTop, behavior: reduceMotion ? 'auto' : 'smooth' });
   };
 
   return (
@@ -237,13 +244,10 @@ export function EmployeeSidebar({
       </SidebarRail>
       {!navCollapsed ? (
         <div className="db-sidebar-panel flex min-w-0 flex-1 flex-col px-2 pb-4 pt-4">
-          <div className="mb-3 flex min-h-10 flex-shrink-0 items-start justify-between gap-2 pl-3">
+          <div className="mb-2 flex min-h-10 flex-shrink-0 items-center justify-between gap-2 pl-3">
             <div className="min-w-0">
-              <p className="m-0 truncate font-ui text-sm font-semibold text-ink">
-                {panelGroup ? t(locale, panelGroup.labelKey) : t(locale, 'employeeHome.sidebarLabel')}
-              </p>
               {companyName || companyLogoUrl ? (
-                <div className="mt-1 flex min-w-0 items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   {companyLogoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element -- remote company logo URL from S3
                     <img
@@ -255,12 +259,16 @@ export function EmployeeSidebar({
                     />
                   ) : null}
                   {companyName ? (
-                    <span className="truncate font-ui text-xs text-ink-muted" title={companyName}>
+                    <span className="truncate font-ui text-sm font-semibold text-ink" title={companyName}>
                       {companyName}
                     </span>
                   ) : null}
                 </div>
-              ) : null}
+              ) : (
+                <p className="m-0 truncate font-ui text-sm font-semibold text-ink">
+                  {t(locale, 'employeeHome.sidebarLabel')}
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -272,33 +280,47 @@ export function EmployeeSidebar({
             </button>
           </div>
           <nav
-            className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4"
-            aria-label={panelGroup ? t(locale, panelGroup.labelKey) : t(locale, 'employeeHome.sectionNavAria')}
+            ref={navRef}
+            className="db-sidebar-nav relative min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4"
+            aria-label={t(locale, 'employeeHome.sectionNavAria')}
           >
-            <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
-              {(panelGroup?.items || []).map((item) => {
-                const active = isActive(item);
-                const badgeN = badgeFor(item.id, badges);
-                return (
-                  <li key={item.id}>
-                    <Link
-                      href={item.href}
-                      aria-current={active ? 'page' : undefined}
-                      className={cn(
-                        'relative mb-0.5 flex min-h-touch w-full items-center gap-2.5 rounded-control border-none py-2 pl-3 pr-3 font-ui text-sm font-medium no-underline transition-colors',
-                        active ? 'bg-brand-500/[0.09] text-brand-800' : 'bg-transparent text-ink-muted hover:bg-ink/[0.035] hover:text-ink',
-                        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500'
-                      )}
-                      onClick={(e) => goItem(item, e)}
-                    >
-                      <Icon name={item.icon} className="h-4 w-4 shrink-0 opacity-80" />
-                      <span className="min-w-0 flex-1 truncate">{t(locale, item.labelKey)}</span>
-                      <NavBadge n={badgeN} />
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            {groupsWithItems.map((group) => (
+              <div key={group.id} id={`emp-nav-group-${group.id}`} className="mb-2">
+                <p
+                  id={`emp-nav-group-${group.id}-label`}
+                  className={cn(
+                    'sticky top-0 z-[1] m-0 bg-surface px-3 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wide',
+                    group.id === activeGroupId ? 'text-ink' : 'text-ink-label'
+                  )}
+                >
+                  {t(locale, group.labelKey)}
+                </p>
+                <ul className="m-0 flex list-none flex-col gap-0.5 p-0" aria-labelledby={`emp-nav-group-${group.id}-label`}>
+                  {group.items.map((item) => {
+                    const active = isActive(item);
+                    const badgeN = badgeFor(item.id, badges);
+                    return (
+                      <li key={item.id}>
+                        <Link
+                          href={item.href}
+                          aria-current={active ? 'page' : undefined}
+                          className={cn(
+                            'relative mb-0.5 flex min-h-touch w-full items-center gap-2.5 rounded-control border-none py-2 pl-3 pr-3 font-ui text-sm font-medium no-underline transition-colors',
+                            active ? 'bg-brand-500/[0.09] text-brand-800' : 'bg-transparent text-ink-muted hover:bg-ink/[0.035] hover:text-ink',
+                            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500'
+                          )}
+                          onClick={(e) => goItem(item, e)}
+                        >
+                          <Icon name={item.icon} className="h-4 w-4 shrink-0 opacity-80" />
+                          <span className="min-w-0 flex-1 truncate">{t(locale, item.labelKey)}</span>
+                          <NavBadge n={badgeN} />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </nav>
         </div>
       ) : null}

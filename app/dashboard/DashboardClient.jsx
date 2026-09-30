@@ -28,6 +28,7 @@ import {
 } from '../../lib/assessment-filters';
 
 import { DashboardBreadcrumb, DashboardPageTitleContext, getDashboardTabNav, S } from './dashboard-shared';
+import { preloadDashboardTab } from './dashboard-tab-preload';
 import { useDashboardNavigation } from './hooks/useDashboardNavigation';
 import { PipelineExtrasProvider } from './PipelineExtrasContext';
 import { AppFeedbackProvider, useAppFeedbackOptional } from '../_components/AppFeedback';
@@ -571,6 +572,8 @@ function DashboardClientContent({
   }, [isAdmin, sessionAuth?.userId, sessionAuth?.companyId, listTotal]);
 
   const {
+    navPending,
+    pendingTab,
     snapshot,
     navigateWithOpts,
     navigateToTab,
@@ -593,6 +596,8 @@ function DashboardClientContent({
     isAdmin,
     teamPagination: pagination,
   });
+  const navTab = pendingTab || tab;
+  const showPanelLoading = panelLoading || Boolean(pendingTab);
 
   const applyCompanyFilter = (nextCompany, extraFilters = {}) => {
     const v = nextCompany == null || nextCompany === '' ? 'all' : String(nextCompany);
@@ -819,11 +824,14 @@ function DashboardClientContent({
       type="button"
       id={`${id}-tab`}
       onClick={() => { navigateToTab(id); setSidebarOpen(false); if (id === 'team') setNewCandidates(false); }}
+      onMouseEnter={() => preloadDashboardTab(id)}
+      onFocus={() => preloadDashboardTab(id)}
+      onTouchStart={() => preloadDashboardTab(id)}
       aria-label={label}
-      aria-current={tab === id ? 'page' : undefined}
+      aria-current={navTab === id ? 'page' : undefined}
       className={cn(
         'relative mb-0.5 flex min-h-touch w-full items-center gap-2.5 rounded-control border-none py-2 pl-3 pr-3 font-ui text-sm font-medium',
-        tab === id ? 'bg-brand-500/[0.09] text-brand-800' : 'bg-transparent text-ink-muted hover:bg-ink/[0.035] hover:text-ink',
+        navTab === id ? 'bg-brand-500/[0.09] text-brand-800' : 'bg-transparent text-ink-muted hover:bg-ink/[0.035] hover:text-ink',
         'cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500'
       )}
     >
@@ -883,7 +891,7 @@ function DashboardClientContent({
     label: t(locale, section.labelKey),
     links: (navLinksBySection[section.id] || []).filter(Boolean),
   })).filter((section) => section.links.length > 0);
-  const activeNavSection = getDashboardSection(tab);
+  const activeNavSection = getDashboardSection(navTab);
   const railSection = railPick?.tab === tab ? railPick.section : activeNavSection;
   const panelSection =
     navSections.find((s) => s.id === railSection) ||
@@ -1040,7 +1048,7 @@ function DashboardClientContent({
 
         <main className="db-main relative mx-auto min-w-0 max-w-[1600px] flex-1 px-6 pb-[60px] pt-7">
           <DashboardPageTitleContext.Provider value={isPersonFocus || isVacancyDetail ? null : t(locale, getDashboardTabNav(tab).labelKey)}>
-          <NavLoadBar active={panelLoading} />
+          <NavLoadBar active={panelLoading || navPending} />
 
           <div className="db-top-row mb-4 flex flex-wrap items-start gap-3">
           {showGlobalSearch ? (
@@ -1110,15 +1118,15 @@ function DashboardClientContent({
               <div className="mb-1.5">
                 <DashboardBreadcrumb
                   locale={locale}
-                  tab={tab}
+                  tab={navTab}
                   onHome={() => navigateToTab('overview')}
                 />
               </div>
               {!isVacancyDetail ? <h1 className={cn("db-page-title mb-1", S.pageTitle)}>
-                {t(locale, getDashboardTabNav(tab).labelKey)}
+                {t(locale, getDashboardTabNav(navTab).labelKey)}
               </h1> : null}
               {!isVacancyDetail ? <span className="text-prose text-ink-muted">
-                {panelLoading ? (
+                {showPanelLoading ? (
                   t(locale, 'dashboard.loadingPanel')
                 ) : showsCohortChrome && ['overview', 'team', 'compatibility'].includes(tab) ? (
                   <>
@@ -1155,7 +1163,7 @@ function DashboardClientContent({
                   {t(locale, 'dashboard.contextHelp')}
                 </button>
               ) : null}
-              {showsCohortChrome && !panelLoading ? (
+              {showsCohortChrome && !showPanelLoading ? (
                 <button
                   type="button"
                   onClick={() => setFiltersOpen(!filtersExpanded)}
@@ -1176,13 +1184,13 @@ function DashboardClientContent({
                     : ''}
                 </button>
               ) : null}
-              {showsCohortChrome && !panelLoading ? (
+              {showsCohortChrome && !showPanelLoading ? (
               <ExportCsvButton href={exportUrl} locale={locale} />
               ) : null}
             </div>
           </div> : null}
 
-          {panelLoading ? (
+          {showPanelLoading ? (
             <AppLoading
               locale={locale}
               variant="panel"

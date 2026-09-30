@@ -19,9 +19,9 @@ const SESSION_MINUTES = Math.max(10, Math.round(SESSION_QUESTIONS * 0.4));
 
 
 const SC = {
-  app: 'cand-flow relative box-border flex min-h-screen flex-col items-center justify-center overflow-auto bg-canvas p-6 font-display text-ink [color-scheme:light]',
+  app: 'cand-flow relative box-border flex min-h-screen flex-col items-center justify-center overflow-auto bg-canvas p-6 font-display text-ink',
   glow: 'pointer-events-none fixed inset-0 bg-radial-glow',
-  card: 'cand-flow-card relative z-[1] box-border w-full max-w-[34rem] rounded-card border border-ink/12 bg-white px-7 py-9 shadow-card sm:px-9 sm:py-10',
+  card: 'cand-flow-card relative z-[1] box-border w-full max-w-[34rem] rounded-card border border-ink/12 bg-surface px-7 py-9 shadow-card sm:px-9 sm:py-10',
   label: 'mb-4 block font-mono text-2xs uppercase tracking-[3px] text-ink-label',
   h1: 'mb-3 text-[clamp(26px,4.5vw,36px)] font-bold leading-[1.15] tracking-tight text-ink',
   p: 'mb-7 text-base italic leading-[1.65] text-ink-muted',

@@ -124,7 +124,7 @@ function CandidateCard({ c, locale, vacancyTitle, hasRubric }) {
       : null;
 
   return (
-    <article className="rounded-xl border border-ink/12 bg-white p-5">
+    <article className="rounded-xl border border-ink/12 bg-surface p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="m-0 font-display text-base text-ink">{c.name}</h3>
         <span className="font-mono text-2xs text-brand-500">{recommendationLabel(locale, rec)}</span>
@@ -534,7 +534,7 @@ function ReportInner() {
         <h2 className="mb-3 mt-0 font-display text-lg font-semibold text-ink">
           {t(locale, 'panel.report.shortlistTitle', { n: candidates.length })}
         </h2>
-        <div className="overflow-x-auto rounded-xl border border-ink/12 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-ink/12 bg-surface">
           <table className="w-full border-collapse text-prose">
             <thead>
               <tr className="text-left font-mono text-2xs text-ink-muted">

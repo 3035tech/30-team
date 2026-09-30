@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useTransition } from 'react';
 import {
   PAGE_SIZE_OPTIONS,
   parseCompaniesPagination,
@@ -32,6 +33,8 @@ export function useDashboardNavigation({
   isAdmin,
   teamPagination,
 }) {
+  const [navPending, startNavTransition] = useTransition();
+  const [pendingTab, setPendingTab] = useState(null);
   const snapshot = () => Object.fromEntries(urlParams.entries());
 
   const buildDashboardUrl = (opts = {}) => {
@@ -282,7 +285,11 @@ export function useDashboardNavigation({
       window.history.pushState(null, '', href);
       return;
     }
-    router.push(href, { scroll });
+    const currentTab = urlParams.get('tab') || 'overview';
+    setPendingTab(urlOpts.tab !== undefined && urlOpts.tab !== currentTab ? urlOpts.tab : null);
+    startNavTransition(() => {
+      router.push(href, { scroll });
+    });
   };
 
   const navigateToTab = (id) => {
@@ -348,6 +355,8 @@ export function useDashboardNavigation({
   };
 
   return {
+    navPending,
+    pendingTab: navPending ? pendingTab : null,
     snapshot,
     navigateWithOpts,
     navigateToTab,

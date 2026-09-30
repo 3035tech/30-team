@@ -1,9 +1,11 @@
 /**
  * Dark mode — CSS variables drive Tailwind tokens (canvas / ink / surface).
  * Class `dark` on <html> (see DarkModeProvider). Light defaults live in globals.css `:root`.
+ * Screen only: print always uses the light tokens from :root.
  * Loaded AFTER globals.css from app/layout.jsx (do not @import at end of globals — browsers ignore that).
  */
 
+@media screen {
 html.dark,
 .dark {
   --canvas: 11 18 32;
@@ -440,7 +442,7 @@ html.dark body,
 }
 
 /*
- * Remaining gaps (B-1501 follow-up):
- * - PDF / print (@media print) and public assessment flows (light-first)
+ * Remaining gap (B-1501 follow-up):
  * - Marketing /login radial glow atmosphere
  */
+}

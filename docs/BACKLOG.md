@@ -406,13 +406,15 @@ Toggle + `.dark` + tokens Tailwind estão **usáveis no dashboard** (cards `S.ca
 3. Chrome: remapeamento extra de `bg-white` no dashboard + Help overlay leftovers.
 4. `ContentEnter` sem `transform` (só opacity) — popup nativo de `<select>` no Safari/macOS deixa de desalinha sob o wrapper das abas; `.ui-select` reforça chevron no dark.
 
+**Fechado (set/2026):** impressão/PDF sempre claros (`dark-mode.css` só em `@media screen` + troca no `beforeprint`); fluxos públicos (`/t`, `/v`, `/jobs`, assessment, `/r`…) sem trava light: seguem a escolha salva ou, sem escolha, o `prefers-color-scheme` do aparelho (`lib/theme-mode.js`). Preferência só é gravada ao clicar no toggle.
+
 **Ainda aberto:**
-1. PDF / print e fluxos públicos (`/t`, `/v`, assessment) — atmosfera light-first (`color-scheme: light` em careers + assessment).
-2. Persistência `localStorage` + anti-flash já existem — só revalidar após mudanças grandes de chrome. Docs: não confundir com `prefers-color-scheme`.
+1. Atmosfera do `/login` (glow radial) no dark.
+2. Revalidar anti-flash após mudanças grandes de chrome.
 
 **Fechado neste corte:** chips T1–T9 / Compare (`TypeBadge` + `typeChipSurfaceStyle` / `typeScoreCellStyle` + classes `ui-type-*` no dark).
 
-**Fora:** segundo tema custom por empresa; modo “auto” OS (opcional depois).
+**Fora:** segundo tema custom por empresa; modo “auto” OS no painel (só nos fluxos públicos, que não têm toggle).
 
 ---
 

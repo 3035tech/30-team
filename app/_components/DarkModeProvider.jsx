@@ -1,14 +1,16 @@
 'use client';
 
 /**
- * Dark mode — class on <html>, preference in localStorage.
- * Default: light (does not follow OS until the user chooses dark once).
+ * Dark mode: class on <html>, preference in localStorage (written only when the user toggles).
+ * Resolution rules live in lib/theme-mode.js. Printing always renders light.
  */
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { cn } from '../../lib/cn';
+import { DARK_MODE_STORAGE_KEY, resolveDarkMode } from '../../lib/theme-mode';
 
-export const DARK_MODE_STORAGE_KEY = 'team30_dark_mode';
+export { DARK_MODE_STORAGE_KEY };
 
 const DarkModeContext = createContext({
   isDark: false,
@@ -28,24 +30,59 @@ function applyDarkClass(isDark) {
 export function DarkModeProvider({ children }) {
   const [isDark, setIsDark] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const isDarkRef = useRef(false);
+  const printSwapRef = useRef(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(DARK_MODE_STORAGE_KEY);
-    // Default light when nothing saved (ignore OS preference).
-    const next = stored === 'true';
+    let stored = null;
+    try {
+      stored = localStorage.getItem(DARK_MODE_STORAGE_KEY);
+    } catch {
+      /* storage blocked */
+    }
+    const osDark = Boolean(window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+    const next = resolveDarkMode(stored, window.location.pathname, osDark);
     setIsDark(next);
     applyDarkClass(next);
     setMounted(true);
   }, []);
 
   useEffect(() => {
+    isDarkRef.current = isDark;
     if (!mounted) return;
     applyDarkClass(isDark);
-    localStorage.setItem(DARK_MODE_STORAGE_KEY, String(isDark));
   }, [isDark, mounted]);
 
-  const toggle = () => setIsDark((prev) => !prev);
-  const setDark = (value) => setIsDark(Boolean(value));
+  useEffect(() => {
+    if (!mounted) return undefined;
+    const beforePrint = () => {
+      if (!isDarkRef.current) return;
+      printSwapRef.current = true;
+      flushSync(() => setIsDark(false));
+    };
+    const afterPrint = () => {
+      if (!printSwapRef.current) return;
+      printSwapRef.current = false;
+      setIsDark(true);
+    };
+    window.addEventListener('beforeprint', beforePrint);
+    window.addEventListener('afterprint', afterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', beforePrint);
+      window.removeEventListener('afterprint', afterPrint);
+    };
+  }, [mounted]);
+
+  const setDark = (value) => {
+    const next = Boolean(value);
+    try {
+      localStorage.setItem(DARK_MODE_STORAGE_KEY, String(next));
+    } catch {
+      /* storage blocked */
+    }
+    setIsDark(next);
+  };
+  const toggle = () => setDark(!isDarkRef.current);
 
   return (
     <DarkModeContext.Provider value={{ isDark, toggle, setDark }}>

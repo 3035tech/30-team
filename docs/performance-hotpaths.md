@@ -13,6 +13,10 @@ Checklist operacional após os sprints Perf-A/B/C e P3 (colaborador). Não subst
 | Pool PG | `PG_POOL_MAX` em `lib/db.js` |
 | Export streamado + cap | `lib/export-assessments-csv.js` / `EXPORT_MAX_ROWS` |
 | Slow query log | `LOG_SLOW_MS` + `lib/monitoring.js` / `lib/db.js` |
+| Troca de aba percebida | `useDashboardNavigation` (`router.push` em `useTransition` → `navPending` / `pendingTab`): destaque do menu, título, `NavLoadBar` e skeleton na hora do clique |
+| Pré-carga de aba | `app/dashboard/dashboard-tab-preload.js`: chunk JS da aba no hover/focus/touch do menu (mesmo `import()` do `dynamic()`) |
+
+**Medição set/2026 (DTOV, gestor RH demo):** servidor em produção (`next start`) responde a troca de aba (payload RSC) em ~20–300 ms; `next dev --webpack` leva ~86 s na primeira compilação do `/dashboard` e ~100–300 ms depois. Painel baixa ~2,6 MB de JS (~800 KB gzip) na entrada. Lentidão percebida em dev = compilação sob demanda; em prod = falta de feedback no clique (corrigido acima).
 
 ## P3 — colaborador + gaps (B-2802)
 

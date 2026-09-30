@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import { LOCALE_COOKIE, localeHtmlLang, normalizeLocale, t } from '../lib/i18n';
 import { DarkModeProvider } from './_components/DarkModeProvider';
 import { versionedIcon } from '../lib/brand';
+import { themeInitScript } from '../lib/theme-mode';
 
 export async function generateMetadata() {
   const cookieStore = await cookies();
@@ -33,15 +34,11 @@ export default async function RootLayout({ children }) {
   const cookieStore = await cookies();
   const locale = normalizeLocale(cookieStore.get(LOCALE_COOKIE)?.value);
   return (
-    <html lang={localeHtmlLang(locale)}>
+    <html lang={localeHtmlLang(locale)} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8"/>
-        {/* Apply saved theme before paint — default remains light */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{if(localStorage.getItem('team30_dark_mode')==='true')document.documentElement.classList.add('dark');}catch(e){}})();`,
-          }}
-        />
+        {/* Apply theme before paint (see lib/theme-mode.js) */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript() }} />
       </head>
       <body className="m-0 bg-canvas p-0 font-ui text-prose text-ink antialiased">
         <DarkModeProvider>
