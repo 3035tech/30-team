@@ -220,9 +220,8 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Sidebar deve respeitar safe areas (rail + painel ocupam a altura toda) */
-  .db-rail,
-  .db-sidebar-panel {
+  /* Sidebar deve respeitar safe areas (ocupa a altura toda) */
+  .db-sidebar {
     padding-top: max(1rem, env(safe-area-inset-top));
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }

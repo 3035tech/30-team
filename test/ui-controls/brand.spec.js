@@ -8,18 +8,15 @@ for (const width of [390,768,1440]) {
   await expect(page.getByLabel('E-mail')).toHaveCSS('background-color','rgb(255, 255, 255)');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   if(width>768) {
-   await expect(page.locator('.db-rail')).toHaveCSS('background-color','rgb(17, 24, 39)');
-   await expect(page.locator('.db-sidebar-panel')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
-   await expect(page.locator('.db-rail .brand-mark svg').first()).toHaveAttribute('viewBox','0 0 140 110');
+   await expect(page.locator('.db-sidebar')).toHaveCSS('background-color','rgb(255, 255, 255)');
+   await expect(page.locator('.db-sidebar .brand-mark svg').first()).toHaveAttribute('viewBox','0 0 140 110');
    await page.getByRole('button',{name:'Recolher menu',exact:true}).click();
-   await expect(page.locator('.db-sidebar-panel')).toHaveCount(0);
    await expect(page.locator('.db-sidebar')).toHaveCSS('width','64px');
   }
   if(width<=768) {
    await expect(page.locator('.db-sidebar')).toHaveCSS('box-shadow','none');
    await page.evaluate(()=>document.querySelector('.db-sidebar').classList.add('db-sidebar-open'));
    await page.waitForTimeout(350);
-   await expect(page.locator('.db-rail')).toHaveCSS('background-color','rgb(17, 24, 39)');
    await expect(page.locator('.db-sidebar')).toHaveCSS('background-color','rgb(255, 255, 255)');
    await page.screenshot({path:test.info().outputPath('drawer-open.png')});
    await page.evaluate(()=>document.querySelector('.db-sidebar').classList.remove('db-sidebar-open'));

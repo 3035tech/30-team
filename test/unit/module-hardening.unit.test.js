@@ -140,21 +140,31 @@ describe('module hardening', () => {
 
   it('keeps logout available in the fixed sidebar footer', () => {
     const dashboard = source('app/dashboard/DashboardClient.jsx');
-    const rail = source('app/_components/SidebarRail.jsx');
-    assert.match(rail, /\{footer \? <div className="flex flex-shrink-0 flex-col/);
-    assert.match(dashboard, /footer=\{[\s\S]*icon="logout"[\s\S]*label=\{t\(locale, 'dashboard\.logout'\)\}[\s\S]*onClick=\{\(\) => void logout\(\)\}/);
+    const nav = source('app/_components/SidebarNav.jsx');
+    assert.match(nav, /\{footer \? \(\s*<div className=\{cn\('db-sidebar-foot flex flex-shrink-0/);
+    assert.match(dashboard, /id: 'logout', icon: 'logout', tone: 'danger', label: t\(locale, 'dashboard\.logout'\)[\s\S]*onClick: \(\) => void logout\(\)/);
+  });
+
+  it('renders one sidebar column with collapsible groups in dashboard and employee portal', () => {
+    const nav = source('app/_components/SidebarNav.jsx');
+    const employee = source('app/_components/EmployeeSidebar.jsx');
+    assert.match(nav, /aria-expanded=\{open\}/);
+    assert.match(nav, /<DisclosureToggle/);
+    assert.match(nav, /bg-brand-50 text-brand-800/);
+    assert.match(nav, /collapsed && isDesktop/);
+    assert.match(employee, /<SidebarNav\b/);
+    assert.doesNotMatch(employee, /SidebarRail\b(?!Button)/);
   });
 
   it('keeps the sidebar focused on destinations and utility actions', () => {
     const dashboard = source('app/dashboard/DashboardClient.jsx');
     assert.doesNotMatch(dashboard, /dashboard\.workShortcuts/);
-    assert.match(dashboard, /<SidebarRailButton\s+icon="help"\s+label=\{t\(locale, 'dashboard\.help'\)\}/);
+    assert.match(dashboard, /id: 'help', domId: 'help-tab', icon: 'help', label: t\(locale, 'dashboard\.help'\)/);
     assert.match(dashboard, /DASHBOARD_NAV_SECTION\.DEVELOPMENT/);
     assert.match(dashboard, /DASHBOARD_NAV_SECTION\.CULTURE_HR/);
-    assert.match(dashboard, /navSections\.map\(\(section\) => \(\s*<SidebarRailButton/);
-    assert.match(dashboard, /className="db-sidebar-panel /);
-    assert.match(dashboard, /id=\{`nav-section-\$\{section\.id\}`\}/);
-    assert.doesNotMatch(dashboard, /panelSection\?\.links\.map/);
+    assert.match(dashboard, /const sidebarGroups = navSections\.map/);
+    assert.match(dashboard, /<SidebarNav\b[\s\S]*groups=\{sidebarGroups\}/);
+    assert.doesNotMatch(dashboard, /SidebarRail\b/);
   });
 
   it('organizes the vacancy workspace around recruiter tasks', () => {
@@ -295,7 +305,8 @@ describe('module hardening', () => {
 
   it('keeps the active dashboard destination visible inside the sidebar scroll area', () => {
     const dashboard = source('app/dashboard/DashboardClient.jsx');
-    assert.match(dashboard, /ref=\{sidebarNavRef\}/);
+    assert.match(dashboard, /navRef=\{sidebarNavRef\}/);
+    assert.match(source('app/_components/SidebarNav.jsx'), /ref=\{navRef\}/);
     assert.match(dashboard, /document\.getElementById\(`\$\{tab\}-tab`\)/);
     assert.match(dashboard, /container\.contains\(item\)/);
     assert.match(dashboard, /container\.scrollTop \+=/);

@@ -6,25 +6,8 @@ import { Icon } from './Icon';
 import { IconActionTip } from './IconActionTip';
 
 /**
- * Navy icon rail of the app shell (sections + footer actions).
- * The light panel next to it lists the pages of the selected section.
- * Colors come from the `.db-rail` contrast context in globals.css.
- */
-export function SidebarRail({ brand, toggle, children, footer, ariaLabel }) {
-  return (
-    <div className="db-rail flex w-16 flex-shrink-0 flex-col items-center gap-1.5 px-2 pb-4 pt-4">
-      <div className="flex h-10 w-10 items-center justify-center">{brand}</div>
-      {toggle}
-      <div className="mx-auto my-1.5 h-px w-8 bg-ink/15" aria-hidden />
-      <nav aria-label={ariaLabel} className="flex min-h-0 flex-1 flex-col items-center gap-1.5 overflow-y-auto">
-        {children}
-      </nav>
-      {footer ? <div className="flex flex-shrink-0 flex-col items-center gap-1.5 pt-2">{footer}</div> : null}
-    </div>
-  );
-}
-
-/**
+ * Icon button with tooltip for the collapsed `SidebarNav` (icon-only desktop menu).
+ *
  * @param {{
  *   icon: string, label: string, active?: boolean, selected?: boolean,
  *   badge?: boolean, onClick?: Function, href?: string, disabled?: boolean,
@@ -43,6 +26,8 @@ export function SidebarRailButton({
   tone = 'default',
   className,
   pressed,
+  id,
+  onIntent,
 }) {
   const classes = cn(
     'relative flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-control border-0 no-underline transition-colors',
@@ -65,13 +50,16 @@ export function SidebarRailButton({
   return (
     <IconActionTip label={label} side="right">
       {href ? (
-        <Link href={href} onClick={onClick} aria-label={label} aria-current={active ? 'page' : undefined} className={classes}>
+        <Link id={id} href={href} onClick={onClick} onMouseEnter={onIntent} onFocus={onIntent} aria-label={label} aria-current={active ? 'page' : undefined} className={classes}>
           {content}
         </Link>
       ) : (
         <button
           type="button"
+          id={id}
           onClick={onClick}
+          onMouseEnter={onIntent}
+          onFocus={onIntent}
           disabled={disabled}
           aria-label={label}
           aria-pressed={pressed}

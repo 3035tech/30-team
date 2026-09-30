@@ -266,18 +266,6 @@ html.dark body,
   color: rgb(var(--ink) / 0.92);
 }
 
-/* Nav items: muted → readable active */
-.dark .db-sidebar-panel a,
-.dark .db-sidebar-panel button {
-  color: rgb(var(--ink) / 0.78);
-}
-
-.dark .db-sidebar-panel a:hover,
-.dark .db-sidebar-panel button:hover {
-  background-color: rgb(var(--ink) / 0.06);
-  color: rgb(var(--ink) / 0.95);
-}
-
 .dark [role='tooltip'],
 .dark .toast {
   background-color: rgb(var(--surface));

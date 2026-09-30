@@ -51,7 +51,7 @@ import {
   DASHBOARD_NAV_SECTIONS,
   getDashboardSection,
 } from '../../lib/dashboard-navigation.js';
-import { SidebarRail, SidebarRailButton } from '../_components/SidebarRail';
+import { SidebarNav, SidebarNavItem } from '../_components/SidebarNav';
 import { helpMetaForTab } from '../../lib/help-screen-context.js';
 
 function TabLoadingFallback() {
@@ -312,7 +312,6 @@ function DashboardClientContent({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const sidebarNavRef = useRef(null);
   /** Section picked on the rail; only valid while the tab it was picked on stays active. */
-  const [railPick, setRailPick] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(null);
   const [isDesktop, setIsDesktop] = useState(true);
   const [newCandidates, setNewCandidates] = useState(false);
@@ -819,27 +818,16 @@ function DashboardClientContent({
     dateTo ? `&dateTo=${encodeURIComponent(dateTo)}` : ''
   }${selectedSearch ? `&search=${encodeURIComponent(selectedSearch)}` : ''}`;
 
-  const NavLink = ({ id, label, badge, icon }) => (
-    <button
-      type="button"
-      id={`${id}-tab`}
-      onClick={() => { navigateToTab(id); setSidebarOpen(false); if (id === 'team') setNewCandidates(false); }}
-      onMouseEnter={() => preloadDashboardTab(id)}
-      onFocus={() => preloadDashboardTab(id)}
-      onTouchStart={() => preloadDashboardTab(id)}
-      aria-label={label}
-      aria-current={navTab === id ? 'page' : undefined}
-      className={cn(
-        'relative mb-0.5 flex min-h-touch w-full items-center gap-2.5 rounded-control border-none py-2 pl-3 pr-3 font-ui text-sm font-medium',
-        navTab === id ? 'bg-brand-500/[0.09] text-brand-800' : 'bg-transparent text-ink-muted hover:bg-ink/[0.035] hover:text-ink',
-        'cursor-pointer text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand-500'
-      )}
-    >
-      <Icon name={icon} className="h-4 w-4 shrink-0" />
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-      {badge ? <span className="inline-block h-[7px] w-[7px] flex-shrink-0 rounded-full bg-brand-500" /> : null}
-    </button>
-  );
+  const navItem = ({ id, label, badge, icon }) => ({
+    id,
+    domId: `${id}-tab`,
+    label,
+    icon,
+    badge,
+    active: navTab === id,
+    onIntent: () => preloadDashboardTab(id),
+    onClick: () => { navigateToTab(id); setSidebarOpen(false); if (id === 'team') setNewCandidates(false); },
+  });
 
   const canSee = (cap) => can(sessionAuth, cap);
   const navLinksBySection = {
@@ -891,25 +879,27 @@ function DashboardClientContent({
     label: t(locale, section.labelKey),
     links: (navLinksBySection[section.id] || []).filter(Boolean),
   })).filter((section) => section.links.length > 0);
-  const activeNavSection = getDashboardSection(navTab);
-  const railSection = railPick?.tab === tab ? railPick.section : activeNavSection;
-  const panelSection =
-    navSections.find((s) => s.id === railSection) ||
-    navSections.find((s) => s.id === activeNavSection) ||
-    navSections[0];
-
-  const onRailSection = (section) => {
-    if (navCollapsed) {
-      navigateToTab(section.links[0].id);
-      return;
-    }
-    setRailPick({ tab, section: section.id });
-    const container = sidebarNavRef.current;
-    const target = document.getElementById(`nav-section-${section.id}`);
-    if (!container || !target) return;
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    container.scrollTo({ top: target.offsetTop, behavior: reduceMotion ? 'auto' : 'smooth' });
-  };
+  const sidebarGroups = navSections.map((section) => ({
+    id: section.id,
+    label: section.label,
+    items: section.links.map(navItem),
+  }));
+  const sidebarFooterItems = [
+    can(sessionAuth, CAP.HELP_VIEW) && {
+      id: 'help', domId: 'help-tab', icon: 'help', label: t(locale, 'dashboard.help'), active: navTab === 'help',
+      onIntent: () => preloadDashboardTab('help'),
+      onClick: () => { navigateToTab('help'); setSidebarOpen(false); },
+    },
+    can(sessionAuth, CAP.PROFILE_SELF) && {
+      id: 'profile', icon: 'user', label: t(locale, 'dashboard.profile'), active: navTab === 'profile',
+      onIntent: () => preloadDashboardTab('profile'),
+      onClick: () => { navigateToTab('profile'); setSidebarOpen(false); },
+    },
+    {
+      id: 'logout', icon: 'logout', tone: 'danger', label: t(locale, 'dashboard.logout'), disabled: loggingOut,
+      onClick: () => void logout(),
+    },
+  ].filter(Boolean);
 
   return (
     <PipelineExtrasProvider>
@@ -937,114 +927,32 @@ function DashboardClientContent({
         aria-hidden={!sidebarOpen}
       />
       <div className="relative flex min-h-screen">
-        <aside
+        <SidebarNav
           id="dashboard-sidebar"
-          className={cn(
-            'db-sidebar db-sidebar--rail flex flex-shrink-0 flex-row border-r border-ink/12 bg-surface',
-            sidebarOpen && 'db-sidebar-open',
-            navCollapsed && 'db-sidebar-collapsed',
-            navCollapsed ? 'w-16' : 'w-[300px]'
-          )}
-        >
-          <SidebarRail
-            ariaLabel={t(locale, 'dashboard.sectionsNavAria')}
-            toggle={
-              <SidebarRailButton
-                icon={navCollapsed ? 'expand' : 'collapse'}
-                label={navCollapsed ? t(locale, 'dashboard.expandSidebar') : t(locale, 'dashboard.collapseSidebar')}
-                className="db-sidebar-collapse-toggle"
-                onClick={toggleSidebarCollapsed}
-              />
-            }
-            brand={
-              <BrandMark
-                size={26}
-                onClick={() => {
-                  navigateToTab('overview');
-                  setSidebarOpen(false);
-                }}
-                title={t(locale, 'dashboard.homeAria')}
-                aria-label={t(locale, 'dashboard.homeAria')}
-              />
-            }
-            footer={
-              <>
-                {can(sessionAuth, CAP.HELP_VIEW) ? (
-                  <SidebarRailButton
-                    icon="help"
-                    label={t(locale, 'dashboard.help')}
-                    active={tab === 'help'}
-                    onClick={() => { navigateToTab('help'); setSidebarOpen(false); }}
-                  />
-                ) : null}
-                {can(sessionAuth, CAP.PROFILE_SELF) ? (
-                  <SidebarRailButton
-                    icon="user"
-                    label={t(locale, 'dashboard.profile')}
-                    active={tab === 'profile'}
-                    onClick={() => { navigateToTab('profile'); setSidebarOpen(false); }}
-                  />
-                ) : null}
-                <SidebarRailButton
-                  icon="logout"
-                  tone="danger"
-                  label={t(locale, 'dashboard.logout')}
-                  disabled={loggingOut}
-                  onClick={() => void logout()}
-                />
-              </>
-            }
-          >
-            {navSections.map((section) => (
-              <SidebarRailButton
-                key={section.id}
-                icon={section.icon}
-                label={section.label}
-                active={section.id === activeNavSection}
-                selected={!navCollapsed && section.id === panelSection?.id}
-                pressed={navCollapsed ? undefined : section.id === panelSection?.id}
-                badge={section.links.some((link) => link.badge)}
-                onClick={() => onRailSection(section)}
-              />
-            ))}
-          </SidebarRail>
-          {!navCollapsed ? (
-            <div className="db-sidebar-panel flex min-w-0 flex-1 flex-col px-2 pb-4 pt-2">
-              <div className="db-sidebar-close-mobile mb-1 min-h-10 flex-shrink-0 items-center justify-end pt-2">
-                <button
-                  type="button"
-                  className="flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-transparent text-ink-muted"
-                  onClick={() => setSidebarOpen(false)}
-                  aria-label={t(locale, 'common.closeMenu')}
-                >
-                  <Icon name="close" />
-                </button>
-              </div>
-              <nav
-                ref={sidebarNavRef}
-                aria-label={t(locale, 'dashboard.sectionsNavAria')}
-                className="db-sidebar-nav relative min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]"
-              >
-                {navSections.map((section) => (
-                  <div key={section.id} id={`nav-section-${section.id}`} role="group" aria-labelledby={`nav-section-${section.id}-label`} className="mb-2">
-                    <p
-                      id={`nav-section-${section.id}-label`}
-                      className={cn(
-                        'sticky top-0 z-[1] m-0 bg-surface px-3 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wide',
-                        section.id === activeNavSection ? 'text-ink' : 'text-ink-label'
-                      )}
-                    >
-                      {section.label}
-                    </p>
-                    {section.links.map((link) => (
-                      <NavLink key={link.id} id={link.id} icon={link.icon} label={link.label} badge={link.badge} />
-                    ))}
-                  </div>
-                ))}
-              </nav>
-            </div>
-          ) : null}
-        </aside>
+          locale={locale}
+          ariaLabel={t(locale, 'dashboard.sectionsNavAria')}
+          storageKey="30team_nav_closed_groups"
+          collapsed={navCollapsed}
+          onToggleCollapsed={toggleSidebarCollapsed}
+          open={sidebarOpen}
+          onCloseMobile={() => setSidebarOpen(false)}
+          navRef={sidebarNavRef}
+          groups={sidebarGroups}
+          brand={
+            <BrandMark
+              size={26}
+              onClick={() => {
+                navigateToTab('overview');
+                setSidebarOpen(false);
+              }}
+              title={t(locale, 'dashboard.homeAria')}
+              aria-label={t(locale, 'dashboard.homeAria')}
+            />
+          }
+          footer={(iconOnly) => sidebarFooterItems.map((item) => (
+            <SidebarNavItem key={item.id} item={item} collapsed={iconOnly} />
+          ))}
+        />
 
         <main className="db-main relative mx-auto min-w-0 max-w-[1600px] flex-1 px-6 pb-[60px] pt-7">
           <DashboardPageTitleContext.Provider value={isPersonFocus || isVacancyDetail ? null : t(locale, getDashboardTabNav(tab).labelKey)}>
