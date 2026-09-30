@@ -1,6 +1,15 @@
 import { test, expect } from '@playwright/test';
 import { HR } from './fixtures.js';
 
+async function openMenuItem(page, trigger, name) {
+  const item=page.getByRole('menuitem',{name,exact:true});
+  await expect(async()=>{
+    if (!(await item.isVisible())) await trigger.click();
+    await expect(item).toBeVisible({timeout:1000});
+  }).toPass({timeout:15000});
+  await item.click();
+}
+
 test('OKR: area → objective → measured KR, history, employee check-in and closed-cycle enforcement', async ({page,browser,baseURL}) => {
   test.setTimeout(120000);
   page.setDefaultTimeout(15000);
@@ -32,15 +41,13 @@ test('OKR: area → objective → measured KR, history, employee check-in and cl
     await dialog.getByRole('button',{name:'Salvar',exact:true}).click();
     const objective=area.getByRole('article',{name:'Objetivo: Acelerar vendas',exact:true});
     await expect(objective).toBeVisible();
-    await objective.getByRole('button',{name:'Mais ações',exact:true}).click();
-    await page.getByRole('menuitem',{name:'Editar objetivo',exact:true}).click();
+    await openMenuItem(page,objective.getByRole('button',{name:'Mais ações: Acelerar vendas',exact:true}),'Editar objetivo');
     await page.getByRole('dialog').getByLabel('Descrição',{exact:true}).fill('Objetivo mensurável da área comercial.');
     await page.getByRole('dialog').getByRole('combobox',{name:'Responsável',exact:true}).fill(employee.label);
     await page.getByRole('dialog').getByRole('option').filter({hasText:employee.label}).click();
     await page.getByRole('dialog').getByRole('button',{name:'Salvar',exact:true}).click();
     await expect(objective).toContainText(employee.label);
-    await objective.getByRole('button',{name:'Mais ações',exact:true}).click();
-    await page.getByRole('menuitem',{name:'Editar objetivo',exact:true}).click();
+    await openMenuItem(page,objective.getByRole('button',{name:'Mais ações: Acelerar vendas',exact:true}),'Editar objetivo');
     await expect(page.getByRole('dialog').getByRole('combobox',{name:'Responsável',exact:true})).toHaveValue(employee.label);
     await page.getByRole('dialog').getByRole('button',{name:'Cancelar',exact:true}).click();
     await expect(page.getByRole('menuitem',{name:'Excluir objetivo',exact:true})).toBeHidden();
@@ -99,8 +106,7 @@ test('OKR: area → objective → measured KR, history, employee check-in and cl
     await expect(employeePage.getByRole('dialog').getByRole('textbox')).toHaveValue('Employee measurement');
     await employeePage.getByRole('dialog').getByRole('button',{name:/Salvar|Registrar/}).click();
     await expect(employeeKr).toContainText('Atual: 6 dias');
-    await kr.getByRole('button',{name:'Mais ações',exact:true}).click();
-    await page.getByRole('menuitem',{name:'Editar resultado-chave',exact:true}).click();
+    await openMenuItem(page,kr.getByRole('button',{name:'Mais ações: Reduzir prazo de venda',exact:true}),'Editar resultado-chave');
     await page.getByRole('dialog').getByRole('spinbutton',{name:'Meta',exact:true}).fill('0');
     await page.getByRole('dialog').getByRole('button',{name:'Salvar',exact:true}).click();
     await expect(kr.getByRole('definition').nth(2)).toContainText('6');

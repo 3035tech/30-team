@@ -12,6 +12,7 @@ import { AppLoading, ContentEnter } from './AppLoading';
 import { FormField } from './FormField';
 import { RowActionsMenu } from './RowActionsMenu';
 import { RichTextView } from './RichTextView';
+import { EmptyState } from './EmptyState';
 import { htmlToPlainText, plainOrMarkdownToSimpleHtml } from '../../lib/sanitize-html';
 
 const RICH_TEXT_MAX = 2000;
@@ -137,13 +138,13 @@ function OkrHierarchyContent({ locale, companyId }) {
     if(await confirm({title:label('Excluir registro','Delete record'),message:label(`Excluir “${item.title}” e todos os registros e históricos vinculados? Essa ação não pode ser desfeita.`,`Delete “${item.title}” and all linked records and history? This cannot be undone.`),danger:true,confirmLabel:label('Excluir','Delete')})) await mutate({action:'delete',kind,id:item.id},url || '/api/admin/okr/hierarchy',url ? 'DELETE' : 'POST');
   }
   const progress = (name,value,className='sm:w-36') => <div className={cn('w-full shrink-0',className)}><span className="text-sm font-medium tabular-nums text-ink">{pct(value)}</span><MeterBar percent={value ?? 0} height={6} aria-label={`${name}: ${pct(value)}`} /></div>;
-  const moreLabel = label('Mais ações','More actions');
+  const moreLabel = name => `${label('Mais ações','More actions')}: ${name}`;
   if(loading && !cycles.length) return <AppLoading locale={locale} variant="panel" label={label('Carregando OKRs…','Loading OKRs…')} />;
   if(error) return <div role="alert" className="flex flex-col items-start gap-3">{notice && <p className={muted}>{notice.message}</p>}<p className={muted}>{label('Não foi possível carregar os OKRs.','Unable to load OKRs.')}</p><button className={S.btnBrandSoft} onClick={load}>{label('Tentar novamente','Try again')}</button></div>;
   return <section className="flex min-w-0 flex-col gap-5" aria-label="OKRs" aria-busy={busy || loading}>
     {notice && <div role={notice.error?'alert':'status'} className={`flex items-center justify-between gap-3 rounded-control border p-3 text-sm ${notice.error?'border-danger/30 text-red-800 dark:text-danger':'border-success/30 text-ink'}`}><span>{notice.message}</span><button className="min-h-touch min-w-touch" aria-label={label('Dispensar aviso','Dismiss notice')} onClick={()=>setNotice(null)}>×</button></div>}
     <AdminPageHeader title="OKRs" subtitle={label('Acompanhe os objetivos e registre a evolução dos resultados da equipe.', 'Track objectives and record your team’s results.')} actions={<button disabled={busy} className={S.btnBrandSoft} onClick={newCycle}>{label('Novo ciclo','New cycle')}</button>} />
-    {!cycle ? <p className={muted}>{label('Crie um ciclo para começar.','Create a cycle to get started.')}</p> : <ContentEnter animKey={cycle.id} className="flex min-w-0 flex-col gap-5">
+    {!cycle ? <EmptyState title={label('Nenhum ciclo de OKR','No OKR cycle yet')} message={label('Crie um ciclo com início e fim; depois adicione áreas, objetivos e resultados-chave.','Create a cycle with start and end dates, then add areas, objectives and key results.')} actionLabel={label('Novo ciclo','New cycle')} onAction={newCycle} actionDisabled={busy} /> : <ContentEnter animKey={cycle.id} className="flex min-w-0 flex-col gap-5">
       <div className="rounded-card border border-ink/12 bg-surface p-4">
         <div className="grid min-w-0 items-end gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto]">
           <FormField label={label('Ciclo OKR ativo','Active OKR cycle')} htmlFor="okr-cycle"><SelectField className="w-full" disabled={busy || loading} id="okr-cycle" aria-label={label('Ciclo OKR ativo','Active OKR cycle')} value={activeId} onChange={e=>{setActiveId(Number(e.target.value));setAreaId('all');setDetailId(null);setHistory(null);setNotice(null);}}>{cycles.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</SelectField></FormField>
@@ -151,9 +152,9 @@ function OkrHierarchyContent({ locale, companyId }) {
             <option value="all">{label('Todas as áreas','All areas')}</option>
             {cycle.areas.map(area => <option key={area.id} value={area.id}>{area.title}</option>)}
           </SelectField></FormField>
-          <div className="flex flex-wrap items-center gap-2 md:col-span-2 xl:col-span-1 xl:justify-end">
+          <div className="flex flex-wrap items-center justify-end gap-2 md:col-span-2 xl:col-span-1">
             <button disabled={locked} className={S.btnBrandSoft} onClick={()=>editArea()}>{label('Nova área','New area')}</button>
-            <RowActionsMenu label={moreLabel} disabled={busy} items={[
+            <RowActionsMenu label={moreLabel(cycle.title)} disabled={busy} items={[
               {id:'status',label:cycle.status==='closed'?label('Reabrir ciclo','Reopen cycle'):label('Encerrar ciclo','Close cycle'),onSelect:()=>mutate({status:cycle.status==='closed'?'active':'closed'},`/api/admin/okr/cycles/${cycle.id}`,'PATCH')},
               {id:'delete',label:label('Excluir ciclo','Delete cycle'),danger:true,disabled:locked,onSelect:()=>remove('cycle',cycle,`/api/admin/okr/cycles/${cycle.id}${qs}`)},
             ]} />
@@ -172,7 +173,7 @@ function OkrHierarchyContent({ locale, companyId }) {
           {progress(area.title,area.progressPct)}
           <div className="flex items-center gap-2">
             <button disabled={locked} className={S.btnBrandSoft} onClick={()=>editObjective(area)}>{label('Novo objetivo','New objective')}</button>
-            <RowActionsMenu label={moreLabel} disabled={locked} items={[
+            <RowActionsMenu label={moreLabel(area.title)} disabled={locked} items={[
               {id:'edit',label:label('Editar área','Edit area'),onSelect:()=>editArea(area)},
               {id:'delete',label:label('Excluir área','Delete area'),danger:true,onSelect:()=>remove('area',area,`/api/admin/okr/areas/${area.id}${qs}`)},
             ]} />
@@ -188,7 +189,7 @@ function OkrHierarchyContent({ locale, companyId }) {
             </div>
             <div className="flex items-center gap-2">
               <button disabled={locked} className={S.btnBrandSoft} onClick={()=>editKr(objective)}>{label('Novo resultado-chave','New key result')}</button>
-              <RowActionsMenu label={moreLabel} disabled={locked} items={[
+              <RowActionsMenu label={moreLabel(objective.title)} disabled={locked} items={[
                 {id:'edit',label:label('Editar objetivo','Edit objective'),onSelect:()=>editObjective(area,objective)},
                 {id:'delete',label:label('Excluir objetivo','Delete objective'),danger:true,onSelect:()=>remove('objective',objective)},
               ]} />
@@ -201,8 +202,8 @@ function OkrHierarchyContent({ locale, companyId }) {
                 <h5 className="m-0 break-words font-ui text-sm font-semibold text-ink">{k.title}</h5>
                 <p className="mb-0 mt-1 break-words text-prose text-ink-muted">
                   <span className="font-medium tabular-nums text-ink">{label('Atual','Current')}: {number(k.currentValue)} · {label('Meta','Target')}: {number(k.targetValue)} {k.unit}</span>
-                  {' · '}{date(k.deadline)}{' · '}
-                  <span className={k.urgency==='overdue' && k.progressPct<100 ? 'text-red-800 dark:text-danger' : ''}>{k.progressPct>=100?label('Concluído','Complete'):k.urgency==='overdue'?label('Atrasado','Overdue'):label('Em andamento','In progress')}</span>
+                  {' · '}<span className="whitespace-nowrap">{date(k.deadline)}</span>{' · '}
+                  <span className={cn('whitespace-nowrap',k.urgency==='overdue' && k.progressPct<100 && 'text-red-800 dark:text-danger')}>{k.progressPct>=100?label('Concluído','Complete'):k.urgency==='overdue'?label('Atrasado','Overdue'):label('Em andamento','In progress')}</span>
                 </p>
                 {!!k.assignees.length && <p className="mb-0 mt-1 break-words text-prose text-ink-muted" title={k.assignees.map(p=>p.fullName).join(', ')}>
                   {k.assignees.length===1 ? label('Responsável','Owner') : label('Responsáveis','Owners')}: <span className="text-ink">{k.assignees.slice(0,2).map(p=>p.fullName).join(', ')}{k.assignees.length>2 && ` +${k.assignees.length-2}`}</span>
@@ -212,7 +213,7 @@ function OkrHierarchyContent({ locale, companyId }) {
               <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
                 <button disabled={locked} className={cn(S.btnBrandSoft,'max-sm:w-full')} onClick={()=>checkin(k)}>{label('Registrar check-in','Record check-in')}</button>
                 <button type="button" disabled={busy} className={cn(S.btnGhost,'max-sm:flex-1')} aria-expanded={detailId===k.id} aria-controls={detailId===k.id ? `okr-details-${k.id}` : undefined} onClick={()=>{setDetailId(detailId===k.id ? null : k.id);setHistory(null);}}>{detailId===k.id ? label('Fechar detalhes','Close details') : label('Ver detalhes','View details')}</button>
-                <RowActionsMenu label={moreLabel} disabled={locked} items={[
+                <RowActionsMenu label={moreLabel(k.title)} disabled={locked} items={[
                   {id:'edit',label:label('Editar resultado-chave','Edit key result'),onSelect:()=>editKr(objective,k)},
                   {id:'delete',label:label('Excluir resultado-chave','Delete key result'),danger:true,onSelect:()=>remove('kr',k)},
                 ]} />
