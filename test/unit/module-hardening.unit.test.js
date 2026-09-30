@@ -153,6 +153,8 @@ describe('module hardening', () => {
     assert.match(dashboard, /DASHBOARD_NAV_SECTION\.CULTURE_HR/);
     assert.match(dashboard, /navSections\.map\(\(section\) => \(\s*<SidebarRailButton/);
     assert.match(dashboard, /className="db-sidebar-panel /);
+    assert.match(dashboard, /id=\{`nav-section-\$\{section\.id\}`\}/);
+    assert.doesNotMatch(dashboard, /panelSection\?\.links\.map/);
   });
 
   it('organizes the vacancy workspace around recruiter tasks', () => {

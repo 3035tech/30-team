@@ -520,7 +520,7 @@ function DashboardClientContent({
       }
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [tab, navCollapsed, railPick]);
+  }, [tab, navCollapsed]);
 
   useEffect(() => {
     try {
@@ -896,6 +896,11 @@ function DashboardClientContent({
       return;
     }
     setRailPick({ tab, section: section.id });
+    const container = sidebarNavRef.current;
+    const target = document.getElementById(`nav-section-${section.id}`);
+    if (!container || !target) return;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    container.scrollTo({ top: target.offsetTop, behavior: reduceMotion ? 'auto' : 'smooth' });
   };
 
   return (
@@ -996,12 +1001,11 @@ function DashboardClientContent({
             ))}
           </SidebarRail>
           {!navCollapsed ? (
-            <div className="db-sidebar-panel flex min-w-0 flex-1 flex-col px-2 pb-4 pt-4">
-              <div className="mb-3 flex min-h-10 flex-shrink-0 items-center justify-between gap-2 pl-3">
-                <p className="m-0 min-w-0 truncate font-ui text-sm font-semibold text-ink">{panelSection?.label}</p>
+            <div className="db-sidebar-panel flex min-w-0 flex-1 flex-col px-2 pb-4 pt-2">
+              <div className="db-sidebar-close-mobile mb-1 min-h-10 flex-shrink-0 items-center justify-end pt-2">
                 <button
                   type="button"
-                  className="db-sidebar-close-mobile flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-transparent text-ink-muted"
+                  className="flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-transparent text-ink-muted"
                   onClick={() => setSidebarOpen(false)}
                   aria-label={t(locale, 'common.closeMenu')}
                 >
@@ -1010,11 +1014,24 @@ function DashboardClientContent({
               </div>
               <nav
                 ref={sidebarNavRef}
-                aria-label={panelSection?.label}
-                className="db-sidebar-nav min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]"
+                aria-label={t(locale, 'dashboard.sectionsNavAria')}
+                className="db-sidebar-nav relative min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]"
               >
-                {panelSection?.links.map((link) => (
-                  <NavLink key={link.id} id={link.id} icon={link.icon} label={link.label} badge={link.badge} />
+                {navSections.map((section) => (
+                  <div key={section.id} id={`nav-section-${section.id}`} role="group" aria-labelledby={`nav-section-${section.id}-label`} className="mb-2">
+                    <p
+                      id={`nav-section-${section.id}-label`}
+                      className={cn(
+                        'sticky top-0 z-[1] m-0 bg-surface px-3 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wide',
+                        section.id === activeNavSection ? 'text-ink' : 'text-ink-label'
+                      )}
+                    >
+                      {section.label}
+                    </p>
+                    {section.links.map((link) => (
+                      <NavLink key={link.id} id={link.id} icon={link.icon} label={link.label} badge={link.badge} />
+                    ))}
+                  </div>
                 ))}
               </nav>
             </div>
