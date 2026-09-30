@@ -48,7 +48,6 @@ function getViews(locale) {
     { id: 'dashboard', label: t(locale, 'panel.motivatorsAdmin.tabs.dashboard') },
     { id: 'invites', label: t(locale, 'panel.motivatorsAdmin.tabs.invites') },
     { id: 'results', label: t(locale, 'panel.motivatorsAdmin.tabs.results') },
-    { id: 'config', label: t(locale, 'panel.motivatorsAdmin.tabs.config'), adminOnly: true },
   ];
 }
 
@@ -1023,150 +1022,12 @@ function AnalyticsPanel({ locale, isAdmin, companyFilter }) {
   );
 }
 
-function ConfigPanel({ locale }) {
-  const { confirm } = useAppFeedback();
-  const [questions, setQuestions] = useState([]);
-  const [dims, setDims] = useState([]);
-  const [definitions, setDefinitions] = useState([]);
-  const [deleteBusy, setDeleteBusy] = useState(null);
-  const [notice, setNotice] = useState(null);
-
-  const loadConfig = useCallback(() => {
-    fetch('/api/admin/ae/config/questions?definition=motivators&activeOnly=1')
-      .then((r) => r.json())
-      .then((d) => setQuestions((d.items || []).slice(0, 100)));
-    fetch('/api/admin/ae/config/dimensions')
-      .then((r) => r.json())
-      .then((d) => setDims(d.items || []));
-    fetch('/api/admin/ae/definitions')
-      .then((r) => r.json())
-      .then((d) => setDefinitions(d.items || []))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => { loadConfig(); }, [loadConfig]);
-
-  const removeDefinition = async (def) => {
-    const msg = def.attemptsCount > 0
-      ? t(locale, 'panel.motivatorsAdmin.config.deleteConfirmWithAttempts', { name: def.name, count: def.attemptsCount })
-      : t(locale, 'panel.motivatorsAdmin.config.deleteConfirmNoAttempts', { name: def.name });
-    const ok = await confirm({ message: msg, danger: true });
-    if (!ok) return;
-    setDeleteBusy(def.id);
-    try {
-      const res = await fetch(`/api/admin/ae/definitions/${def.id}`, { method: 'DELETE' });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || t(locale, 'panel.motivatorsAdmin.config.deleteError'));
-      loadConfig();
-    } catch (e) {
-      setNotice({
-        tone: 'error',
-        title: t(locale, 'panel.common.error'),
-        message: e.message || t(locale, 'panel.motivatorsAdmin.config.deleteError'),
-      });
-    } finally {
-      setDeleteBusy(null);
-    }
-  };
-
-  const toggleQuestion = async (id, active) => {
-    await fetch('/api/admin/ae/config/questions', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, active: !active }),
-    });
-    setQuestions((prev) => prev.map((q) => (q.id === id ? { ...q, active: !active } : q)));
-  };
-
-  return (
-    <div className="grid gap-5">
-      <SystemNoticeModal
-        open={Boolean(notice)}
-        locale={locale}
-        tone={notice?.tone || 'info'}
-        title={notice?.title}
-        message={notice?.message || ''}
-        onClose={() => setNotice(null)}
-      />
-      {definitions.length > 0 ? (
-        <div className={S.card}>
-          <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.config.definitionsTitle')}</span>
-          <p className="mb-3 mt-0 text-xs text-ink-muted">
-            {t(locale, 'panel.motivatorsAdmin.config.definitionsIntro')}
-          </p>
-          {definitions.map((def) => (
-            <div key={def.id} className="flex items-start justify-between gap-3 border-t border-ink/12 py-3">
-              <div>
-                <div className="text-sm text-ink">{def.name}</div>
-                <div className="mt-1 font-mono text-2xs text-ink-muted">
-                  {t(locale, 'panel.motivatorsAdmin.config.defMeta', {
-                    slug: def.slug,
-                    version: def.version,
-                    questions: def.questionsCount,
-                    results: def.attemptsCount,
-                  })}
-                  {!def.active ? t(locale, 'panel.motivatorsAdmin.config.defInactive') : ''}
-                </div>
-              </div>
-              <AdminDeleteButton
-                label={
-                  deleteBusy === def.id
-                    ? t(locale, 'panel.motivatorsAdmin.config.deleting')
-                    : t(locale, 'panel.motivatorsAdmin.config.delete')
-                }
-                disabled={deleteBusy === def.id}
-                onClick={() => removeDefinition(def)}
-              />
-            </div>
-          ))}
-        </div>
-      ) : null}
-      <div className={S.card}>
-        <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.config.dimensionsTitle', { count: dims.length })}</span>
-        <p className="text-xs text-ink-muted">{t(locale, 'panel.motivatorsAdmin.config.dimensionsHint')}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {dims.map((d) => (
-            <span
-              key={d.id}
-              className={cn('rounded-2xl px-2.5 py-1 text-2xs', !d.active && 'opacity-40')}
-              style={{ background: `${d.color || C.purple}18`, color: d.color || C.purple }}
-            >
-              {d.label}
-            </span>
-          ))}
-        </div>
-      </div>
-      <div className={S.card}>
-        <span className={S.label}>{t(locale, 'panel.motivatorsAdmin.config.questionBankTitle')}</span>
-        <p className="mb-3 text-xs text-ink-muted">{t(locale, 'panel.motivatorsAdmin.config.questionBankIntro')}</p>
-        {questions.map((q) => (
-          <div key={q.id} className="flex items-start gap-3 border-t border-ink/12 py-2.5">
-            <button
-              type="button"
-              onClick={() => toggleQuestion(q.id, q.active)}
-              className={cn(
-                'cursor-pointer rounded-lg border border-ink/12 px-2 py-0.5 text-2xs',
-                q.active ? 'bg-success/10' : 'bg-transparent'
-              )}
-            >
-              {q.active ? t(locale, 'panel.motivatorsAdmin.config.questionActive') : t(locale, 'panel.motivatorsAdmin.config.questionInactive')}
-            </button>
-            <div className={cn('flex-1 text-xs leading-snug', q.active ? 'text-ink' : 'text-ink-muted')}>
-              <span className="font-mono text-2xs text-ink-faint">{q.questionType} · {q.key}</span>
-              <div>{q.text.length > 120 ? `${q.text.slice(0, 120)}…` : q.text}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) {
   const searchParams = useSearchParams();
-  const view =
-    searchParams.get('motivatorsView') ||
-    (searchParams.get('attempt') ? 'results' : 'dashboard');
+  const requestedView = searchParams.get('motivatorsView');
+  const view = getViews(locale).some((v) => v.id === requestedView)
+    ? requestedView
+    : searchParams.get('attempt') ? 'results' : 'dashboard';
   const companyFilter = searchParams.get('company') || 'all';
   const focusAttemptId = searchParams.get('attempt') || null;
   const [refreshKey, setRefreshKey] = useState(0);
@@ -1222,7 +1083,7 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
     window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
   };
 
-  const visibleViews = getViews(locale).filter((v) => !v.adminOnly || isAdmin);
+  const visibleViews = getViews(locale);
   const inviteBusy = Boolean(inviteActions?.busy);
 
   return (
@@ -1317,7 +1178,6 @@ export default function MotivatorsAdminTab({ isAdmin, companies = [], locale }) 
             focusAttemptId={focusAttemptId}
           />
         ) : null}
-        {view === 'config' && isAdmin ? <ConfigPanel locale={locale} /> : null}
       </ContentEnter>
     </div>
   );
