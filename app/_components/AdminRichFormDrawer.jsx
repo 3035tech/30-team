@@ -135,7 +135,7 @@ export function AdminRichFormDrawer({
                 type="button"
                 onClick={onClose}
                 aria-label={backLabel}
-                className="mb-3 inline-flex min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-1.5 font-ui text-prose text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
+                className="mb-3 flex w-fit min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-1.5 font-ui text-prose text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
               >
                 ← {backLabel}
               </button>

@@ -17,7 +17,7 @@ test('P1: dependent-only edits preserve other personnel fields and cancel is rea
     for (const field of ['cpf','rg','emergencyName','emergencyPhone','emergencyRelation','addressLine','addressNumber','addressCity','addressState','addressPostal','internalNotes']) expect(after.profile[field], field).toEqual(before.profile[field]);
     await page.goto(`/dashboard?tab=team&candidate=${id}&section=dp`);
     await dismissManagerOnboarding(page);
-    const button = page.getByRole('button', { name: 'Dependentes', exact: true });
+    const button = page.getByRole('button', { name: 'Editar dependentes', exact: true });
     await expect(button).toBeVisible();
     await button.click();
     const editor = page.getByRole('dialog').filter({ hasText: 'Possui dependentes?' });
@@ -26,7 +26,7 @@ test('P1: dependent-only edits preserve other personnel fields and cancel is rea
     await editor.getByRole('button', { name: 'Cancelar', exact: true }).last().click();
     expect((await json(page.request.get(endpoint))).profile.dependents).toEqual(dependents);
     await button.click();
-    await editor.getByLabel('Não', { exact: true }).check();
+    await editor.getByRole('button', { name: 'Não', exact: true }).click();
     await editor.getByRole('button', { name: 'Salvar', exact: true }).click();
     await expect(editor).toHaveCount(0);
     expect((await json(page.request.get(endpoint))).profile.dependents).toEqual([]);

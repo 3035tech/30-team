@@ -17,8 +17,8 @@ import { EmptyState } from './EmptyState';
 import { AppLoading, ContentEnter } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
 import { StatusToneChip } from './StatusToneChip';
-import { FormField } from './FormField';
 import { DpDependentsEditor } from './DpDependentsEditor';
+import { Icon } from './Icon';
 import { InlineCallout } from './InlineCallout';
 import { PrivateAttachment } from './PrivateAttachment';
 import { formatDisplayDateTime } from '../../lib/format-display-date';
@@ -151,6 +151,28 @@ function leaveStatusTone(status) {
 /**
  * Lightweight DP: emergency/address profile, document checklist, leave.
  */
+function ProfileSection({ title, action = null, first = false, plain = false, children }) {
+  return (
+    <section className={cn(!first && 'mt-4 border-t border-ink/10 pt-4')}>
+      <div className="mb-3 flex min-h-touch items-center justify-between gap-2">
+        <h3 className="m-0 font-ui text-sm font-semibold text-ink">{title}</h3>
+        {action}
+      </div>
+      {plain ? children : <dl className="m-0 grid items-start gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">{children}</dl>}
+    </section>
+  );
+}
+
+function ProfileInfo({ label, children, className, breakAll = false, pre = false }) {
+  const empty = children == null || children === '';
+  return (
+    <div className={cn('min-w-0', className)}>
+      <dt className={S.label}>{label}</dt>
+      <dd className={cn('m-0 text-sm', empty ? 'text-ink-faint' : 'text-ink', breakAll && 'break-all', pre && 'whitespace-pre-wrap')}>{empty ? '—' : children}</dd>
+    </div>
+  );
+}
+
 export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
   const { toast, promptForm, confirm } = useAppFeedback();
   const [profile, setProfile] = useState(null);
@@ -221,6 +243,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
 
   const editProfile = async () => {
     await promptForm({
+      size: 'wide',
       title: t(locale, 'panel.dp.editProfile'),
       confirmLabel: t(locale, 'panel.dp.save'),
       submit: async (values) => {
@@ -235,6 +258,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             fullName: values.fullName,
+            email: values.email,
             personalEmail: values.personalEmail,
             phone: values.phone,
             maritalStatus: values.maritalStatus,
@@ -260,6 +284,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           label: t(locale, 'panel.dp.fullName'),
           defaultValue: candidate?.fullName || '',
           required: true,
+          section: i18nT(locale, 'ui.dpBlock.personal'),
         },
         {
           key: 'maritalStatus',
@@ -274,29 +299,107 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             { value: 'divorced', label: t(locale, 'panel.dp.maritalDivorced') },
             { value: 'widowed', label: t(locale, 'panel.dp.maritalWidowed') },
           ],
-        },
-        {
-          key: 'personalEmail',
-          type: 'email',
-          label: t(locale, 'panel.dp.personalEmail'),
-          defaultValue: candidate?.personalEmail || '',
-        },
-        {
-          key: 'phone',
-          type: 'phone',
-          label: t(locale, 'panel.dp.mobile'),
-          defaultValue: candidate?.phone || '',
-        },
-        {
-          key: 'employeeNumber',
-          label: t(locale, 'panel.dp.employeeNumber'),
-          defaultValue: candidate?.employeeNumber || '',
+          row: 'maritalBirth',
         },
         {
           key: 'birthDate',
           type: 'date',
           label: t(locale, 'panel.dp.birthDate'),
           defaultValue: candidate?.birthDate ? String(candidate.birthDate).slice(0, 10) : '',
+          row: 'maritalBirth',
+        },
+        {
+          key: 'cpf',
+          type: 'cpf',
+          label: t(locale, 'panel.dp.cpf'),
+          defaultValue: profile?.cpf || '',
+          help: t(locale, 'panel.dp.cpfHelp'),
+          row: 'docs',
+        },
+        {
+          key: 'rg',
+          label: t(locale, 'panel.dp.rg'),
+          defaultValue: profile?.rg || '',
+          row: 'docs',
+        },
+        {
+          key: 'email',
+          type: 'email',
+          label: t(locale, 'panel.dp.corporateEmail'),
+          defaultValue: candidate?.email || '',
+          required: true,
+          help: t(locale, 'panel.dp.corporateEmailHelp'),
+          section: i18nT(locale, 'ui.dpBlock.contact'),
+          row: 'emails',
+        },
+        {
+          key: 'personalEmail',
+          type: 'email',
+          label: t(locale, 'panel.dp.personalEmail'),
+          defaultValue: candidate?.personalEmail || '',
+          row: 'emails',
+        },
+        {
+          key: 'phone',
+          type: 'phone',
+          label: t(locale, 'panel.dp.mobile'),
+          defaultValue: candidate?.phone || '',
+          row: 'phoneCep',
+        },
+        {
+          key: 'addressPostal',
+          type: 'cep',
+          label: t(locale, 'panel.dp.addressPostal'),
+          defaultValue: profile?.addressPostal || '',
+          help: t(locale, 'panel.dp.cepHelp'),
+          cepAutofill: {
+            addressLine: 'addressLine',
+            addressCity: 'addressCity',
+            addressState: 'addressState',
+          },
+          row: 'phoneCep',
+        },
+        {
+          key: 'addressLine',
+          label: t(locale, 'panel.dp.addressLine'),
+          defaultValue: profile?.addressLine || '',
+          maxLength: 240,
+          row: 'street',
+          rowWeight: 3,
+        },
+        {
+          key: 'addressNumber',
+          label: t(locale, 'panel.dp.addressNumber'),
+          defaultValue: profile?.addressNumber || '',
+          maxLength: DP_ADDRESS_NUMBER_MAX_LENGTH,
+          help: t(locale, 'panel.dp.addressNumberHelp'),
+          row: 'street',
+        },
+        {
+          key: 'addressCity',
+          label: t(locale, 'panel.dp.addressCity'),
+          defaultValue: profile?.addressCity || '',
+          maxLength: 120,
+          row: 'city',
+          rowWeight: 3,
+        },
+        {
+          key: 'addressState',
+          type: 'select',
+          label: t(locale, 'panel.dp.addressState'),
+          defaultValue: profile?.addressState || '',
+          options: [
+            { value: '', label: t(locale, 'panel.dp.ufEmpty') },
+            ...BR_STATES.map((s) => ({ value: s.uf, label: s.uf })),
+          ],
+          row: 'city',
+        },
+        {
+          key: 'employeeNumber',
+          label: t(locale, 'panel.dp.employeeNumber'),
+          defaultValue: candidate?.employeeNumber || '',
+          section: i18nT(locale, 'ui.dpBlock.professional'),
+          row: 'work',
         },
         {
           key: 'workFormat',
@@ -310,6 +413,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             { value: 'cooperative', label: t(locale, 'panel.dp.workFormatCooperative') },
             { value: 'pj', label: t(locale, 'panel.dp.workFormatPj') },
           ],
+          row: 'work',
         },
         {
           key: 'workFormatEffectiveDate',
@@ -317,6 +421,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           required: true,
           label: t(locale, 'panel.dp.workFormatEffectiveDate'),
           showWhen: values => (values.workFormat || '') !== (candidate?.workFormat || ''),
+          width: 'half',
         },
         {
           key: 'workHistory',
@@ -326,87 +431,35 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           rows: 3,
         },
         {
-          key: 'addressPostal',
-          type: 'cep',
-          label: t(locale, 'panel.dp.addressPostal'),
-          defaultValue: profile?.addressPostal || '',
-          help: t(locale, 'panel.dp.cepHelp'),
-          cepAutofill: {
-            addressLine: 'addressLine',
-            addressCity: 'addressCity',
-            addressState: 'addressState',
-          },
-        },
-        {
-          key: 'addressLine',
-          label: t(locale, 'panel.dp.addressLine'),
-          defaultValue: profile?.addressLine || '',
-          maxLength: 240,
-          row: 'streetNumber',
-        },
-        {
-          key: 'addressNumber',
-          row: 'streetNumber',
-          label: t(locale, 'panel.dp.addressNumber'),
-          defaultValue: profile?.addressNumber || '',
-          maxLength: DP_ADDRESS_NUMBER_MAX_LENGTH,
-          help: t(locale, 'panel.dp.addressNumberHelp'),
-        },
-        {
-          key: 'addressCity',
-          label: t(locale, 'panel.dp.addressCity'),
-          defaultValue: profile?.addressCity || '',
-          maxLength: 120,
-          row: 'cityUf',
-        },
-        {
-          key: 'addressState',
-          type: 'select',
-          label: t(locale, 'panel.dp.addressState'),
-          defaultValue: profile?.addressState || '',
-          options: [
-            { value: '', label: t(locale, 'panel.dp.ufEmpty') },
-            ...BR_STATES.map((s) => ({ value: s.uf, label: s.uf })),
-          ],
-          row: 'cityUf',
-        },
-        {
-          key: 'cpf',
-          type: 'cpf',
-          label: t(locale, 'panel.dp.cpf'),
-          defaultValue: profile?.cpf || '',
-          help: t(locale, 'panel.dp.cpfHelp'),
-        },
-        {
-          key: 'rg',
-          label: t(locale, 'panel.dp.rg'),
-          defaultValue: profile?.rg || '',
-        },
-        {
-          key: 'emergencyName',
-          label: t(locale, 'panel.dp.emergencyName'),
-          defaultValue: profile?.emergencyName || '',
-          maxLength: 120,
-        },
-        {
-          key: 'emergencyPhone',
-          type: 'phone',
-          label: t(locale, 'panel.dp.emergencyPhone'),
-          defaultValue: profile?.emergencyPhone || '',
-        },
-        {
-          key: 'emergencyRelation',
-          label: t(locale, 'panel.dp.emergencyRelation'),
-          defaultValue: profile?.emergencyRelation || '',
-          maxLength: 80,
-        },
-        {
           key: 'internalNotes',
           type: 'textarea',
           label: t(locale, 'panel.dp.internalNotes'),
           defaultValue: profile?.internalNotes || '',
           rows: 3,
           maxLength: 4000,
+        },
+        {
+          key: 'emergencyName',
+          label: t(locale, 'panel.dp.emergencyName'),
+          defaultValue: profile?.emergencyName || '',
+          maxLength: 120,
+          section: i18nT(locale, 'ui.dpBlock.emergency'),
+          row: 'emergency',
+          rowWeight: 2,
+        },
+        {
+          key: 'emergencyRelation',
+          label: t(locale, 'panel.dp.emergencyRelation'),
+          defaultValue: profile?.emergencyRelation || '',
+          maxLength: 80,
+          row: 'emergency',
+        },
+        {
+          key: 'emergencyPhone',
+          type: 'phone',
+          label: t(locale, 'panel.dp.emergencyPhone'),
+          defaultValue: profile?.emergencyPhone || '',
+          width: 'half',
         },
       ],
     });
@@ -895,24 +948,8 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
         </InlineCallout>
       ) : null}
 
-      <div className="rounded-control border border-ink/12 bg-canvas/40 p-3.5">
-        <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-          <span className={cn(S.cardSection, 'block')}>{t(locale, 'panel.dp.profileTitle')}</span>
-          {!readOnly ? (
-            <div className="flex flex-wrap gap-2">
-              <AdminEditButton
-                label={t(locale, 'panel.dp.dependents')}
-                onClick={() => setEditingDependents(true)}
-                disabled={busy}
-              />
-              <AdminEditButton
-                label={t(locale, 'panel.dp.editProfile')}
-                onClick={() => void editProfile()}
-                disabled={busy}
-              />
-            </div>
-          ) : null}
-        </div>
+      <div className="rounded-control border border-ink/12 bg-canvas/40 p-4">
+        <h2 className="sr-only">{t(locale, 'panel.dp.profileTitle')}</h2>
         {editingDependents && !readOnly ? (
           <DpDependentsEditor
             key={candidateId}
@@ -939,139 +976,89 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           />
         ) : null}
         {profile ? (
-          <div className="space-y-5">
-            <section>
-              <h3 className={cn(S.cardSection, 'mb-3 mt-0 block')}>
-                {i18nT(locale, 'ui.dpBlock.personal')}
-              </h3>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <FormField as="div" label={t(locale, 'panel.dp.fullName')}>
-                  <p className="m-0 text-sm text-ink">{candidate?.fullName || '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.maritalStatus')}>
-                  <p className="m-0 text-sm text-ink">{maritalStatusLabel(locale, candidate?.maritalStatus)}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.birthDate')}>
-                  <p className="m-0 text-sm text-ink">{candidate?.birthDate ? formatDate(candidate.birthDate, locale) : '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.age')}>
-                  <p className="m-0 text-sm text-ink">{ageFromBirthDate(candidate?.birthDate) ?? '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.cpf')}>
-                  <p className="m-0 text-sm text-ink">
-                    {profile.cpf ? formatCpfBr(profile.cpf) : '—'}
-                  </p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.rg')}>
-                  <p className="m-0 text-sm text-ink">{profile.rg || '—'}</p>
-                </FormField>
-              </div>
-            </section>
-            <section>
-              <h3 className={cn(S.cardSection, 'mb-3 mt-0 block')}>
-                {i18nT(locale, 'ui.dpBlock.contact')}
-              </h3>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <FormField as="div" label={t(locale, 'panel.dp.corporateEmail')}>
-                  <p className="m-0 break-all text-sm text-ink">{candidate?.email || '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.personalEmail')}>
-                  <p className="m-0 break-all text-sm text-ink">{candidate?.personalEmail || '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.mobile')}>
-                  <p className="m-0 text-sm text-ink">{candidate?.phone ? formatPhoneBr(candidate.phone) : '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.addressPostal')}>
-                  <p className="m-0 text-sm text-ink">
-                    {profile.addressPostal ? formatCepBr(profile.addressPostal) : '—'}
-                  </p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.addressLine')}>
-                  <p className="m-0 text-sm text-ink">{profile.addressLine || '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.addressNumber')}>
-                  <p className="m-0 text-sm text-ink">{profile.addressNumber || '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.addressCity')}>
-                  <p className="m-0 text-sm text-ink">{profile.addressCity || '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.addressState')}>
-                  <p className="m-0 text-sm text-ink">{profile.addressState || '—'}</p>
-                </FormField>
-              </div>
-            </section>
-            <section>
-              <h3 className={cn(S.cardSection, 'mb-3 mt-0 block')}>
-                {i18nT(locale, 'ui.dpBlock.professional')}
-              </h3>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <FormField as="div" label={t(locale, 'panel.dp.employeeNumber')}>
-                  <p className="m-0 text-sm text-ink">{candidate?.employeeNumber || '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.workFormat')}>
-                  <p className="m-0 text-sm text-ink">{workFormatLabel(locale, candidate?.workFormat)}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.jobRole')}>
-                  <p className="m-0 text-sm text-ink">{candidate?.jobRoleName || '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.startDate')}>
-                  <p className="m-0 text-sm text-ink">{candidate?.startDate ? formatDate(candidate.startDate, locale) : '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.workHistory')} className="sm:col-span-2">
-                  <p className="m-0 whitespace-pre-wrap text-sm text-ink">{candidate?.workHistory || '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.workFormatHistory')} className="sm:col-span-2">
-                  {workFormatHistory.length ? <ol className="m-0 list-none space-y-2 p-0">
+          <div className="flex flex-col">
+            <ProfileSection
+              title={i18nT(locale, 'ui.dpBlock.personal')}
+              first
+              action={!readOnly ? (
+                <button type="button" className={cn(S.btnGhost, 'gap-1.5')} onClick={() => void editProfile()} disabled={busy}>
+                  <Icon name="pencil" className="h-3.5 w-3.5" />
+                  {t(locale, 'panel.dp.editProfile')}
+                </button>
+              ) : null}
+            >
+              <ProfileInfo className="lg:col-span-2" label={t(locale, 'panel.dp.fullName')}>{candidate?.fullName}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.maritalStatus')}>{candidate?.maritalStatus ? maritalStatusLabel(locale, candidate.maritalStatus) : null}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.birthDate')}>{candidate?.birthDate ? formatDate(candidate.birthDate, locale) : null}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.age')}>{ageFromBirthDate(candidate?.birthDate)}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.cpf')}>{profile.cpf ? formatCpfBr(profile.cpf) : null}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.rg')}>{profile.rg}</ProfileInfo>
+            </ProfileSection>
+            <ProfileSection title={i18nT(locale, 'ui.dpBlock.contact')}>
+              <ProfileInfo className="lg:col-span-2" breakAll label={t(locale, 'panel.dp.corporateEmail')}>{candidate?.email}</ProfileInfo>
+              <ProfileInfo className="lg:col-span-2" breakAll label={t(locale, 'panel.dp.personalEmail')}>{candidate?.personalEmail}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.mobile')}>{candidate?.phone ? formatPhoneBr(candidate.phone) : null}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.addressPostal')}>{profile.addressPostal ? formatCepBr(profile.addressPostal) : null}</ProfileInfo>
+              <ProfileInfo className="sm:col-span-2" label={t(locale, 'panel.dp.addressLine')}>
+                {[profile.addressLine, profile.addressNumber].filter(Boolean).join(', ') || null}
+              </ProfileInfo>
+              <ProfileInfo className="sm:col-span-2" label={t(locale, 'panel.dp.addressCity')}>
+                {[profile.addressCity, profile.addressState].filter(Boolean).join(' · ') || null}
+              </ProfileInfo>
+            </ProfileSection>
+            <ProfileSection title={i18nT(locale, 'ui.dpBlock.professional')}>
+              <ProfileInfo label={t(locale, 'panel.dp.employeeNumber')}>{candidate?.employeeNumber}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.workFormat')}>{candidate?.workFormat ? workFormatLabel(locale, candidate.workFormat) : null}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.jobRole')}>{candidate?.jobRoleName}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.startDate')}>{candidate?.startDate ? formatDate(candidate.startDate, locale) : null}</ProfileInfo>
+              {candidate?.workHistory ? (
+                <ProfileInfo className="sm:col-span-2 lg:col-span-4" pre label={t(locale, 'panel.dp.workHistory')}>{candidate.workHistory}</ProfileInfo>
+              ) : null}
+              {workFormatHistory.length ? (
+                <ProfileInfo className="sm:col-span-2 lg:col-span-4" label={t(locale, 'panel.dp.workFormatHistory')}>
+                  <ol className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2">
                     {workFormatHistory.map(event => <li key={event.id} className="text-sm">
                       <div>{workFormatLabel(locale, event.previousFormat)} → {workFormatLabel(locale, event.newFormat)}</div>
                       <div className={S.faint}>{t(locale, 'panel.dp.workFormatEffectiveDate')}: {formatDate(event.effectiveDate, locale)}</div>
                       <div className={S.faint}>{formatDisplayDateTime(event.changedAt, locale)} · {event.actorName || event.actorUserId || '—'}</div>
                     </li>)}
-                  </ol> : <p className="m-0 text-sm text-ink-muted">{t(locale, 'panel.dp.workFormatHistoryEmpty')}</p>}
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.internalNotes')} className="sm:col-span-2">
-                  <p className="m-0 whitespace-pre-wrap text-sm text-ink">
-                    {profile.internalNotes || '—'}
-                  </p>
-                </FormField>
-              </div>
-            </section>
-            <section>
-              <h3 className={cn(S.cardSection, 'mb-3 mt-0 block')}>
-                {i18nT(locale, 'ui.dpBlock.dependents')}
-              </h3>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <FormField as="div" label={t(locale, 'panel.dp.dependents')} className="sm:col-span-2">
-                  {profile.dependents?.length ? (
-                    <ul className="m-0 list-disc pl-4 text-sm text-ink">
-                      {profile.dependents.map((dependent, index) => (
-                        <li key={`${dependent.name}-${index}`}>
-                          {[dependent.name, dependent.cpf, dependent.relation, dependent.birthDate].filter(Boolean).join(' · ')}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <p className="m-0 text-sm text-ink">—</p>}
-                </FormField>
-              </div>
-            </section>
-            <section>
-              <h3 className={cn(S.cardSection, 'mb-3 mt-0 block')}>
-                {i18nT(locale, 'ui.dpBlock.emergency')}
-              </h3>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <FormField as="div" label={t(locale, 'panel.dp.emergencyName')}>
-                  <p className="m-0 text-sm text-ink">{profile.emergencyName || '—'}</p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.emergencyPhone')}>
-                  <p className="m-0 text-sm text-ink">
-                    {profile.emergencyPhone ? formatPhoneBr(profile.emergencyPhone) : '—'}
-                  </p>
-                </FormField>
-                <FormField as="div" label={t(locale, 'panel.dp.emergencyRelation')}>
-                  <p className="m-0 text-sm text-ink">{profile.emergencyRelation || '—'}</p>
-                </FormField>
-              </div>
-            </section>
+                  </ol>
+                </ProfileInfo>
+              ) : null}
+              {profile.internalNotes ? (
+                <ProfileInfo className="sm:col-span-2 lg:col-span-4" pre label={t(locale, 'panel.dp.internalNotes')}>{profile.internalNotes}</ProfileInfo>
+              ) : null}
+            </ProfileSection>
+            <ProfileSection
+              title={i18nT(locale, 'ui.dpBlock.dependents')}
+              plain
+              action={!readOnly ? (
+                <button type="button" className={cn(S.btnGhost, 'gap-1.5')} onClick={() => setEditingDependents(true)} disabled={busy}>
+                  <Icon name="pencil" className="h-3.5 w-3.5" />
+                  {t(locale, 'panel.dp.editDependents')}
+                </button>
+              ) : null}
+            >
+              {profile.dependents?.length ? (
+                <ul className="m-0 grid list-none gap-2 p-0 sm:grid-cols-2 lg:grid-cols-3">
+                  {profile.dependents.map((dependent, index) => (
+                    <li key={`${dependent.name}-${index}`} className="min-w-0 rounded-control border border-ink/10 bg-surface px-3 py-2">
+                      <div className="truncate text-sm font-medium text-ink" title={dependent.name || ''}>{dependent.name || '—'}</div>
+                      <div className="text-xs text-ink-muted">
+                        {[dependent.relation, dependent.birthDate ? formatDate(dependent.birthDate, locale) : null, dependent.cpf ? formatCpfBr(dependent.cpf) : null].filter(Boolean).join(' · ') || '—'}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="m-0 text-sm text-ink-muted">{t(locale, 'panel.dp.noDependents')}</p>
+              )}
+            </ProfileSection>
+            <ProfileSection title={i18nT(locale, 'ui.dpBlock.emergency')}>
+              <ProfileInfo className="lg:col-span-2" label={t(locale, 'panel.dp.emergencyName')}>{profile.emergencyName}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.emergencyPhone')}>{profile.emergencyPhone ? formatPhoneBr(profile.emergencyPhone) : null}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.emergencyRelation')}>{profile.emergencyRelation}</ProfileInfo>
+            </ProfileSection>
           </div>
         ) : (
           <p className={cn(S.muted, 'm-0 text-xs')}>{t(locale, 'panel.dp.noProfile')}</p>

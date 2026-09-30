@@ -2,7 +2,7 @@
 
 import { SelectField } from './SelectField';
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
@@ -47,6 +47,8 @@ import { digitsOnly, formatSalaryDisplay, formatCepBr, formatCpfBr, formatPhoneB
  *   min?: string, max?: string, // date / datetime-local
  *   row?: string, // same key → side-by-side on one row (e.g. start/end dates)
  *   width?: 'half', // short control alone on its row: half width from sm up
+ *   rowWeight?: number, // relative width inside a `row` from sm up (default 1)
+ *   section?: string, // group heading rendered above this field
  *   // cep autofill (keys of other fields in the same form):
  *   cepAutofill?: { addressLine?: string, addressCity?: string, addressState?: string, neighborhoodAppend?: boolean },
  *   // imageUpload:
@@ -111,6 +113,7 @@ export function PromptFormDialog({
   cancelLabel,
   onSubmit,
   onCancel,
+  size,
 }) {
   const [mounted, setMounted] = useState(false);
   const [values, setValues] = useState({});
@@ -787,7 +790,7 @@ export function PromptFormDialog({
             'prompt-form-card',
             dialogCardClass,
             'max-h-[90vh] overflow-y-auto',
-            hasWideFields ? 'max-w-[560px]' : 'max-w-[520px]'
+            size === 'wide' ? 'max-w-[760px]' : hasWideFields ? 'max-w-[560px]' : 'max-w-[520px]'
           )}
           onClick={(e) => e.stopPropagation()}
         >
@@ -804,18 +807,28 @@ export function PromptFormDialog({
             <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
           ) : null}
           <fieldset disabled={submitting} className="m-0 mt-4 flex min-w-0 flex-col gap-5 border-0 p-0">
-            {fieldGroups.map((group, gi) =>
-              group.row && group.fields.length > 1 ? (
+            {fieldGroups.map((group, gi) => {
+              const section = group.fields[0]?.section;
+              const weights = group.fields.map((f) => Number(f.rowWeight) > 0 ? Number(f.rowWeight) : 1);
+              const weighted = weights.some((w) => w !== 1);
+              const body = group.row && group.fields.length > 1 ? (
                 <div
                   key={`row-${group.row}-${gi}`}
-                  className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2"
+                  className={cn('grid grid-cols-1 items-start gap-5', weighted ? 'sm:[grid-template-columns:var(--prompt-row-cols)]' : 'sm:grid-cols-2')}
+                  style={weighted ? { '--prompt-row-cols': weights.map((w) => `minmax(0,${w}fr)`).join(' ') } : undefined}
                 >
                   {group.fields.map((f) => renderFieldBlock(f, true))}
                 </div>
               ) : (
                 group.fields.map((f) => renderFieldBlock(f))
-              )
-            )}
+              );
+              return section ? (
+                <Fragment key={`section-${gi}`}>
+                  <h3 className={cn('m-0 border-t border-ink/10 pt-4 font-ui text-sm font-semibold text-ink', gi === 0 && 'border-t-0 pt-0')}>{section}</h3>
+                  {body}
+                </Fragment>
+              ) : body;
+            })}
           </fieldset>
           {submitError ? <p role="alert" className="mt-4 rounded-control border border-danger/30 p-3 text-sm text-danger">{submitError}</p> : null}
           <div className="mt-[22px] flex flex-wrap justify-end gap-2.5">

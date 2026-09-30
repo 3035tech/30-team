@@ -48,7 +48,7 @@ test('OKR workspace remains legible with several areas and objectives', async ({
   await page.getByRole('option',{name:'Produto',exact:true}).click();
   await expect(page.getByRole('region',{name:'Área: Comercial',exact:true})).not.toBeVisible();
   const product = page.getByRole('region',{name:'Área: Produto',exact:true});
-  const collapsed = product.getByRole('button',{name:/Melhorar a experiência/});
+  const collapsed = product.getByRole('button',{name:/^Melhorar a experiência/});
   await expect(collapsed).toHaveAttribute('aria-expanded','false');
   await collapsed.click();
   await expect(collapsed).toHaveAttribute('aria-expanded','true');
@@ -60,10 +60,10 @@ test('OKR workspace remains legible with several areas and objectives', async ({
   await expect(commercial.getByRole('definition')).toHaveCount(0);
   await expect(rows.first().getByRole('button',{name:'Registrar check-in',exact:true})).toBeVisible();
   await rows.first().getByRole('button',{name:'Ver detalhes',exact:true}).click();
-  await expect(rows.first().getByRole('definition')).toHaveCount(3);
+  await expect(rows.first().getByRole('definition')).toHaveCount(4);
   await rows.nth(1).getByRole('button',{name:'Ver detalhes',exact:true}).click();
   await expect(rows.first().getByRole('definition')).toHaveCount(0);
-  await expect(rows.nth(1).getByRole('definition')).toHaveCount(3);
+  await expect(rows.nth(1).getByRole('definition')).toHaveCount(4);
   await rows.nth(1).getByRole('button',{name:'Fechar detalhes',exact:true}).click();
   for(const width of [1440,390]) {
     await page.setViewportSize({width,height:900});

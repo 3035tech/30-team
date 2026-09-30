@@ -80,6 +80,7 @@ export function AppFeedbackProvider({ children, locale = 'pt-BR' }) {
         fields,
         confirmLabel: opts.confirmLabel,
         cancelLabel: opts.cancelLabel,
+        size: opts.size,
         submit: opts.submit,
         resolve,
       });
@@ -145,6 +146,7 @@ export function AppFeedbackProvider({ children, locale = 'pt-BR' }) {
           fields={promptState.fields}
           confirmLabel={promptState.confirmLabel}
           cancelLabel={promptState.cancelLabel}
+          size={promptState.size}
           onCancel={() => {
             promptState.resolve(null);
             setPromptState(null);

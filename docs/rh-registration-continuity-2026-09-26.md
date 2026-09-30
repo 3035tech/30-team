@@ -21,3 +21,19 @@ O componente recebe o registro já autorizado de `TeamTab` e usa o mesmo `PATCH 
 - Valores sintéticos do teste restaurados em `finally`.
 
 A skill `surgical-patch` manteve a correção na integração da interface com o domínio já existente. Item 3.10 encerrado localmente; sem deploy ou modificação de produção.
+
+## Revisão de UI/UX da ficha (30/09/2026)
+
+- Visualização em seções (Pessoal, Contato, Profissional, Dependentes, Emergência) com grade de até 4
+  colunas; campos longos (nome, e-mails, endereço) ocupam mais espaço e vazios aparecem em cinza.
+- Ações com texto: "Editar ficha" e "Editar dependentes" (antes eram dois lápis iguais).
+- "Editar ficha" abre diálogo largo em seções, com larguras proporcionais (Endereço 3 × Número 1,
+  Cidade 3 × UF 1). `PromptFormDialog` ganhou `size: 'wide'`, `rowWeight` e `section` (opcionais).
+- E-mail corporativo editável (`PATCH /api/admin/candidates/[id]` com `email`): minúsculas, validação do
+  login do colaborador, único por empresa (`EMAIL_TAKEN` 409) e auditoria `candidate.email_change`
+  (de/para). O novo e-mail passa a ser o login do colaborador. Usuário do painel com o e-mail antigo não
+  é alterado.
+- Dependentes: Sim/Não segmentado, CPF com máscara, data via `DateField`, nome em linha inteira.
+- Ficha da pessoa: só o cabeçalho fica fixo ao rolar (a barra de abas sobrepunha o cabeçalho) e o botão
+  "Voltar para equipe" não cola mais no breadcrumb.
+- Provas: `test/e2e/p1-corporate-email.spec.js`, `test/e2e/p1-dependents.spec.js`.

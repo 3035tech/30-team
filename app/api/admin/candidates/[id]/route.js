@@ -14,6 +14,7 @@ import { CAP, requireAnyCapability, canAccessCandidateRecord, isAdminRole } from
 import { upsertDpProfile } from '../../../../../lib/people/employee-dp.js';
 import { listCandidateOverdueLms } from '../../../../../lib/lms.js';
 import { normalizeLocale } from '../../../../../lib/i18n.js';
+import { isValidEmployeeEmail } from '../../../../../lib/employee-auth.js';
 
 export async function GET(request, props) {
   const params = await props.params;
@@ -180,7 +181,7 @@ export async function PATCH(request, props) {
   const hasExtendedProfile = [
     'personalEmail', 'personal_email', 'maritalStatus', 'marital_status',
     'employeeNumber', 'employee_number', 'workFormat', 'work_format',
-    'workHistory', 'work_history',
+    'workHistory', 'work_history', 'email',
   ].some((key) => body[key] !== undefined);
 
   if (!hasHrNotes && !hasProfile && !hasName && !hasBirthDate && !hasExtendedProfile) {
@@ -257,6 +258,13 @@ export async function PATCH(request, props) {
     sets.push(`personal_email = $${n++}`);
     sqlParams.push(value == null ? null : String(value).trim().slice(0, 240) || null);
   }
+  let nextEmail = null;
+  if (body.email !== undefined) {
+    nextEmail = String(body.email ?? '').trim().toLowerCase();
+    if (!nextEmail || nextEmail.length > 254 || !isValidEmployeeEmail(nextEmail)) return apiError(request, ERR.INVALID_CANDIDATE_EMAIL, 400);
+    sets.push(`email = $${n++}`);
+    sqlParams.push(nextEmail);
+  }
   if (body.maritalStatus !== undefined || body.marital_status !== undefined) {
     const value = body.maritalStatus !== undefined ? body.maritalStatus : body.marital_status;
     sets.push(`marital_status = $${n++}`);
@@ -284,7 +292,7 @@ export async function PATCH(request, props) {
   if (sets.length === 0) return apiError(request, ERR.NO_FIELDS_TO_UPDATE, 400);
 
   const up = await withTransaction(async (db) => {
-    const previous = await db.query('SELECT company_id AS "companyId", work_format AS "workFormat" FROM candidates WHERE id = $1 FOR UPDATE', [id]);
+    const previous = await db.query('SELECT company_id AS "companyId", work_format AS "workFormat", email FROM candidates WHERE id = $1 FOR UPDATE', [id]);
     if (!previous.rowCount) return { rowCount: 0, rows: [] };
     if (!isAdmin && String(previous.rows[0].companyId) !== String(companyId)) return { errorCode: ERR.UNAUTHORIZED, status: 401 };
     const oldFormat = previous.rows[0].workFormat || null;
@@ -325,9 +333,14 @@ export async function PATCH(request, props) {
       result.rows[0].dpProfile = dp.profile;
       result.companyId = previous.rows[0].companyId;
     }
+    const previousEmail = String(previous.rows[0].email || '').toLowerCase();
+    if (nextEmail && nextEmail !== previousEmail) {
+      result.emailChange = { companyId: previous.rows[0].companyId, from: previousEmail };
+    }
     return result;
   }).catch((error) => {
     if (error.dpErrorCode) return { errorCode: error.dpErrorCode, status: 400 };
+    if (error?.code === '23505' && String(error?.constraint || '').includes('email')) return { errorCode: ERR.EMAIL_TAKEN, status: 409 };
     console.error('PATCH candidate profile transaction', { code: error?.code || 'UNKNOWN' });
     return { errorCode: ERR.INTERNAL, status: 500 };
   });
@@ -339,6 +352,15 @@ export async function PATCH(request, props) {
     action: 'candidate.profile_update',
     targetType: 'candidate',
     targetId: String(id),
+  });
+
+  if (up.emailChange) await auditFromRequest(request, {
+    actorUserId: payload.userId || null,
+    companyId: up.emailChange.companyId,
+    action: 'candidate.email_change',
+    targetType: 'candidate',
+    targetId: String(id),
+    metadata: { from: up.emailChange.from, to: nextEmail },
   });
 
   if (hasDpProfile) await auditFromRequest(request, {
