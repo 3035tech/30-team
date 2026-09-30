@@ -515,44 +515,57 @@ textarea:focus-visible {
   }
 }
 
-/* AppErrorScreen: HR person stamping a checklist while the screen gets fixed */
-@keyframes app-err-spin { to { transform: rotate(360deg); } }
-@keyframes app-err-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-@keyframes app-err-stamp {
-  0%, 60%, 100% { transform: rotate(0deg); }
-  70% { transform: rotate(-14deg); }
-  80% { transform: rotate(4deg); }
+/* AppErrorScreen: overloaded HR analyst stop-motion photo loop with animated layers (notifications, phone, papers) */
+@keyframes app-err-photo {
+  0%, 51%, 64%, 100% { transform: translate(0, 0); }
+  52%, 56%, 60% { transform: translate(-0.6%, 0.2%); }
+  54%, 58%, 62% { transform: translate(0.6%, -0.2%); }
 }
-@keyframes app-err-check {
-  0%, 12% { stroke-dashoffset: 1; }
-  24%, 88% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: 1; }
+@keyframes app-err-frame {
+  0% { opacity: 0; }
+  3%, 25% { opacity: 1; }
+  28%, 100% { opacity: 0; }
 }
 @keyframes app-err-steam {
-  0% { opacity: 0; transform: translateY(4px); }
+  0% { opacity: 0; transform: translateY(8px); }
   40% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 0; transform: translateY(-24px); }
 }
-.app-err-gear { animation: app-err-spin 6s linear infinite; }
-.app-err-float-a { animation: app-err-float 3.2s ease-in-out infinite; }
-.app-err-float-b { animation: app-err-float 3.8s ease-in-out -1.2s infinite; }
-.app-err-stamp { animation: app-err-stamp 1.8s ease-in-out infinite; }
-.app-err-check { stroke-dasharray: 1; stroke-dashoffset: 1; animation: app-err-check 5.4s ease-out infinite; }
-.app-err-check-2 { animation-delay: 0.6s; }
-.app-err-check-3 { animation-delay: 1.2s; }
+@keyframes app-err-pop {
+  0%, 8% { opacity: 0; transform: translateX(24px) scale(0.9); }
+  16%, 82% { opacity: 1; transform: translateX(0) scale(1); }
+  92%, 100% { opacity: 0; transform: translateX(0) scale(1); }
+}
+@keyframes app-err-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+@keyframes app-err-ringwave { 0%, 12%, 24%, 36% { opacity: 1; } 6%, 18%, 30%, 42%, 100% { opacity: 0; } }
+@keyframes app-err-fly {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--app-err-dx), var(--app-err-dy)) rotate(var(--app-err-rot)); }
+}
+.app-err-photo { transform-origin: center; animation: app-err-photo 6.4s ease-in-out infinite; }
+.app-err-frame { opacity: 0; animation: app-err-frame 6.4s ease-in-out infinite; }
+.app-err-frame-3 { animation-delay: 3.2s; }
+.app-err-frame-4 { animation-delay: 4.8s; }
+.app-err-pop { animation: app-err-pop 3.6s ease-out infinite; }
+.app-err-pop-2 { animation-delay: 0.5s; }
+.app-err-pop-3 { animation-delay: 1s; }
+.app-err-pulse { animation: app-err-pulse 1s ease-in-out infinite; }
+.app-err-ringwave { animation: app-err-ringwave 1.8s linear infinite; }
+.app-err-fly { opacity: 0; transform-box: fill-box; transform-origin: center; animation: app-err-fly 3.6s ease-out infinite; }
+.app-err-fly-1 { --app-err-dx: 40px; --app-err-dy: -260px; --app-err-rot: -40deg; }
+.app-err-fly-2 { --app-err-dx: 150px; --app-err-dy: -300px; --app-err-rot: 35deg; animation-delay: 1.2s; }
+.app-err-fly-3 { --app-err-dx: -30px; --app-err-dy: -340px; --app-err-rot: 70deg; animation-delay: 2.4s; }
 .app-err-steam { animation: app-err-steam 2.4s ease-out infinite; }
 .app-err-steam-2 { animation-delay: 1.2s; }
 @media (prefers-reduced-motion: reduce) {
-  .app-err-gear,
-  .app-err-float-a,
-  .app-err-float-b,
-  .app-err-stamp,
-  .app-err-steam {
-    animation: none;
+  .app-err-art,
+  .app-err-art * {
+    animation: none !important;
   }
-  .app-err-check {
-    animation: none;
-    stroke-dashoffset: 0;
+  .app-err-fly,
+  .app-err-frame {
+    opacity: 0;
   }
 }
 

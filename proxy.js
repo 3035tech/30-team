@@ -309,6 +309,6 @@ export async function proxy(request) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|brand/|site.webmanifest).*)',
+    '/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|brand/|illustrations/|site.webmanifest).*)',
   ],
 };

@@ -14,8 +14,17 @@ test('error boundaries render AppErrorScreen', () => {
 
 test('AppErrorScreen animations respect reduced motion', () => {
   const css = read('app/globals.css');
-  assert.match(css, /@keyframes app-err-check/);
-  assert.match(css, /prefers-reduced-motion: reduce\)\s*\{\s*\.app-err-gear/);
+  assert.match(css, /@keyframes app-err-photo/);
+  assert.match(css, /prefers-reduced-motion: reduce\)\s*\{\s*\.app-err-art,\s*\.app-err-art \*/);
+});
+
+test('AppErrorScreen photo asset exists and bypasses the proxy', () => {
+  const src = read('app/_components/AppErrorScreen.jsx');
+  for (const name of ['hr-overload', 'hr-overload-busy', 'hr-overload-scream', 'hr-overload-collapse']) {
+    assert.match(src, new RegExp(`/illustrations/${name}\\.webp`), name);
+    assert.ok(readFileSync(new URL(`../../public/illustrations/${name}.webp`, import.meta.url)).length > 1000, name);
+  }
+  assert.match(read('proxy.js'), /illustrations\//);
 });
 
 test('app error copy exists in every locale without em dash', () => {
