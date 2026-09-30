@@ -579,6 +579,7 @@ export function PublicVacanciesIndexView({
   showSearchForm = true,
   showJobAlert = true,
   cityChips = [],
+  showRemoteChip = false,
 }) {
   const q = String(filters.q || '');
   const employmentType = String(filters.employmentType || '');
@@ -718,19 +719,23 @@ export function PublicVacanciesIndexView({
               </Link>
             ) : null}
           </div>
+          {showRemoteChip || cityChips?.length ? (
           <nav
             aria-label={t(locale, 'publicVacancy.indexModalityNav')}
             className="flex flex-wrap gap-2"
           >
-            <Link href={remotePath} className={SC.filterChip}>
-              {t(locale, 'recruiting.workplaceModality_remote')}
-            </Link>
+            {showRemoteChip ? (
+              <Link href={remotePath} className={SC.filterChip}>
+                {t(locale, 'recruiting.workplaceModality_remote')}
+              </Link>
+            ) : null}
             {(cityChips || []).slice(0, 5).map((chip) => (
               <Link key={chip.slug || chip.path} href={chip.path} className={SC.filterChip}>
                 {chip.city}
               </Link>
             ))}
           </nav>
+          ) : null}
         </form>
         ) : null}
 

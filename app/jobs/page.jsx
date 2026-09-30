@@ -7,7 +7,11 @@ import {
   listOpenPublicVacancies,
   PUBLIC_JOB_PATH_PREFIX,
 } from '../../lib/public-vacancy-posting';
-import { listPublicCityCounts } from '../../lib/public-job-aggregators';
+import {
+  aggregatorMinCount,
+  listPublicCityCounts,
+  resolveRemoteAggregator,
+} from '../../lib/public-job-aggregators';
 import { PublicVacanciesIndexView } from '../_components/PublicVacancyPosting';
 
 export async function generateMetadata({ searchParams } = {}) {
@@ -58,7 +62,7 @@ export default async function PublicJobsIndexPage(props) {
   const pageRaw = parseInt(String(searchParams?.page || '1'), 10);
   const page = Number.isFinite(pageRaw) && pageRaw >= 1 ? pageRaw : 1;
 
-  const [result, cityChips] = await Promise.all([
+  const [result, cityChips, remoteAggregator] = await Promise.all([
     listOpenPublicVacancies({
       q: q || null,
       employmentType,
@@ -67,7 +71,8 @@ export default async function PublicJobsIndexPage(props) {
       pageSize: 12,
       includeTotal: true,
     }),
-    listPublicCityCounts({ minCount: 1, limit: 5 }),
+    listPublicCityCounts({ minCount: aggregatorMinCount(), limit: 5 }),
+    resolveRemoteAggregator().catch(() => ({ ok: false })),
   ]);
 
   return (
@@ -83,6 +88,7 @@ export default async function PublicJobsIndexPage(props) {
         workplaceModality: workplaceModality || '',
       }}
       cityChips={cityChips}
+      showRemoteChip={remoteAggregator.ok}
     />
   );
 }

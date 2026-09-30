@@ -101,6 +101,7 @@ A partir da migration `054`, `055` e `056`:
 - APIs: `/api/admin/exit-analysis` (CRUD exit records), `/api/admin/exit-analysis/insights` (agregações + insights)
 - Lib: `lib/exit-analysis.js` (CRUD, `getExitReasonAggregation`, `getExitsByTypeProfile`, `getExitInsights`)
 - Migration: `058_exit_analysis.sql` (tabela `exit_records`)
+- **Recontratação (várias passagens):** `POST /api/admin/exit-analysis/rehire` (`CAP.EXIT_ANALYSIS_VIEW`, Zod, audit `employee.rehire`) → `rehireEmployee` em `lib/hire.js`; fecha a saída aberta (`rehired_at`, `rehired_by_user_id`) e volta a pessoa a colaborador, com convite de acesso opcional. `markCandidateHired` (vaga ou inclusão direta) também fecha a saída aberta. Filtro **Ex-colaboradores** na Equipe (`ROSTER_SCOPE.ALUMNI`, SQL em `lib/roster-scope-sql.js`); "Time interno" exclui ex-colaboradores. Migration `135_exit_records_rehire.sql` (uma saída **aberta** por pessoa, índice parcial).
 
 ### B-1007 — Cultura Organizacional
 - **Leitura hedged**: sintetiza clima (Likert mean level), mix T1–T9 (arquétipo dominante, % homogeneidade), pulsos recentes (engajamento), e valores declarados (`companies.about_html`)
