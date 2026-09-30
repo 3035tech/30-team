@@ -46,6 +46,7 @@ import { digitsOnly, formatSalaryDisplay, formatCepBr, formatCpfBr, formatPhoneB
  *   minHeight?: number, // richText
  *   min?: string, max?: string, // date / datetime-local
  *   row?: string, // same key → side-by-side on one row (e.g. start/end dates)
+ *   width?: 'half', // short control alone on its row: half width from sm up
  *   // cep autofill (keys of other fields in the same form):
  *   cepAutofill?: { addressLine?: string, addressCity?: string, addressState?: string, neighborhoodAppend?: boolean },
  *   // imageUpload:
@@ -286,7 +287,7 @@ export function PromptFormDialog({
     return !fieldHasValue(values[fieldKeyOf(f)]);
   });
 
-  const renderFieldBlock = (f) => {
+  const renderFieldBlock = (f, inRow = false) => {
     if (f.type === 'boolean') {
       return (
         <div key={fieldKeyOf(f)} className="block min-w-0">
@@ -309,7 +310,7 @@ export function PromptFormDialog({
               ? cepHint
               : f.help || null
         }
-        className="w-full"
+        className={cn('w-full', f.width === 'half' && !inRow && 'sm:max-w-[calc(50%-0.625rem)]')}
       >
         {renderControl(f)}
         {fieldErrors[fieldKeyOf(f)] ? <p id={`prompt-error-${fieldKeyOf(f)}`} role="alert" className="m-0 mt-1 text-sm text-danger">{fieldErrors[fieldKeyOf(f)]}</p> : null}
@@ -809,7 +810,7 @@ export function PromptFormDialog({
                   key={`row-${group.row}-${gi}`}
                   className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2"
                 >
-                  {group.fields.map((f) => renderFieldBlock(f))}
+                  {group.fields.map((f) => renderFieldBlock(f, true))}
                 </div>
               ) : (
                 group.fields.map((f) => renderFieldBlock(f))

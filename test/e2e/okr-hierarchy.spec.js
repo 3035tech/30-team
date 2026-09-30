@@ -32,23 +32,22 @@ test('OKR: area → objective → measured KR, history, employee check-in and cl
     await dialog.getByRole('button',{name:'Salvar',exact:true}).click();
     const objective=area.getByRole('article',{name:'Objetivo: Acelerar vendas',exact:true});
     await expect(objective).toBeVisible();
-    await objective.locator('summary').filter({hasText:'Mais ações'}).click();
-    await objective.getByRole('button',{name:'Editar objetivo',exact:true}).click();
+    await objective.getByRole('button',{name:'Mais ações',exact:true}).click();
+    await page.getByRole('menuitem',{name:'Editar objetivo',exact:true}).click();
     await page.getByRole('dialog').getByLabel('Descrição',{exact:true}).fill('Objetivo mensurável da área comercial.');
     await page.getByRole('dialog').getByRole('combobox',{name:'Responsável',exact:true}).fill(employee.label);
     await page.getByRole('dialog').getByRole('option').filter({hasText:employee.label}).click();
     await page.getByRole('dialog').getByRole('button',{name:'Salvar',exact:true}).click();
     await expect(objective).toContainText(employee.label);
-    await objective.getByRole('button',{name:'Editar objetivo',exact:true}).click();
+    await objective.getByRole('button',{name:'Mais ações',exact:true}).click();
+    await page.getByRole('menuitem',{name:'Editar objetivo',exact:true}).click();
     await expect(page.getByRole('dialog').getByRole('combobox',{name:'Responsável',exact:true})).toHaveValue(employee.label);
     await page.getByRole('dialog').getByRole('button',{name:'Cancelar',exact:true}).click();
-    await objective.locator('summary').filter({hasText:'Mais ações'}).focus();
-    await page.keyboard.press('Enter');
-    await expect(objective.getByRole('button',{name:'Excluir objetivo',exact:true})).toBeHidden();
+    await expect(page.getByRole('menuitem',{name:'Excluir objetivo',exact:true})).toBeHidden();
     await objective.getByRole('button',{name:'Novo resultado-chave',exact:true}).click();
     dialog=page.getByRole('dialog');
     await dialog.getByLabel('Título',{exact:true}).fill('Reduzir prazo de venda');
-    await dialog.getByLabel('Unidade (ex.: R$, dias, clientes)',{exact:true}).fill('dias');
+    await dialog.getByLabel('Unidade',{exact:true}).fill('dias');
     await dialog.getByLabel('Valor inicial',{exact:true}).fill('10');
     await dialog.getByRole('spinbutton',{name:'Meta',exact:true}).fill('5');
     await dialog.getByRole('combobox',{name:'Responsável',exact:true}).fill(employee.label);
@@ -68,7 +67,7 @@ test('OKR: area → objective → measured KR, history, employee check-in and cl
     await page.getByRole('dialog').getByRole('button',{name:'Salvar',exact:true}).click();
     await expect(kr.getByRole('definition').nth(2)).toContainText('7,5');
     await expect(kr).toContainText('50%');
-    await kr.getByRole('button',{name:'Histórico',exact:true}).click();
+    await kr.getByRole('button',{name:'Ver histórico de medições',exact:true}).click();
     await expect(kr.getByRole('list',{name:'Histórico de medições'})).toContainText('Melhoria comprovada');
     await expect(page.getByRole('status').filter({hasText:'Alteração salva.'})).toHaveCount(1);
     await page.screenshot({path:'/private/tmp/okr-hierarchy-desktop.png',fullPage:true});
@@ -100,8 +99,8 @@ test('OKR: area → objective → measured KR, history, employee check-in and cl
     await expect(employeePage.getByRole('dialog').getByRole('textbox')).toHaveValue('Employee measurement');
     await employeePage.getByRole('dialog').getByRole('button',{name:/Salvar|Registrar/}).click();
     await expect(employeeKr).toContainText('Atual: 6 dias');
-    await kr.locator('summary').filter({hasText:'Mais ações'}).click();
-    await kr.getByRole('button',{name:'Editar resultado-chave',exact:true}).click();
+    await kr.getByRole('button',{name:'Mais ações',exact:true}).click();
+    await page.getByRole('menuitem',{name:'Editar resultado-chave',exact:true}).click();
     await page.getByRole('dialog').getByRole('spinbutton',{name:'Meta',exact:true}).fill('0');
     await page.getByRole('dialog').getByRole('button',{name:'Salvar',exact:true}).click();
     await expect(kr.getByRole('definition').nth(2)).toContainText('6');
@@ -123,7 +122,7 @@ test('OKR: area → objective → measured KR, history, employee check-in and cl
     await page.getByRole('option',{name:cycle.title,exact:true}).click();
     await expect(kr.getByRole('button',{name:'Registrar check-in',exact:true})).toBeDisabled();
     await kr.getByRole('button',{name:'Ver detalhes',exact:true}).click();
-    await kr.getByRole('button',{name:'Histórico',exact:true}).click();
+    await kr.getByRole('button',{name:'Ver histórico de medições',exact:true}).click();
     await expect(kr.getByRole('list',{name:'Histórico de medições'})).toContainText('Employee measurement');
     await expect(kr.getByRole('list',{name:'Histórico de medições'})).toContainText('Mobile measurement');
   } finally {
