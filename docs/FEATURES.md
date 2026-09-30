@@ -107,6 +107,7 @@ Convenções que valem para todos os módulos:
 - **Cultura organizacional**: leitura a partir de clima, mix T1–T9, pulsos e valores declarados (sem novo instrumento).
 - **HR Score** (0–100) com sete sinais e **Radar de rotatividade** multi-sinal. Migration `054`.
 - **Análise demissional**: registros de saída, motivos × perfil × área, insights. Migration `058`.
+- **Reativar ex-colaborador (recontratação)**: Equipe → filtro de quadro "Ex-colaboradores" (`roster=alumni`) + selo "Desligado em"; "Reativar colaborador" no menu ⋯, na ficha e na Análise Demissional (`POST /api/admin/exit-analysis/rehire`, CAP `exit_analysis.view`, convite opcional ao portal). A saída anterior não é apagada: `exit_records.rehired_at` fecha a passagem e ela segue no turnover; no máximo uma saída aberta por pessoa (índice parcial `uq_exit_records_open_candidate`). Qualquer volta a colaborador (reativar, incluir de novo o e-mail, contratar por vaga) passa por `markCandidateHired`, que fecha a saída aberta. "Time interno" nunca inclui ex-colaboradores (`lib/roster-scope-sql.js`). Migration `135`.
 - **Mural e reconhecimento** (avisos + kudos, migration `085`), **feedback contínuo** e **ouvidoria** anônima (`/ouvidoria/<token>`, migration `090`).
 
 ### Remuneração e benefícios

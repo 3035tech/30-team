@@ -15,7 +15,8 @@ import {
   dialogCardClass,
   dialogOverlayClass,
 } from '../../_components/app-dialog-styles';
-import { EXIT_REASONS, EXIT_TYPES } from '../../../lib/domain-status.js';
+import { EMPLOYMENT_STATUS, EXIT_REASONS, EXIT_TYPES } from '../../../lib/domain-status.js';
+import { useRehireEmployee } from '../../_components/useRehireEmployee';
 import { formatDisplayDate, toDateOnlyIso } from '../../../lib/format-display-date.js';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
 import { cn } from '../../../lib/cn';
@@ -51,6 +52,16 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
   const [exitTypeFilter, setExitTypeFilter] = useState('');
   const [exitReasonFilter, setExitReasonFilter] = useState('');
   const { promptForm, toast, confirm } = useAppFeedback();
+  const { rehire, busyId: rehireBusyId } = useRehireEmployee({ locale, companyId });
+
+  async function handleRehire(rec) {
+    const ok = await rehire({
+      candidateId: rec.candidateId,
+      name: rec.candidateName,
+      exitDate: rec.exitDate,
+    });
+    if (ok) loadRecords();
+  }
 
   /** Tab already gated by USERS_MANAGE; allow write for hr/direction too. */
   const canWrite = Boolean(isAdmin) || Boolean(companyId);
@@ -463,6 +474,13 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
                     ) : (
                       rec.candidateName
                     )}
+                    {rec.rehiredAt ? (
+                      <div className="mt-1">
+                        <StatusToneChip tone="success">
+                          {i18nT(locale, 'panel.rehire.rehiredOn', { date: formatDate(rec.rehiredAt) })}
+                        </StatusToneChip>
+                      </div>
+                    ) : null}
                     {rec.exitReason === 'benefits' || rec.exitReason === 'compensation' ? (
                       <div className="mt-1">
                         <Link
@@ -495,6 +513,14 @@ export function ExitAnalysisAdminTab({ locale = 'pt-BR', companyId, isAdmin }) {
                       <AdminViewButton label={t('view')} onClick={() => setViewRecord(rec)} />
                       {canWrite ? (
                         <>
+                          {!rec.rehiredAt && rec.employmentStatus === EMPLOYMENT_STATUS.ALUMNI ? (
+                            <AdminViewButton
+                              icon="refresh"
+                              label={i18nT(locale, 'panel.rehire.action')}
+                              disabled={rehireBusyId === rec.candidateId}
+                              onClick={() => handleRehire(rec)}
+                            />
+                          ) : null}
                           <AdminEditButton label={t('edit')} onClick={() => handleEdit(rec)} />
                           <AdminDeleteButton label={t('delete')} onClick={() => handleDelete(rec)} />
                         </>

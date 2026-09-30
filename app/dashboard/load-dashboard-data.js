@@ -1,5 +1,6 @@
 import { query, queryRead } from '../../lib/db';
 import { ORG_UNIT, parseOrgUnitFilter } from '../../lib/org-unit-constants.js';
+import { EMPLOYMENT_STATUS } from '../../lib/domain-status.js';
 import {
   parseDashboardPagination,
   parseDashboardTab,
@@ -509,7 +510,11 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
              ass.created_at AS "createdAt",
              COALESCE(stg.changed_at, ass.created_at) AS "stageEnteredAt",
              ass.pipeline_stage AS "pipelineStage",
-             ass.invite_id AS "inviteId"
+             ass.invite_id AS "inviteId",
+             c.employment_status AS "employmentStatus",
+             CASE WHEN c.employment_status = '${EMPLOYMENT_STATUS.ALUMNI}' THEN (
+               SELECT MAX(e.exit_date) FROM exit_records e WHERE e.candidate_id = c.id
+             ) END AS "exitDate"
            ${BASE_JOIN_LIST}
            LEFT JOIN LATERAL (
              SELECT h.changed_at

@@ -43,6 +43,8 @@ import { HrScoreBadge } from '../../_components/HrScoreBadge';
 import { MotivatorsRadarChart } from '../../_components/MotivatorsRadarChart';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { StatusToneChip } from '../../_components/StatusToneChip';
+import { useRehireEmployee } from '../../_components/useRehireEmployee';
+import { formatDisplayDate } from '../../../lib/format-display-date.js';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { isRichTextEmpty } from '../../../lib/sanitize-html';
 import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-cross';
@@ -254,6 +256,7 @@ export function TeamTab({
   canViewCompensation = false,
   canManageCompensation = false,
   canViewJobRoles = false,
+  canRehire = false,
 }) {
   const [open, setOpen] = useState(null);
   const [personTab, setPersonTab] = useState('people');
@@ -285,6 +288,16 @@ export function TeamTab({
   const [createEmployeeBusy, setCreateEmployeeBusy] = useState(false);
   const { requestPipelineExtras } = usePipelineExtras();
   const { confirm, notice, promptForm, toast } = useAppFeedback();
+  const { rehire, busyId: rehireBusyId } = useRehireEmployee({ locale, companyId });
+
+  const rehirePerson = async ({ candidateId, name, exitDate }) => {
+    const ok = await rehire({ candidateId, name: titleCasePersonName(name), exitDate });
+    if (!ok) return;
+    setDetail((d) => (d?.candidate?.id === candidateId
+      ? { ...d, candidate: { ...d.candidate, employmentStatus: EMPLOYMENT_STATUS.EMPLOYEE } }
+      : d));
+    router.refresh();
+  };
 
   const createEmployeeDirect = async () => {
     if (!companyId || createEmployeeBusy) return;
@@ -471,9 +484,11 @@ export function TeamTab({
               roster:
                 s.roster === ROSTER_SCOPE.RECRUITING
                   ? t(locale, 'dashboard.rosterRecruiting')
-                  : s.roster === ROSTER_SCOPE.ALL
-                    ? t(locale, 'dashboard.rosterAll')
-                    : t(locale, 'dashboard.rosterInternal'),
+                  : s.roster === ROSTER_SCOPE.ALUMNI
+                    ? t(locale, 'dashboard.rosterAlumni')
+                    : s.roster === ROSTER_SCOPE.ALL
+                      ? t(locale, 'dashboard.rosterAll')
+                      : t(locale, 'dashboard.rosterInternal'),
             }),
             confirmLabel: t(locale, 'panel.team.diagnoseSwitchRoster'),
           });
@@ -1169,6 +1184,13 @@ export function TeamTab({
                   <span className="text-base leading-snug text-ink">
                     {titleCasePersonName(r.name)}
                   </span>
+                  {r.employmentStatus === EMPLOYMENT_STATUS.ALUMNI ? (
+                    <StatusToneChip tone="neutral">
+                      {r.exitDate
+                        ? t(locale, 'panel.rehire.leftOn', { date: formatDisplayDate(r.exitDate, locale) })
+                        : t(locale, 'panel.rehire.formerEmployee')}
+                    </StatusToneChip>
+                  ) : null}
                   {detail?.candidate?.id === r.candidateId && detail?.candidate?.employmentStatus === EMPLOYMENT_STATUS.EMPLOYEE ? (
                     <StatusToneChip tone="success">
                       {t(locale, 'recruiting.employmentEmployee')}
@@ -1232,6 +1254,14 @@ export function TeamTab({
                           id: 'recalcHrScore',
                           label: t(locale, 'hrScore.recalculateOne'),
                           onSelect: () => recalculateHrScore(r.candidateId),
+                        }]
+                        : []),
+                      ...(canRehire && r.employmentStatus === EMPLOYMENT_STATUS.ALUMNI
+                        ? [{
+                          id: 'rehire',
+                          label: t(locale, 'panel.rehire.action'),
+                          disabled: rehireBusyId === r.candidateId,
+                          onSelect: () => rehirePerson({ candidateId: r.candidateId, name: r.name, exitDate: r.exitDate }),
                         }]
                         : []),
                       {
@@ -1377,6 +1407,29 @@ export function TeamTab({
                           {t(locale, 'panel.team.addToVacancyBtn')}
                         </button>
                       </div>
+                    ) : null}
+                    {detail.candidate.employmentStatus === EMPLOYMENT_STATUS.ALUMNI ? (
+                      <InlineCallout tone="neutral" className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-ink">
+                        <span>
+                          {openRow.exitDate
+                            ? t(locale, 'panel.rehire.detailLeftOn', { date: formatDisplayDate(openRow.exitDate, locale) })
+                            : t(locale, 'panel.rehire.detailFormer')}
+                        </span>
+                        {canRehire ? (
+                          <button
+                            type="button"
+                            className={S.btnBrandSoft}
+                            disabled={rehireBusyId === detail.candidate.id}
+                            onClick={() => rehirePerson({
+                              candidateId: detail.candidate.id,
+                              name: openRow.name,
+                              exitDate: openRow.exitDate,
+                            })}
+                          >
+                            {t(locale, 'panel.rehire.action')}
+                          </button>
+                        ) : null}
+                      </InlineCallout>
                     ) : null}
                     <PanelSubNav
                       ariaLabel={t(locale, 'panel.team.peopleSubTabsAria')}

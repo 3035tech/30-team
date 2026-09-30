@@ -775,7 +775,9 @@ function DashboardClientContent({
       key: 'roster',
       label: roster === 'recruiting'
         ? t(locale, 'dashboard.rosterRecruiting')
-        : t(locale, 'dashboard.rosterAll'),
+        : roster === ROSTER_SCOPE.ALUMNI
+          ? t(locale, 'dashboard.rosterAlumni')
+          : t(locale, 'dashboard.rosterAll'),
       onRemove: () => { setRoster('internal'); pushFilters({ roster: 'internal' }); },
     });
   }
@@ -1196,6 +1198,7 @@ function DashboardClientContent({
             >
               <option value="internal">{t(locale, 'dashboard.rosterInternal')}</option>
               <option value="recruiting">{t(locale, 'dashboard.rosterRecruiting')}</option>
+              <option value={ROSTER_SCOPE.ALUMNI}>{t(locale, 'dashboard.rosterAlumni')}</option>
               <option value="all">{t(locale, 'dashboard.rosterAll')}</option>
             </SelectField>
             <SelectField
@@ -1406,6 +1409,7 @@ function DashboardClientContent({
                     canViewCompensation={showCompensation}
                     canManageCompensation={manageCompensation}
                     canViewJobRoles={canViewJobRoles}
+                    canRehire={can(sessionAuth, CAP.EXIT_ANALYSIS_VIEW)}
                     onSearch={(value) => {
                       setSearch(value || '');
                       pushFilters({ search: value });

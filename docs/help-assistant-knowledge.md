@@ -48,6 +48,7 @@ Após **Test pass** (pipeline Dev → Test → Validate), antes de dar a entrega
 | DP leve (ficha / docs / assinatura interna / férias / saldo / template D1) | Seção `dpLight` + FAQ `faqDpLight` / `faqLeaveBalance` |
 | Ponto digital MVP | Seção `timeClock` + FAQ `faqTimeClock` |
 | Banco de horas | Seção `hourBank` + FAQ `faqHourBank` |
+| Reativar ex-colaborador / filtro Ex-colaboradores | Seção `b1000Exit` (passos 2 e 7) + FAQ `faqRehire` |
 | Mural / kudos | Seção `companyFeed` + FAQ `faqCompanyFeed` |
 | OKRs + bônus variável | Seção `b3000Pack` + FAQ `faqOkr` / `faqVariablePay` |
 | Ouvidoria / organograma / feedback contínuo | Seção `b3005Pack` + FAQ `faqWhistleblowing` |
