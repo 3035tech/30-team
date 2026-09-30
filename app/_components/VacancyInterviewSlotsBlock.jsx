@@ -113,12 +113,14 @@ export function VacancyInterviewSlotsBlock({
         },
         {
           name: 'startsAt',
+          row: 'period',
           type: 'datetime-local',
           label: t(locale, 'recruiting.interviewSlotsStartsAt'),
           required: true,
         },
         {
           name: 'endsAt',
+          row: 'period',
           type: 'datetime-local',
           label: t(locale, 'recruiting.interviewSlotsEndsAt'),
           required: false,

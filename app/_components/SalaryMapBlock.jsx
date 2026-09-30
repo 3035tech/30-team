@@ -265,7 +265,7 @@ export function SalaryMapBlock({ locale = 'pt-BR', companyId }) {
         ) : null}
 
         <div className="mb-4 flex flex-wrap items-end gap-3">
-          <FormField label={t(locale, 'panel.salaryMap.pctLabel')} className="w-28">
+          <FormField label={t(locale, 'panel.salaryMap.pctLabel')} className="max-w-[7rem] flex-none">
             <input
               type="number"
               min={0}

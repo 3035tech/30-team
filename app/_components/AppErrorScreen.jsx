@@ -1,18 +1,46 @@
 'use client';
 
 import * as Sentry from '@sentry/nextjs';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
 
-/** Stop-motion loop over the base photo (shocked at the screen): busy → base → scream → collapse. */
+/** Stop-motion loop: key poses hold longer, in-betweens are short so the crossfade reads as motion. */
 const FRAMES = [
-  { src: '/illustrations/hr-overload-busy.webp', className: 'app-err-frame-1' },
-  { src: '/illustrations/hr-overload-scream.webp', className: 'app-err-frame-3' },
-  { src: '/illustrations/hr-overload-collapse.webp', className: 'app-err-frame-4' },
+  { name: 'busy', ms: 1100 },
+  { name: 'hangup', ms: 450 },
+  { name: 'shock', ms: 1100 },
+  { name: 'grip', ms: 450 },
+  { name: 'scream', ms: 1000, jolt: true },
+  { name: 'droop', ms: 550 },
+  { name: 'collapse', ms: 1100 },
+  { name: 'wake', ms: 600 },
 ];
+const STILL_FRAME = FRAMES.findIndex((f) => f.name === 'shock');
+const frameSrc = (name) => `/illustrations/hr-toon-${name}.webp`;
+
+/** Returns the active frame and the previous one, which stays opaque underneath while the next fades in. */
+function useFrameLoop() {
+  const [frames, setFrames] = useState({ active: STILL_FRAME, prev: -1 });
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
+    let current = STILL_FRAME;
+    let timer;
+    const schedule = () => {
+      timer = setTimeout(() => {
+        const prev = current;
+        current = (current + 1) % FRAMES.length;
+        setFrames({ active: current, prev });
+        schedule();
+      }, FRAMES[current].ms);
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, []);
+  return frames;
+}
 
 const PAPER_LINES = 'M8 12h30M8 20h34M8 28h22';
 
@@ -35,34 +63,40 @@ function FlyingPaper({ className }) {
 }
 
 /**
- * Overloaded HR analyst as a stop-motion photo loop with animated layers: notifications pile up
+ * Overloaded HR analyst as an 8-frame stop-motion loop with animated layers: notifications pile up
  * on the monitor, the phone rings, papers fly off the pile. Animation classes live in globals.css (`app-err-*`).
  */
 function HrOverloadArt({ label }) {
+  const { active, prev } = useFrameLoop();
   return (
     <div
       role="img"
       aria-label={label}
       className="app-err-art relative w-[min(440px,88vw)] overflow-hidden rounded-card border border-ink/10 bg-ink/[0.04] shadow-sm"
     >
-      <div className="app-err-photo relative">
+      <div className={cn('relative isolate', FRAMES[active].jolt && 'app-err-jolt')}>
         <img
-          src="/illustrations/hr-overload.webp"
+          src={frameSrc('shock')}
           alt=""
           width={960}
           height={720}
           decoding="async"
           className="block h-auto w-full"
         />
-        {FRAMES.map((frame) => (
+        {FRAMES.map((frame, i) => (
           <img
-            key={frame.src}
-            src={frame.src}
+            key={frame.name}
+            src={frameSrc(frame.name)}
             alt=""
             width={960}
             height={720}
             decoding="async"
-            className={`app-err-frame ${frame.className} absolute inset-0 h-full w-full`}
+            className={cn(
+              'absolute inset-0 h-full w-full',
+              i === active && 'z-[2] opacity-100 transition-opacity duration-200 ease-out motion-reduce:transition-none',
+              i === prev && 'z-[1] opacity-100',
+              i !== active && i !== prev && 'opacity-0',
+            )}
           />
         ))}
       </div>

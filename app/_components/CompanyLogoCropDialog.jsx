@@ -10,6 +10,7 @@ import {
   dialogOverlayElevatedClass,
 } from './app-dialog-styles';
 import { FormField } from './FormField';
+import { DialogCloseButton } from './DialogCloseButton';
 import {
   assertLogoSourceFile,
   clampLogoPan,
@@ -194,9 +195,12 @@ export function CompanyLogoCropDialog({ open, file, locale = 'pt-BR', onCancel, 
         className="w-full max-w-[420px] rounded-card border border-ink/12 bg-white px-[26px] py-6 shadow-dialog"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="company-logo-crop-title" className="m-0 font-display text-lg font-semibold text-ink">
-          {t(locale, 'panel.admin.companyLogoCropTitle')}
-        </h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 id="company-logo-crop-title" className="m-0 min-w-0 pt-1.5 font-display text-lg font-semibold text-ink">
+            {t(locale, 'panel.admin.companyLogoCropTitle')}
+          </h2>
+          <DialogCloseButton onClick={() => onCancel?.()} locale={locale} disabled={busy} className="-mr-2 -mt-1" />
+        </div>
         <p className="mb-4 mt-2 text-sm leading-snug text-ink-muted">
           {t(locale, 'panel.admin.companyLogoCropHint')}
         </p>

@@ -23,6 +23,7 @@ import { EntitySearchSelect } from './EntitySearchSelect';
 import { parseTagList } from '../../lib/tag-list';
 import { CompanyLogoCropDialog } from './CompanyLogoCropDialog';
 import { FormField } from './FormField';
+import { DialogCloseButton } from './DialogCloseButton';
 import { COMPANY_LOGO_ACCEPT } from '../../lib/company-logo-limits';
 import { digitsOnly, formatSalaryDisplay, formatCepBr, formatCpfBr, formatPhoneBr, stripCep, stripCpf, stripPhone } from '../../lib/br-masks';
 
@@ -205,7 +206,9 @@ export function PromptFormDialog({
     if (!open || !mounted) return undefined;
     const previous = document.activeElement;
     const frame = requestAnimationFrame(() => {
-      dialogRef.current?.querySelector('input:not([hidden]):not(:disabled), textarea:not(:disabled), button:not(:disabled)')?.focus();
+      const root = dialogRef.current;
+      (root?.querySelector('input:not([hidden]):not(:disabled), textarea:not(:disabled)')
+        || root?.querySelector('fieldset button:not(:disabled), button[type="submit"]:not(:disabled)'))?.focus();
     });
     return () => { cancelAnimationFrame(frame); if (previous?.isConnected) previous.focus(); };
   }, [open, mounted]);
@@ -794,15 +797,15 @@ export function PromptFormDialog({
           )}
           onClick={(e) => e.stopPropagation()}
         >
-          <span className="font-mono text-2xs uppercase tracking-[2px] text-brand-500">
-            30Grow
-          </span>
-          <h2
-            id="prompt-form-title"
-            className="mb-0 mt-2 font-ui text-xl font-semibold leading-snug text-ink"
-          >
-            {heading}
-          </h2>
+          <div className="flex items-start justify-between gap-3">
+            <h2
+              id="prompt-form-title"
+              className="m-0 min-w-0 break-words pt-1.5 font-ui text-xl font-semibold leading-snug text-ink"
+            >
+              {heading}
+            </h2>
+            <DialogCloseButton onClick={onCancel} locale={locale} disabled={submitting} className="-mr-2 -mt-1" />
+          </div>
           {message ? (
             <p className="mb-0 mt-3 text-sm leading-[1.55] text-ink-muted">{message}</p>
           ) : null}

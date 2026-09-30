@@ -193,8 +193,8 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
       confirmLabel: t(locale, 'panel.okr.createCycleConfirm'),
       fields: [
         { key: 'title', label: t(locale, 'panel.okr.cycleTitleLabel'), required: true, maxLength: 200 },
-        { key: 'startsOn', type: 'date', label: t(locale, 'panel.okr.periodStart'), required: true },
-        { key: 'endsOn', type: 'date', label: t(locale, 'panel.okr.periodEnd'), required: true },
+        { key: 'startsOn', type: 'date', row: 'period', label: t(locale, 'panel.okr.periodStart'), required: true },
+        { key: 'endsOn', type: 'date', row: 'period', label: t(locale, 'panel.okr.periodEnd'), required: true },
       ],
     });
     if (!values) return;

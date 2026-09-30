@@ -30,7 +30,7 @@ import {
   dialogBtnPrimaryClass,
 } from '../../_components/AdminRichFormDrawer';
 import { RubricEditor } from '../../_components/RubricEditor';
-import { FormField } from '../../_components/FormField';
+import { FormField, formFieldGrowClass } from '../../_components/FormField';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { fieldInputClass } from '../../_components/form-control-styles';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
@@ -682,7 +682,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
             <div className="flex flex-col gap-3">
               <p className="m-0 text-prose text-ink-muted">{t(locale, 'jobRoles.marketBandHint')}</p>
               <div className={cn(S.fieldRow, 'items-start gap-3')}>
-                <FormField label={t(locale, 'jobRoles.marketMinLabel')}>
+                <FormField label={t(locale, 'jobRoles.marketMinLabel')} className={formFieldGrowClass}>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -697,7 +697,7 @@ export function JobRolesAdminTab({ locale, companyId }) {
                     className={FIELD}
                   />
                 </FormField>
-                <FormField label={t(locale, 'jobRoles.marketMaxLabel')}>
+                <FormField label={t(locale, 'jobRoles.marketMaxLabel')} className={formFieldGrowClass}>
                   <input
                     type="text"
                     inputMode="numeric"

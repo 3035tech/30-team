@@ -3,7 +3,9 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
-import { AppLoading } from '../../_components/AppLoading';
+import { AppLoading, ContentEnter } from '../../_components/AppLoading';
+import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
+import { cn } from '../../../lib/cn';
 import { RichTextView } from '../../_components/RichTextView';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { BENEFIT_TYPES } from '../../../lib/domain-status.js';
@@ -36,6 +38,7 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId }) {
   const [sort, setSort] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
   const [nameQ, setNameQ] = useState('');
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const { confirm, notice, promptForm, toast } = useAppFeedback();
 
   function companyQs(prefix = '?') {
@@ -362,41 +365,48 @@ export function CompanyBenefitsAdminTab({ locale = 'pt-BR', companyId }) {
       <AdminPageHeader
         title={t('title')}
         subtitle={t('subtitle')}
-        actions={<AdminCreateButton label={t('create')} onClick={handleCreate} />}
+        actions={
+          <>
+            <button
+              type="button"
+              className={cn(S.btnGhost, 'min-h-touch text-ink')}
+              onClick={() => setCategoriesOpen(true)}
+            >
+              {t('manageCategories')}
+              <span className="tabular-nums text-ink-muted">{categories.length}</span>
+            </button>
+            <AdminCreateButton label={t('create')} onClick={handleCreate} />
+          </>
+        }
       />
 
-      {/* Categories first — list before linking to benefits */}
-      <section className={S.cardTight}>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold text-ink">{t('manageCategories')}</h3>
-          <AdminCreateButton variant="secondary" label={t('newCategory')} onClick={handleCreateCategory} />
-        </div>
+      <AdminRichFormDrawer
+        open={categoriesOpen}
+        title={t('manageCategories')}
+        locale={locale}
+        maxWidth="520px"
+        onClose={() => setCategoriesOpen(false)}
+        headerActions={<AdminCreateButton variant="secondary" label={t('newCategory')} onClick={handleCreateCategory} />}
+      >
+        <p className={cn(S.muted, 'mb-4 mt-0')}>{t('categoriesHint')}</p>
         {categories.length === 0 ? (
-          <p className="text-sm text-ink-muted">{t('noCategories')}</p>
+          <EmptyState title={t('noCategories')} actionLabel={t('newCategory')} onAction={handleCreateCategory} />
         ) : (
-          <ul className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <li
-                key={cat.id}
-                className="inline-flex items-center gap-1 rounded-control border border-ink/10 bg-canvas px-2 py-1 text-sm text-ink"
-              >
-                <span className="px-1">{cat.name}</span>
-                <AdminActionsCell>
-                  <AdminViewButton
-                    label={t('view')}
-                    onClick={() => notice({ title: cat.name, message: cat.name })}
-                  />
-                  <AdminEditButton label={t('edit')} onClick={() => handleEditCategory(cat)} />
-                  <AdminDeleteButton
-                    label={t('deactivate')}
-                    onClick={() => handleDeactivateCategory(cat)}
-                  />
-                </AdminActionsCell>
-              </li>
-            ))}
-          </ul>
+          <ContentEnter animKey={`benefit-categories-${categories.length}`}>
+            <ul className="m-0 list-none divide-y divide-ink/5 rounded-card border border-ink/10 p-0">
+              {categories.map((cat) => (
+                <li key={cat.id} className="flex items-center justify-between gap-3 px-4 py-2">
+                  <span className="min-w-0 break-words text-sm text-ink">{cat.name}</span>
+                  <AdminActionsCell>
+                    <AdminEditButton label={t('edit')} onClick={() => handleEditCategory(cat)} />
+                    <AdminDeleteButton label={t('deactivate')} onClick={() => handleDeactivateCategory(cat)} />
+                  </AdminActionsCell>
+                </li>
+              ))}
+            </ul>
+          </ContentEnter>
         )}
-      </section>
+      </AdminRichFormDrawer>
 
       <AdminListFilters
         aria-label={t('title')}

@@ -268,7 +268,7 @@ describe('module hardening', () => {
   it('keeps benefit management available to every manager with the module capability', () => {
     const benefits = source('app/dashboard/tabs/CompanyBenefitsAdminTab.jsx');
     const dashboard = source('app/dashboard/DashboardClient.jsx');
-    assert.match(benefits, /actions=\{<AdminCreateButton label=\{t\('create'\)\}/);
+    assert.match(benefits, /actions=\{\s*<>[\s\S]*?<AdminCreateButton label=\{t\('create'\)\} onClick=\{handleCreate\}/);
     assert.match(benefits, /actionLabel=\{t\('create'\)\}/);
     assert.doesNotMatch(benefits, /\bisAdmin\b/);
     assert.doesNotMatch(dashboard, /<CompanyBenefitsAdminTab[^>]*isAdmin=/);

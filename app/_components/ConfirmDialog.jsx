@@ -65,17 +65,9 @@ export function ConfirmDialog({
         className={dialogCardClass}
         onClick={(e) => e.stopPropagation()}
       >
-        <span
-          className={cn(
-            'font-mono text-2xs uppercase tracking-[2px]',
-            danger ? 'text-danger' : 'text-brand-500'
-          )}
-        >
-          30Grow
-        </span>
         <h2
           id="confirm-dialog-title"
-          className="mb-0 mt-2 font-ui text-xl font-semibold leading-snug text-ink"
+          className="m-0 font-ui text-xl font-semibold leading-snug text-ink"
         >
           {heading}
         </h2>

@@ -89,12 +89,9 @@ export function SystemNoticeModal({
             <Icon name={noticeIconName(tone)} className="h-5 w-5 shrink-0" />
           </span>
           <div className="min-w-0 flex-1">
-            <span className={cn('font-mono text-2xs uppercase tracking-[2px]', accentClass)}>
-              30Grow
-            </span>
             <h2
               id="system-notice-title"
-              className="mb-0 mt-2 font-ui text-xl font-semibold leading-tight text-ink"
+              className="m-0 font-ui text-xl font-semibold leading-tight text-ink"
             >
               {heading}
             </h2>

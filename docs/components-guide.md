@@ -148,6 +148,10 @@ const [rubric, setRubric] = useState({});
 </AdminRichFormDrawer>
 ```
 
+### Fechar modal (×)
+
+Modais de cadastro, edição e visualização (`AdminRichFormDrawer`, `PromptFormDialog`/`promptForm`, recorte de logo, visualização de desligamento) têm o **×** no canto superior direito via `DialogCloseButton` (`app/_components/DialogCloseButton.jsx`, rótulo `panel.common.close`). Modal novo com formulário reutiliza esse componente. Confirmações e avisos (`ConfirmDialog`, `SystemNoticeModal`) ficam **sem ×**: pedem decisão explícita (Cancelar/Confirmar/OK). Em todos, Esc e clique fora continuam fechando.
+
 ---
 
 ## Integração nas APIs
@@ -202,7 +206,7 @@ const role = await getJobRole(id);
 
 ### Telas de erro (error boundaries)
 
-`app/global-error.jsx`, `app/error.jsx` e `app/r/error.jsx` usam `AppErrorScreen` (`app/_components/AppErrorScreen.jsx`): foto animada em stop motion (analista de RH sobrecarregada: base `public/illustrations/hr-overload.webp` + quadros `hr-overload-busy/scream/collapse.webp` alternando em loop de 6,4s; sem movimento com `prefers-reduced-motion` fica só a base), com camadas SVG por cima: notificações no monitor, badge 99+, telefone tocando, papéis voando, vapor do café; `illustrations/` fica fora do matcher do `proxy.js`), copy `panel.common.appError*`, "Tentar de novo" (`retry`/`reset`), link ao painel (`homeHref={null}` em fluxo público) e o `digest` como código de suporte. Envia ao Sentry. Animações `.app-err-*` em `globals.css`, desligadas com `prefers-reduced-motion`. Novo `error.jsx` de segmento reutiliza esse componente.
+`app/global-error.jsx`, `app/error.jsx` e `app/r/error.jsx` usam `AppErrorScreen` (`app/_components/AppErrorScreen.jsx`): bonequinho 3D animado em stop motion (analista de RH sobrecarregada: 8 quadros `public/illustrations/hr-toon-{busy,hangup,shock,grip,scream,droop,collapse,wake}.webp`, loop de ~6,4s controlado por timer no componente (`FRAMES` com duração por quadro: poses-chave ~1s, intermediárias ~0,5s; fade de 200ms com o quadro anterior opaco embaixo; tremor `app-err-jolt` só no grito). Com `prefers-reduced-motion` fica parado em `shock`), com camadas SVG por cima: notificações no monitor, badge 99+, telefone tocando, papéis voando, vapor do café; `illustrations/` fica fora do matcher do `proxy.js`), copy `panel.common.appError*`, "Tentar de novo" (`retry`/`reset`), link ao painel (`homeHref={null}` em fluxo público) e o `digest` como código de suporte. Envia ao Sentry. Animações `.app-err-*` em `globals.css`, desligadas com `prefers-reduced-motion`. Novo `error.jsx` de segmento reutiliza esse componente.
 
 ### VacanciesAdminTab (Criar/Editar Vaga):
 

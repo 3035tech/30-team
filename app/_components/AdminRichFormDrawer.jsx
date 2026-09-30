@@ -2,13 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { t, t as i18nT } from '../../lib/i18n';
+import { t as i18nT } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { UI_TYPE } from '../../lib/ui-typography';
-import {
-  dialogBtnGhostClass,
-  dialogOverlayClass,
-} from './app-dialog-styles';
+import { dialogOverlayClass } from './app-dialog-styles';
+import { DialogCloseButton } from './DialogCloseButton';
 
 /**
  * Wide form shell for rich create/edit (vacancies, etc.).
@@ -31,6 +29,7 @@ export function AdminRichFormDrawer({
   eyebrow = null,
 }) {
   const TitleTag = fullPage ? 'h1' : 'h2';
+  const eyebrowText = eyebrow || (fullPage ? i18nT(locale, 'ui.adminRichFormDrawer.peopleTeam') : '');
   const [mounted, setMounted] = useState(false);
   const contentRef = useRef(null);
   const panelRef = useRef(null);
@@ -140,15 +139,12 @@ export function AdminRichFormDrawer({
                 ← {backLabel}
               </button>
             ) : null}
-            <span className={UI_TYPE.label}>
-              {eyebrow || (fullPage
-                ? (i18nT(locale, 'ui.adminRichFormDrawer.peopleTeam'))
-                : '30Grow')}
-            </span>
+            {eyebrowText ? <span className={UI_TYPE.label}>{eyebrowText}</span> : null}
             <TitleTag
               id="rich-form-drawer-title"
               className={cn(
-                'mb-0 mt-1.5 break-words',
+                'mb-0 break-words',
+                eyebrowText && 'mt-1.5',
                 fullPage ? UI_TYPE.page : UI_TYPE.section
               )}
             >
@@ -162,15 +158,7 @@ export function AdminRichFormDrawer({
           </div>
           <div className={cn('flex shrink-0 items-start gap-2', fullPage && 'mt-8')}>
             {headerActions}
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label={fullPage ? closeLabel : t(locale, 'panel.common.cancel')}
-              title={fullPage ? closeLabel : undefined}
-              className={cn(dialogBtnGhostClass, 'min-h-touch min-w-10 px-3 py-2')}
-            >
-              ×
-            </button>
+            <DialogCloseButton onClick={onClose} locale={locale} label={fullPage ? closeLabel : undefined} />
           </div>
         </div>
         <div ref={contentRef} className={cn(

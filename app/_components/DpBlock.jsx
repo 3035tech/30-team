@@ -721,12 +721,14 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
         },
         {
           key: 'periodStart',
+          row: 'period',
           type: 'date',
           label: t(locale, 'panel.dp.balancePeriodStart'),
           defaultValue: balance?.periodStart || '',
         },
         {
           key: 'periodEnd',
+          row: 'period',
           type: 'date',
           label: t(locale, 'panel.dp.balancePeriodEnd'),
           defaultValue: balance?.periodEnd || '',

@@ -515,16 +515,11 @@ textarea:focus-visible {
   }
 }
 
-/* AppErrorScreen: overloaded HR analyst stop-motion photo loop with animated layers (notifications, phone, papers) */
-@keyframes app-err-photo {
-  0%, 51%, 64%, 100% { transform: translate(0, 0); }
-  52%, 56%, 60% { transform: translate(-0.6%, 0.2%); }
-  54%, 58%, 62% { transform: translate(0.6%, -0.2%); }
-}
-@keyframes app-err-frame {
-  0% { opacity: 0; }
-  3%, 25% { opacity: 1; }
-  28%, 100% { opacity: 0; }
+/* AppErrorScreen: overloaded HR analyst 8-frame stop-motion loop (timer in the component) with animated layers (notifications, phone, papers) */
+@keyframes app-err-jolt {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-0.5%, 0.2%); }
+  75% { transform: translate(0.5%, -0.2%); }
 }
 @keyframes app-err-steam {
   0% { opacity: 0; transform: translateY(8px); }
@@ -543,10 +538,7 @@ textarea:focus-visible {
   12% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--app-err-dx), var(--app-err-dy)) rotate(var(--app-err-rot)); }
 }
-.app-err-photo { transform-origin: center; animation: app-err-photo 6.4s ease-in-out infinite; }
-.app-err-frame { opacity: 0; animation: app-err-frame 6.4s ease-in-out infinite; }
-.app-err-frame-3 { animation-delay: 3.2s; }
-.app-err-frame-4 { animation-delay: 4.8s; }
+.app-err-jolt { animation: app-err-jolt 0.2s linear infinite; }
 .app-err-pop { animation: app-err-pop 3.6s ease-out infinite; }
 .app-err-pop-2 { animation-delay: 0.5s; }
 .app-err-pop-3 { animation-delay: 1s; }
@@ -563,8 +555,7 @@ textarea:focus-visible {
   .app-err-art * {
     animation: none !important;
   }
-  .app-err-fly,
-  .app-err-frame {
+  .app-err-fly {
     opacity: 0;
   }
 }

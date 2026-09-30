@@ -289,8 +289,8 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
           type: 'boolean',
           defaultValue: !!draft?.includeSelf,
         },
-        { name: 'periodStart', label: t(locale, 'performanceReviews.periodStart'), type: 'date', defaultValue: draft?.periodStart?.slice(0, 10) || '' },
-        { name: 'periodEnd', label: t(locale, 'performanceReviews.periodEnd'), type: 'date', defaultValue: draft?.periodEnd?.slice(0, 10) || '' },
+        { name: 'periodStart', label: t(locale, 'performanceReviews.periodStart'), type: 'date', row: 'period', defaultValue: draft?.periodStart?.slice(0, 10) || '' },
+        { name: 'periodEnd', label: t(locale, 'performanceReviews.periodEnd'), type: 'date', row: 'period', defaultValue: draft?.periodEnd?.slice(0, 10) || '' },
         { key: 'competencyIds', label: tf(locale, 'competenciesTitle'), type: 'checkboxGroup', defaultValue: (draft?.questionnaire || []).map(item => String(item.competencyId)), options: choices.map(item => ({ value: String(item.id), label: item.name })) },
         { key: 'instructions', label: i18nT(locale, 'ui.formalCompetencyReviewsBlock.instructions'), type: 'textarea', maxLength: 4000, defaultValue: draft?.instructions || '' },
         { key: 'responseScale', label: i18nT(locale, 'ui.formalCompetencyReviewsBlock.responseScale'), type: 'select', defaultValue: draft?.responseScale || 'agreement', options: [

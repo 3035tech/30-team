@@ -7,6 +7,7 @@ import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { RichTextView } from '../../_components/RichTextView';
+import { DialogCloseButton } from '../../_components/DialogCloseButton';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import {
@@ -603,9 +604,12 @@ function ExitRecordViewDialog({ locale, record, t, formatDate, canWrite, onClose
         aria-modal="true"
         aria-labelledby="exit-record-view-title"
       >
-        <h3 id="exit-record-view-title" className="m-0 text-lg font-semibold text-ink">
-          {t('viewTitle')}
-        </h3>
+        <div className="flex items-start justify-between gap-3">
+          <h3 id="exit-record-view-title" className="m-0 min-w-0 pt-1.5 text-lg font-semibold text-ink">
+            {t('viewTitle')}
+          </h3>
+          <DialogCloseButton onClick={onClose} locale={locale} className="-mr-2 -mt-1" />
+        </div>
         <dl className="mt-4 flex flex-col gap-3 text-sm">
           <div>
             <dt className="font-mono text-2xs uppercase tracking-wider text-ink-faint">{t('candidateName')}</dt>
