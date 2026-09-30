@@ -2,11 +2,14 @@
 
 import { SelectField } from './SelectField';
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { t } from '../../lib/i18n';
 import { BR_UF_SET } from '../../lib/candidate-profile';
 import { cn } from '../../lib/cn';
 import { fieldInputClass, fieldSelectClass } from './form-control-styles';
+
+const LIST_MAX_H = 220;
 
 function foldCity(s) {
   return String(s || '')
@@ -38,6 +41,9 @@ export function BrCitySelect({
   const [query, setQuery] = useState(String(value || ''));
   const listId = useId();
   const wrapRef = useRef(null);
+  const inputRef = useRef(null);
+  const listRef = useRef(null);
+  const [listPos, setListPos] = useState(null);
   const autocomplete = mode === 'autocomplete';
 
   useEffect(() => {
@@ -86,7 +92,7 @@ export function BrCitySelect({
   useEffect(() => {
     if (!autocomplete) return undefined;
     const onDoc = (e) => {
-      if (!wrapRef.current?.contains(e.target)) setOpen(false);
+      if (!wrapRef.current?.contains(e.target) && !listRef.current?.contains(e.target)) setOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
@@ -99,7 +105,6 @@ export function BrCitySelect({
   let placeholder = t(locale, 'recruiting.cityPh');
   if (!hasUf) placeholder = t(locale, 'recruiting.citySelectUfFirst');
   else if (loading) placeholder = t(locale, 'recruiting.cityLoading');
-  else if (loadErr) placeholder = t(locale, 'recruiting.cityLoadFailed');
 
   const suggestions = useMemo(() => {
     if (!autocomplete || !hasUf || loading || loadErr) return [];
@@ -110,11 +115,37 @@ export function BrCitySelect({
     return list;
   }, [autocomplete, hasUf, loading, loadErr, query, cities]);
 
+  const showList = autocomplete && open && hasUf && !loading && !loadErr && suggestions.length > 0;
+
+  const placeList = useCallback(() => {
+    const r = inputRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const below = window.innerHeight - r.bottom;
+    const above = below < LIST_MAX_H + 8 && r.top > below;
+    setListPos({
+      left: r.left,
+      width: r.width,
+      top: above ? undefined : r.bottom + 4,
+      bottom: above ? window.innerHeight - r.top + 4 : undefined,
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!showList) return undefined;
+    placeList();
+    window.addEventListener('scroll', placeList, true);
+    window.addEventListener('resize', placeList);
+    return () => {
+      window.removeEventListener('scroll', placeList, true);
+      window.removeEventListener('resize', placeList);
+    };
+  }, [showList, placeList]);
+
   if (autocomplete) {
-    const showList = open && hasUf && !loading && !loadErr && suggestions.length > 0;
     return (
       <div ref={wrapRef} className={cn('relative w-full', className)}>
         <input
+          ref={inputRef}
           id={id}
           type="text"
           role="combobox"
@@ -151,11 +182,13 @@ export function BrCitySelect({
             …
           </span>
         ) : null}
-        {showList ? (
+        {showList && listPos && typeof document !== 'undefined' ? createPortal(
           <ul
+            ref={listRef}
             id={listId}
             role="listbox"
-            className="absolute left-0 right-0 top-[calc(100%+4px)] z-40 m-0 max-h-[220px] list-none overflow-y-auto rounded-control border border-ink/16 bg-white py-1.5 shadow-menu"
+            className="fixed z-[10090] m-0 max-h-[220px] list-none overflow-y-auto rounded-control border border-ink/16 bg-white py-1.5 shadow-menu"
+            style={listPos}
           >
             {suggestions.map((name) => (
               <li key={name} role="option" aria-selected={name === cityValue}>
@@ -176,9 +209,26 @@ export function BrCitySelect({
                 </button>
               </li>
             ))}
-          </ul>
+          </ul>,
+          document.body
         ) : null}
       </div>
+    );
+  }
+
+  if (loadErr) {
+    return (
+      <input
+        id={id}
+        type="text"
+        autoComplete="address-level2"
+        value={String(value || '')}
+        placeholder={t(locale, 'recruiting.cityPh')}
+        onChange={(e) => onChange?.(e.target.value)}
+        aria-label={ariaLabel || t(locale, 'recruiting.cityPh')}
+        className={cn(fieldInputClass, 'w-full', className)}
+        style={style}
+      />
     );
   }
 

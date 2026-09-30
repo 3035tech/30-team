@@ -7,6 +7,7 @@ import {
   TIME_DAY_JUSTIFICATION,
   TIME_DAY_JUSTIFICATIONS,
   TIME_DAY_OCCURRENCE,
+  TIME_PUNCH_FLAG,
   TIME_PUNCH_KIND,
   TIME_PUNCH_REVIEW,
   TIME_PUNCH_SOURCE,
@@ -26,6 +27,8 @@ import { useAppFeedback } from './AppFeedback';
 import { DateField } from './DateField';
 import { EmptyState } from './EmptyState';
 import { FormField } from './FormField';
+import { Icon } from './Icon';
+import { IconActionTip } from './IconActionTip';
 import { InlineCallout } from './InlineCallout';
 import { SegmentedControl } from './SegmentedControl';
 import { StatMetricTile } from './StatMetricTile';
@@ -81,7 +84,8 @@ function dayLabel(iso, locale) {
   const lang = localeHtmlLang(locale);
   const wd = d.toLocaleDateString(lang, { weekday: 'short', timeZone: 'UTC' });
   const dm = d.toLocaleDateString(lang, { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
-  return `${wd.replace(/\.$/, '')} ${dm}`;
+  const w = wd.replace(/\.$/, '');
+  return `${w.charAt(0).toLocaleUpperCase(lang)}${w.slice(1)} ${dm}`;
 }
 
 function activePunches(day) {
@@ -102,25 +106,34 @@ async function postJson(url, body, method = 'POST') {
 function PunchTimes({ day, locale }) {
   const active = activePunches(day);
   if (active.length === 0) {
-    return <span className={S.faint}>{t(locale, `${K}.noPunch`)}</span>;
+    return <span className={cn(S.faint, 'whitespace-nowrap')}>{t(locale, `${K}.noPunch`)}</span>;
+  }
+  const pairs = [];
+  for (const p of active) {
+    const last = pairs[pairs.length - 1];
+    if (last && p.punchKind === TIME_PUNCH_KIND.OUT && last.length === 1) last.push(p);
+    else pairs.push([p]);
   }
   return (
-    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-mono tabular-nums text-ink">
-      {active.map((p, i) => {
-        const manual = p.source === TIME_PUNCH_SOURCE.MANAGER;
-        const sep = i === 0 ? '' : p.punchKind === TIME_PUNCH_KIND.OUT ? '–' : '·';
-        return (
-          <span key={p.id} className="inline-flex items-center gap-1.5">
-            {sep ? <span className="text-ink-faint" aria-hidden>{sep}</span> : null}
-            <span
-              className={cn(manual && 'underline decoration-dotted underline-offset-2')}
-              title={manual ? t(locale, `${K}.manualPunchTip`) : undefined}
-            >
-              {timeOf(p.punchedAt, locale)}
-            </span>
-          </span>
-        );
-      })}
+    <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-0.5 font-mono tabular-nums text-ink">
+      {pairs.map((pair) => (
+        <span key={pair[0].id} className="inline-flex items-center gap-1 whitespace-nowrap">
+          {pair.map((p, i) => {
+            const manual = p.source === TIME_PUNCH_SOURCE.MANAGER;
+            return (
+              <span key={p.id} className="inline-flex items-center gap-1">
+                {i > 0 ? <span className="text-ink-faint" aria-hidden>–</span> : null}
+                <span
+                  className={cn(manual && 'underline decoration-dotted underline-offset-2')}
+                  title={manual ? t(locale, `${K}.manualPunchTip`) : undefined}
+                >
+                  {timeOf(p.punchedAt, locale)}
+                </span>
+              </span>
+            );
+          })}
+        </span>
+      ))}
     </span>
   );
 }
@@ -239,7 +252,7 @@ function DayDetail({ day, locale, onMarkOk, busy }) {
                 {p.voidedAt ? (
                   <StatusToneChip tone="neutral">{t(locale, `${K}.voided`)}</StatusToneChip>
                 ) : null}
-                {!p.voidedAt && p.flag ? (
+                {!p.voidedAt && p.flag && p.flag !== TIME_PUNCH_FLAG.MANUAL ? (
                   <StatusToneChip tone="warning">{t(locale, `panel.timeClock.flag.${p.flag}`)}</StatusToneChip>
                 ) : null}
                 {!p.voidedAt && p.reviewStatus === TIME_PUNCH_REVIEW.OK ? (
@@ -326,6 +339,7 @@ export function TimeClockMirror({ locale = 'pt-BR', companyId, candidateId, onBa
   };
 
   const days = useMemo(() => [...(data?.days || [])].reverse(), [data]);
+  const lockedDays = useMemo(() => days.filter((d) => d.locked).length, [days]);
   const detailDay = detailIso ? (data?.days || []).find((d) => d.day === detailIso) || null : null;
 
   const afterChange = async (msgKey) => {
@@ -552,7 +566,12 @@ export function TimeClockMirror({ locale = 'pt-BR', companyId, candidateId, onBa
               {t(locale, `${K}.periodClamped`, { from: data.from, to: data.to, max: data.maxDays })}
             </InlineCallout>
           ) : null}
-          <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
+          {lockedDays > 0 ? (
+            <InlineCallout tone="info" className="mb-3">
+              {t(locale, `${K}.lockedDaysHint`, { n: lockedDays })}
+            </InlineCallout>
+          ) : null}
+          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-5">
             <StatMetricTile value={formatMinutesClock(totals.workedMinutes)} label={t(locale, `${K}.totalWorked`)} />
             <StatMetricTile value={formatMinutesClock(totals.extraMinutes)} label={t(locale, `${K}.colExtra`)} />
             <StatMetricTile value={formatMinutesClock(totals.missingMinutes)} label={t(locale, `${K}.colMissing`)} />
@@ -594,7 +613,12 @@ export function TimeClockMirror({ locale = 'pt-BR', companyId, candidateId, onBa
                     <td className="whitespace-nowrap px-4 py-2.5 align-middle">
                       <span className="font-ui text-sm capitalize text-ink">{dayLabel(day.day, locale)}</span>
                       {day.locked ? (
-                        <span className={cn(S.faint, 'ml-2')}>{t(locale, `${K}.lockedChip`)}</span>
+                        <IconActionTip label={t(locale, `${K}.lockedTip`)} className="ml-1.5 align-middle">
+                          <span className="inline-flex text-ink-faint">
+                            <Icon name="lock" className="h-3.5 w-3.5" />
+                            <span className="sr-only">{t(locale, `${K}.lockedChip`)}</span>
+                          </span>
+                        </IconActionTip>
                       ) : null}
                     </td>
                     <td className="px-4 py-2.5 align-middle">

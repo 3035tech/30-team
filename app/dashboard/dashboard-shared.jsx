@@ -751,11 +751,11 @@ function AdminActionsCell({ children, className }) {
   );
 }
 
-function AdminActionsTh({ children }) {
+function AdminActionsTh({ children, className }) {
   return (
     <th
       scope="col"
-      className={cn('w-px whitespace-nowrap border-b border-ink/12 px-4 py-3 text-right align-middle', UI_TYPE.label)}
+      className={cn('w-px whitespace-nowrap border-b border-ink/12 px-4 py-3 text-right align-middle', UI_TYPE.label, className)}
     >
       {children}
     </th>

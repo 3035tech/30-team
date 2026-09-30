@@ -172,6 +172,7 @@ export function TimeClockClosuresBlock({ locale = 'pt-BR', companyId }) {
         to: dateBr(row.periodEnd, locale),
       }),
       confirmLabel: t(locale, `${K}.cancelConfirm`),
+      cancelLabel: t(locale, `${K}.cancelKeep`),
       fields: [
         {
           key: 'reason',

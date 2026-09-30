@@ -36,7 +36,7 @@ Status de vaga no 30Grow: `open` \| `closed` (+ soft `deleted`). Sem enum DRAFT/
 | Encerrada | `closed` ou `target_date` passado → UX fechada, noindex, sem JobPosting, sem CTA |
 
 Flags na vaga (drawer): página pública, permitir indexação, mostrar empresa, mostrar salário.  
-Local: `workplace_modality` (`onsite` \| `hybrid` \| `remote`), `workplace_state` (UF), `workplace_city` (município IBGE via `/api/public/br-cities` + autocomplete no drawer).  
+Local: `workplace_modality` (`onsite` \| `hybrid` \| `remote`), `workplace_state` (UF), `workplace_city` (município IBGE via `/api/public/br-cities` + autocomplete no drawer; base estática em `lib/data/br-cities.js`, sem chamada ao IBGE em runtime; regenerar com `node scripts/sync-br-cities.mjs`).  
 Salário no relatório cliente (`/r`) é flag **separada** (`client_report_show_salary`).
 
 Empresa: `website`, `about_html`, `public_profile_enabled` (opt-in para `/companies/{slug}`), `logo_url` / `logo_key` (arquivo no S3; migration `039`).

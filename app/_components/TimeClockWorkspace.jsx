@@ -60,13 +60,33 @@ function usePagedList(url, params, deps) {
   return { ...state, reload: load };
 }
 
-function PersonCell({ name, email }) {
+const WIDE_COL = 'hidden xl:table-cell';
+const ACTIONS_COL = 'hidden sm:table-cell';
+
+function PersonCell({ name, email, meta }) {
   return (
     <div className="min-w-0">
       <p className="m-0 truncate font-ui text-sm text-ink">{name}</p>
       {email ? <p className={cn(S.faint, 'm-0 truncate')}>{email}</p> : null}
+      {meta ? <p className={cn(S.faint, 'm-0 truncate xl:hidden')}>{meta}</p> : null}
     </div>
   );
+}
+
+function PersonButton({ onClick, children }) {
+  return (
+    <button
+      type="button"
+      className="min-h-touch w-full rounded-control text-left hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
+function personMeta(row, locale) {
+  return [row.jobRoleName, row.orgUnitPath || t(locale, 'panel.orgUnits.none')].filter(Boolean).join(' · ');
 }
 
 function PeopleList({ locale, companyId, onOpen, reloadKey }) {
@@ -120,33 +140,29 @@ function PeopleList({ locale, companyId, onOpen, reloadKey }) {
         <>
           <AdminTableShell
             locale={locale}
-            minWidth="640px"
+            minWidth="360px"
             animKey={`tc-people|${page}|${q}|${orgUnit}|${total}`}
             ariaLabel={t(locale, `${K}.peopleAria`)}
           >
             <thead>
               <tr>
                 <AdminTh>{t(locale, `${K}.colPerson`)}</AdminTh>
-                <AdminTh>{t(locale, `${K}.colRole`)}</AdminTh>
-                <AdminTh>{t(locale, `${K}.colUnit`)}</AdminTh>
+                <AdminTh className={WIDE_COL}>{t(locale, `${K}.colRole`)}</AdminTh>
+                <AdminTh className={WIDE_COL}>{t(locale, `${K}.colUnit`)}</AdminTh>
                 <AdminTh>{t(locale, `${K}.colPending`)}</AdminTh>
-                <AdminActionsTh>{t(locale, `${K}.colActions`)}</AdminActionsTh>
+                <AdminActionsTh className={ACTIONS_COL}>{t(locale, `${K}.colActions`)}</AdminActionsTh>
               </tr>
             </thead>
             <tbody>
               {items.map((row) => (
                 <tr key={row.candidateId} className="border-b border-ink/8 last:border-b-0">
-                  <td className="max-w-[18rem] px-4 py-2.5 align-middle">
-                    <button
-                      type="button"
-                      className="min-h-touch w-full rounded-control text-left hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
-                      onClick={() => onOpen(row.candidateId)}
-                    >
-                      <PersonCell name={row.fullName} email={row.email} />
-                    </button>
+                  <td className="max-w-[13rem] px-4 py-2.5 align-middle sm:max-w-[18rem]">
+                    <PersonButton onClick={() => onOpen(row.candidateId)}>
+                      <PersonCell name={row.fullName} email={row.email} meta={personMeta(row, locale)} />
+                    </PersonButton>
                   </td>
-                  <td className="px-4 py-2.5 align-middle text-ink-muted">{row.jobRoleName || '·'}</td>
-                  <td className="px-4 py-2.5 align-middle text-ink-muted">{row.orgUnitPath || t(locale, 'panel.orgUnits.none')}</td>
+                  <td className={cn(WIDE_COL, 'px-4 py-2.5 align-middle text-ink-muted')}>{row.jobRoleName || '·'}</td>
+                  <td className={cn(WIDE_COL, 'px-4 py-2.5 align-middle text-ink-muted')}>{row.orgUnitPath || t(locale, 'panel.orgUnits.none')}</td>
                   <td className="px-4 py-2.5 align-middle">
                     {row.flaggedCount > 0 ? (
                       <StatusToneChip tone="warning">
@@ -156,7 +172,7 @@ function PeopleList({ locale, companyId, onOpen, reloadKey }) {
                       <span className={S.faint}>{t(locale, `${K}.noPending`)}</span>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 text-right align-middle">
+                  <td className={cn(ACTIONS_COL, 'px-4 py-2.5 text-right align-middle')}>
                     <AdminActionsCell>
                       <AdminIconButton
                         icon="clock"
@@ -225,28 +241,30 @@ function BankBalances({ locale, companyId, onOpen, reloadKey }) {
         <>
           <AdminTableShell
             locale={locale}
-            minWidth="720px"
+            minWidth="400px"
             animKey={`tc-bank|${page}|${q}|${total}`}
             ariaLabel={t(locale, `${K}.bankAria`)}
           >
             <thead>
               <tr>
                 <AdminTh>{t(locale, `${K}.colPerson`)}</AdminTh>
-                <AdminTh>{t(locale, `${K}.colRole`)}</AdminTh>
-                <AdminTh>{t(locale, `${K}.colUnit`)}</AdminTh>
+                <AdminTh className={WIDE_COL}>{t(locale, `${K}.colRole`)}</AdminTh>
+                <AdminTh className={WIDE_COL}>{t(locale, `${K}.colUnit`)}</AdminTh>
                 <AdminTh align="right">{t(locale, `${K}.colBalance`)}</AdminTh>
                 <AdminTh>{t(locale, `${K}.colPending`)}</AdminTh>
-                <AdminActionsTh>{t(locale, `${K}.colActions`)}</AdminActionsTh>
+                <AdminActionsTh className={ACTIONS_COL}>{t(locale, `${K}.colActions`)}</AdminActionsTh>
               </tr>
             </thead>
             <tbody>
               {items.map((row) => (
                 <tr key={row.candidateId} className="border-b border-ink/8 last:border-b-0">
-                  <td className="max-w-[18rem] px-4 py-2.5 align-middle">
-                    <PersonCell name={row.candidateName} email={row.candidateEmail} />
+                  <td className="max-w-[13rem] px-4 py-2.5 align-middle sm:max-w-[18rem]">
+                    <PersonButton onClick={() => onOpen(row.candidateId)}>
+                      <PersonCell name={row.candidateName} email={row.candidateEmail} meta={personMeta(row, locale)} />
+                    </PersonButton>
                   </td>
-                  <td className="px-4 py-2.5 align-middle text-ink-muted">{row.jobRoleName || '·'}</td>
-                  <td className="px-4 py-2.5 align-middle text-ink-muted">{row.orgUnitPath || t(locale, 'panel.orgUnits.none')}</td>
+                  <td className={cn(WIDE_COL, 'px-4 py-2.5 align-middle text-ink-muted')}>{row.jobRoleName || '·'}</td>
+                  <td className={cn(WIDE_COL, 'px-4 py-2.5 align-middle text-ink-muted')}>{row.orgUnitPath || t(locale, 'panel.orgUnits.none')}</td>
                   <td className="px-4 py-2.5 text-right align-middle">
                     <StatusToneChip tone={row.balanceMinutes < 0 ? 'danger' : row.balanceMinutes > 0 ? 'success' : 'neutral'}>
                       <span className="font-mono tabular-nums">{formatMinutesClock(row.balanceMinutes)}</span>
@@ -261,7 +279,7 @@ function BankBalances({ locale, companyId, onOpen, reloadKey }) {
                       <span className={S.faint}>{t(locale, `${K}.noPending`)}</span>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 text-right align-middle">
+                  <td className={cn(ACTIONS_COL, 'px-4 py-2.5 text-right align-middle')}>
                     <AdminActionsCell>
                       <AdminIconButton
                         icon="clock"
