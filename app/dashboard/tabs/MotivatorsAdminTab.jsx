@@ -519,6 +519,9 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
   const [notice, setNotice] = useState(null);
   const [searchDraft, setSearchDraft] = useState('');
   const [q, setQ] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const [detailError, setDetailError] = useState('');
+  const loadSeqRef = useRef(0);
   const focusId = Number(focusAttemptId) || null;
 
   useEffect(() => {
@@ -532,7 +535,10 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
   }, [searchDraft, q]);
 
   const load = useCallback(() => {
+    loadSeqRef.current += 1;
+    const seq = loadSeqRef.current;
     setLoading(true);
+    setLoadError('');
     const p = new URLSearchParams({
       status: 'completed',
       page: String(page),
@@ -543,8 +549,13 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
     if (q) p.set('q', q);
     if (isAdmin && companyFilter && companyFilter !== 'all') p.set('company', companyFilter);
     fetch(`/api/admin/ae/attempts?${p}`)
-      .then((r) => r.json())
+      .then(async (r) => {
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || '');
+        return d;
+      })
       .then((d) => {
+        if (seq !== loadSeqRef.current) return;
         const nextItems = d.items || [];
         setItems(nextItems);
         setTotal(Number(d.total) || 0);
@@ -553,8 +564,14 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
           return nextItems[0]?.id ?? null;
         });
       })
-      .finally(() => setLoading(false));
-  }, [isAdmin, companyFilter, page, pageSize, sort, sortDir, q, focusId]);
+      .catch((e) => {
+        if (seq !== loadSeqRef.current) return;
+        setLoadError((e instanceof TypeError ? '' : e?.message) || t(locale, 'panel.motivatorsAdmin.results.loadError'));
+      })
+      .finally(() => {
+        if (seq === loadSeqRef.current) setLoading(false);
+      });
+  }, [isAdmin, companyFilter, page, pageSize, sort, sortDir, q, focusId, locale]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -572,20 +589,36 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
     setSelected(id);
   }, [focusAttemptId]);
 
+  const fetchDetail = useCallback(
+    (id, isCancelled = () => false) => {
+      setDetailError('');
+      return fetch(`/api/admin/ae/attempts/${id}`)
+        .then(async (r) => {
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok || !d?.attempt) throw new Error(d.error || '');
+          return d;
+        })
+        .then((d) => {
+          if (!isCancelled()) setDetail(d);
+        })
+        .catch((e) => {
+          if (isCancelled()) return;
+          setDetail(null);
+          setDetailError((e instanceof TypeError ? '' : e?.message) || t(locale, 'panel.motivatorsAdmin.results.loadError'));
+        });
+    },
+    [locale]
+  );
+
   useEffect(() => {
-    if (!selected) { setDetail(null); return undefined; }
+    if (!selected) { setDetail(null); setDetailError(''); return undefined; }
     let cancelled = false;
-    fetch(`/api/admin/ae/attempts/${selected}`)
-      .then((r) => r.json())
-      .then((d) => { if (!cancelled) setDetail(d); });
+    fetchDetail(selected, () => cancelled);
     return () => { cancelled = true; };
-  }, [selected]);
+  }, [selected, fetchDetail]);
 
   const reloadDetail = () => {
-    if (!selected) return;
-    fetch(`/api/admin/ae/attempts/${selected}`)
-      .then((r) => r.json())
-      .then((d) => setDetail(d));
+    if (selected) fetchDetail(selected);
   };
 
   const rescoreAttempt = async (id) => {
@@ -669,7 +702,9 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
           />
         </AdminListFilters>
         {loading ? <AppLoading variant="panel" label={t(locale, 'panel.common.loading')} /> : null}
-        {!loading && items.length === 0 ? (
+        {!loading && loadError ? (
+          <EmptyState message={loadError} actionLabel={t(locale, 'panel.common.retry')} onAction={load} />
+        ) : !loading && items.length === 0 ? (
           <EmptyState
             message={
               q
@@ -742,7 +777,11 @@ function ResultsList({ locale, isAdmin, companyFilter, focusAttemptId = null }) 
       </div>
       {selected && !detail?.attempt ? (
         <div className={S.card}>
-          <AppLoading variant="panel" locale={locale} label={t(locale, 'panel.common.loading')} />
+          {detailError ? (
+            <EmptyState message={detailError} actionLabel={t(locale, 'panel.common.retry')} onAction={reloadDetail} />
+          ) : (
+            <AppLoading variant="panel" locale={locale} label={t(locale, 'panel.common.loading')} />
+          )}
         </div>
       ) : null}
       {detail?.attempt ? (

@@ -47,7 +47,7 @@ import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
-import { VACANCY_STATUS } from '../../../lib/domain-status.js';
+import { VACANCY_LIST_FILTER, VACANCY_STATUS, normalizeVacancyListFilter } from '../../../lib/domain-status.js';
 import { formatWorkplaceLabel } from '../../../lib/vacancy-workplace';
 import { VacancyWorkplaceFields } from '../../_components/VacancyWorkplaceFields';
 import { DateField } from '../../_components/DateField';
@@ -75,6 +75,13 @@ import { RECRUITING_UX_EVENT } from '../../../lib/recruiting-ux-events';
 import { VacancyDescriptionHtml } from '../vacancies/VacancyDescriptionHtml';
 import { Icon } from '../../_components/Icon';
 
+
+const VACANCY_LIST_FILTER_OPTIONS = [
+  [VACANCY_LIST_FILTER.ALL, 'ui.vacanciesAdminTab.statusAll'],
+  [VACANCY_LIST_FILTER.OPEN, 'ui.vacanciesAdminTab.statusOpen'],
+  [VACANCY_LIST_FILTER.CLOSED, 'ui.vacanciesAdminTab.statusClosed'],
+  [VACANCY_LIST_FILTER.ATTENTION, 'ui.vacanciesAdminTab.statusAttention'],
+];
 
 const FIELD = `${fieldInputClass} w-full font-mono text-prose`;
 const FIELD_SELECT = `${fieldSelectClass} w-full font-mono text-prose`;
@@ -188,7 +195,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const vacFilterFromUrl = String(urlParams.get('vacancy') || 'all');
   const companyFilterFromUrl = String(urlParams.get('company') || 'all');
   const vacQFromUrl = String(urlParams.get('vacanciesQ') || '').trim();
-  const vacStatusFromUrl = String(urlParams.get('vacanciesStatus') || 'all');
+  const vacStatusFromUrl = normalizeVacancyListFilter(urlParams.get('vacanciesStatus'));
   const [vacSearchDraft, setVacSearchDraft] = useState(vacQFromUrl);
   const [vacSummary, setVacSummary] = useState(null);
   const [vacTotal, setVacTotal] = useState(0);
@@ -246,6 +253,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const [showPipelineSettings, setShowPipelineSettings] = useState(false);
   const createOpenedAtRef = useRef(null);
   const pipelineTemplateLoadRef = useRef(0);
+  const vacancyListLoadRef = useRef(0);
 
   const trackRecruitingUx = useCallback((event, extra = {}) => {
     const body = { event, ...extra };
@@ -309,6 +317,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   };
 
   const loadVacancies = async () => {
+    vacancyListLoadRef.current += 1;
+    const requestId = vacancyListLoadRef.current;
     setLoading(true);
     setError('');
     try {
@@ -320,12 +330,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       });
       if (vacFilterFromUrl && vacFilterFromUrl !== 'all') qs.set('vacancy', vacFilterFromUrl);
       if (vacQFromUrl) qs.set('q', vacQFromUrl);
-      if (vacStatusFromUrl !== 'all') qs.set('status', vacStatusFromUrl);
+      if (vacStatusFromUrl !== VACANCY_LIST_FILTER.ALL) qs.set('status', vacStatusFromUrl);
       if (isAdmin && companyFilterFromUrl && companyFilterFromUrl !== 'all') {
         qs.set('company', companyFilterFromUrl);
       }
       const res = await fetch(`/api/admin/vacancies?${qs.toString()}`);
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (requestId !== vacancyListLoadRef.current) return;
       if (!res.ok) throw new Error(data?.error || t(locale, 'recruiting.loadVacanciesFailed'));
       const rows = Array.isArray(data?.items)
         ? data.items
@@ -341,10 +352,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
       setVacTotal(total);
       setVacTotalPages(tpg);
     } catch (e) {
-      setError(e?.message || t(locale, 'panel.common.error'));
+      if (requestId !== vacancyListLoadRef.current) return;
+      setError((e instanceof TypeError ? '' : e?.message) || t(locale, 'recruiting.loadVacanciesFailed'));
     } finally {
-      setVacLoaded(true);
-      setLoading(false);
+      if (requestId === vacancyListLoadRef.current) {
+        setVacLoaded(true);
+        setLoading(false);
+      }
     }
   };
 
@@ -491,8 +505,8 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     navigateDashboard({ tab: 'vacancies', vacancyDetail: String(id), vacancySection: section });
   };
 
-  const listFiltered = Boolean(vacQFromUrl) || vacStatusFromUrl !== 'all';
-  const attentionCount = Number(vacSummary?.attention) || 0;
+  const listFiltered = Boolean(vacQFromUrl) || vacStatusFromUrl !== VACANCY_LIST_FILTER.ALL;
+  const attentionCount = Number(vacSummary?.[VACANCY_LIST_FILTER.ATTENTION]) || 0;
   const todayIso = (() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -501,7 +515,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
   const pushVacanciesStatus = (next) => {
     navigateDashboard({
       tab: 'vacancies',
-      vacanciesStatus: next && next !== 'all' ? next : null,
+      vacanciesStatus: next && next !== VACANCY_LIST_FILTER.ALL ? next : null,
       vacanciesPage: 1,
       scroll: false,
     });
@@ -1994,10 +2008,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 </span>
                 <button
                   type="button"
-                  onClick={() => pushVacanciesStatus(vacStatusFromUrl === 'attention' ? 'all' : 'attention')}
+                  onClick={() =>
+                    pushVacanciesStatus(
+                      vacStatusFromUrl === VACANCY_LIST_FILTER.ATTENTION ? VACANCY_LIST_FILTER.ALL : VACANCY_LIST_FILTER.ATTENTION
+                    )
+                  }
                   className="inline-flex min-h-touch shrink-0 cursor-pointer items-center rounded-control border border-warning/40 bg-surface px-3 py-1.5 font-ui text-sm font-medium text-amber-800 transition-colors hover:bg-warning/10 dark:text-warning"
                 >
-                  {vacStatusFromUrl === 'attention'
+                  {vacStatusFromUrl === VACANCY_LIST_FILTER.ATTENTION
                     ? i18nT(locale, 'ui.vacanciesAdminTab.attentionShowAll')
                     : i18nT(locale, 'ui.vacanciesAdminTab.attentionShow')}
                 </button>
@@ -2031,10 +2049,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                 onChange={pushVacanciesStatus}
                 className="max-w-[16rem]"
               >
-                <option value="all">{i18nT(locale, 'ui.vacanciesAdminTab.statusAll', { n: vacSummary?.all ?? 0 })}</option>
-                <option value={VACANCY_STATUS.OPEN}>{i18nT(locale, 'ui.vacanciesAdminTab.statusOpen', { n: vacSummary?.open ?? 0 })}</option>
-                <option value={VACANCY_STATUS.CLOSED}>{i18nT(locale, 'ui.vacanciesAdminTab.statusClosed', { n: vacSummary?.closed ?? 0 })}</option>
-                <option value="attention">{i18nT(locale, 'ui.vacanciesAdminTab.statusAttention', { n: vacSummary?.attention ?? 0 })}</option>
+                {VACANCY_LIST_FILTER_OPTIONS.map(([value, key]) => (
+                  <option key={value} value={value}>
+                    {i18nT(locale, key, { n: vacSummary?.[value] ?? 0 })}
+                  </option>
+                ))}
               </AdminListFilterSelect>
             </AdminListFilters>
 

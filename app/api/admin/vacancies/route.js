@@ -39,7 +39,7 @@ export async function GET(request) {
     pageSize: url.searchParams.get('pageSize') || 20,
     sortParams,
     q: url.searchParams.get('q') || '',
-    statusFilter: String(url.searchParams.get('status') || 'all'),
+    statusFilter: url.searchParams.get('status'),
   });
 
   return NextResponse.json(result);

@@ -13,6 +13,7 @@ import {
   parseVacanciesPagination,
   parseVacanciesSort,
 } from '../../../lib/assessment-filters';
+import { VACANCY_LIST_FILTER, normalizeVacancyListFilter } from '../../../lib/domain-status.js';
 
 /**
  * Centraliza montagem da query do dashboard (filtros, paginação por aba, ordenação).
@@ -162,9 +163,10 @@ export function useDashboardNavigation({
     p.set('vacanciesSortDir', vacSortSt.dir);
     const vacanciesQ = opts.vacanciesQ !== undefined ? opts.vacanciesQ : urlParams.get('vacanciesQ') || '';
     if (vacanciesQ) p.set('vacanciesQ', String(vacanciesQ));
-    const vacanciesStatus =
-      opts.vacanciesStatus !== undefined ? opts.vacanciesStatus : urlParams.get('vacanciesStatus') || 'all';
-    if (vacanciesStatus && vacanciesStatus !== 'all') p.set('vacanciesStatus', String(vacanciesStatus));
+    const vacanciesStatus = normalizeVacancyListFilter(
+      opts.vacanciesStatus !== undefined ? opts.vacanciesStatus : urlParams.get('vacanciesStatus')
+    );
+    if (vacanciesStatus !== VACANCY_LIST_FILTER.ALL) p.set('vacanciesStatus', vacanciesStatus);
 
     const cmp = parseComparePagination(merged);
     const cPg = opts.comparePage != null ? opts.comparePage : cmp.page;

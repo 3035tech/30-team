@@ -25,6 +25,9 @@ import {
   SUCCESSION_READINESS,
   SUCCESSION_READINESSES,
   TEAM_PULSE_STATUS,
+  VACANCY_LIST_FILTER,
+  VACANCY_STATUS,
+  normalizeVacancyListFilter,
 } from '../../lib/domain-status.js';
 import { ROLES } from '../../lib/permissions.js';
 import { normalizeOfferStatus } from '../../lib/people/candidate-offer.js';
@@ -124,5 +127,15 @@ describe('domain-status wave3 closed sets', () => {
     assert.deepEqual([...ONBOARDING_ACK_KINDS].sort(), ['checkin', 'pre'].sort());
     assert.equal(ONBOARDING_ACK_KIND.PRE, 'pre');
     assert.deepEqual([...ROLES].sort(), ['admin', 'direction', 'hr'].sort());
+  });
+});
+
+describe('vacancy list filter', () => {
+  it('reuses vacancy statuses and falls back to ALL for unknown values', () => {
+    assert.equal(VACANCY_LIST_FILTER.OPEN, VACANCY_STATUS.OPEN);
+    assert.equal(VACANCY_LIST_FILTER.CLOSED, VACANCY_STATUS.CLOSED);
+    assert.equal(normalizeVacancyListFilter(VACANCY_LIST_FILTER.ATTENTION), VACANCY_LIST_FILTER.ATTENTION);
+    assert.equal(normalizeVacancyListFilter(null), VACANCY_LIST_FILTER.ALL);
+    assert.equal(normalizeVacancyListFilter("open' OR 1=1"), VACANCY_LIST_FILTER.ALL);
   });
 });
