@@ -23,8 +23,7 @@ import { usePipelineExtras } from '../PipelineExtrasContext';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { AdminRichFormDrawer } from '../../_components/AdminRichFormDrawer';
 import { EnneagramCross } from '../../_components/EnneagramCross';
-import { Icon } from '../../_components/Icon';
-import { IconActionTip } from '../../_components/IconActionTip';
+import { RowActionsMenu } from '../../_components/RowActionsMenu';
 import { TypeScoreChart } from '../../_components/TypeScoreChart';
 import { CompensationBlock } from '../../_components/CompensationBlock';
 import { BenefitAssignmentsBlock } from '../../_components/BenefitAssignmentsBlock';
@@ -590,6 +589,22 @@ export function TeamTab({
       );
     } catch (e) {
       toast(e?.message || t(locale, 'panel.common.error'), 'error');
+    }
+  };
+
+  const recalculateHrScore = async (candidateId) => {
+    try {
+      const res = await fetch('/api/admin/hr-score/recalculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidateId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || t(locale, 'hrScore.recalculateFailed'));
+      toast(t(locale, 'hrScore.recalculated'), 'ok');
+      router.refresh();
+    } catch (e) {
+      toast(e instanceof TypeError ? t(locale, 'hrScore.recalculateFailed') : e?.message || t(locale, 'hrScore.recalculateFailed'), 'error');
     }
   };
 
@@ -1209,49 +1224,25 @@ export function TeamTab({
               </button>
               <div className="flex shrink-0 items-center gap-2">
                 {r.candidateId ? (
-                  <IconActionTip label={t(locale, 'panel.team.moreActions')}>
-                  <details className="group relative group-open:z-40">
-                    <summary
-                      className="inline-flex min-h-touch min-w-touch cursor-pointer list-none items-center justify-center rounded-control border border-ink/12 bg-transparent text-ink-muted transition-colors hover:bg-ink/[0.04] hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35 [&::-webkit-details-marker]:hidden"
-                      aria-label={t(locale, 'panel.team.moreActions')}
-                      title={t(locale, 'panel.team.moreActions')}
-                    >
-                      <Icon name="moreHorizontal" />
-                    </summary>
-                    <div className="absolute right-0 z-30 mt-1.5 grid min-w-[210px] gap-1 rounded-control border border-ink/12 bg-surface p-1.5 shadow-menu">
-                      {isAdmin ? (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            try {
-                              const res = await fetch('/api/admin/hr-score/recalculate', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ candidateId: r.candidateId }),
-                              });
-                              if (!res.ok) throw new Error('recalc_failed');
-                              toast(t(locale, 'hrScore.recalculated'), 'ok');
-                              router.refresh();
-                            } catch (err) {
-                              toast(t(locale, 'hrScore.recalculateFailed'), 'error');
-                            }
-                          }}
-                          className="min-h-touch rounded-control px-3 py-2 text-left font-ui text-sm text-ink-muted hover:bg-ink/[0.04] hover:text-ink"
-                        >
-                          {t(locale, 'hrScore.recalculateOne')}
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={() => deleteCandidate(r.candidateId, r.name)}
-                        disabled={deleting}
-                        className="min-h-touch rounded-control px-3 py-2 text-left font-ui text-sm text-red-800 dark:text-danger hover:bg-danger/[0.08] disabled:opacity-60"
-                      >
-                        {t(locale, 'panel.team.ariaDeletePerson')}
-                      </button>
-                    </div>
-                  </details>
-                  </IconActionTip>
+                  <RowActionsMenu
+                    label={t(locale, 'panel.team.moreActions')}
+                    items={[
+                      ...(isAdmin
+                        ? [{
+                          id: 'recalcHrScore',
+                          label: t(locale, 'hrScore.recalculateOne'),
+                          onSelect: () => recalculateHrScore(r.candidateId),
+                        }]
+                        : []),
+                      {
+                        id: 'delete',
+                        label: t(locale, 'panel.team.ariaDeletePerson'),
+                        danger: true,
+                        disabled: deleting,
+                        onSelect: () => deleteCandidate(r.candidateId, r.name),
+                      },
+                    ]}
+                  />
                 ) : null}
               </div>
             </div>

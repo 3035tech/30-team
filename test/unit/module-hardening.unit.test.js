@@ -177,7 +177,7 @@ describe('module hardening', () => {
     assert.match(team, /panel\.team\.moreActions/);
     assert.match(team, /StatusToneChip tone="info"/);
     assert.match(team, /aria-label=\{`\$\{t\(locale, 'panel\.team\.openDetail'\)\}/);
-    assert.match(team, /<IconActionTip label=\{t\(locale, 'panel\.team\.moreActions'\)\}>/);
+    assert.match(team, /<RowActionsMenu\s+label=\{t\(locale, 'panel\.team\.moreActions'\)\}/);
   });
 
   it('updates route-backed tabs without rerunning the full dashboard navigation', () => {

@@ -37,7 +37,7 @@ export async function POST(request) {
       const candidateRes = await queryRead(
         `SELECT id, company_id AS "companyId", full_name AS "fullName"
          FROM candidates
-         WHERE id = $1 AND deleted = FALSE
+         WHERE id = $1
          LIMIT 1`,
         [candidateId]
       );
