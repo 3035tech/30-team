@@ -223,11 +223,7 @@ export function EmployeeSidebar({
               onClick: onClose,
             }}
           />
-          {iconOnly ? (
-            <EmployeeLogoutButton locale={locale} variant="rail" onLoggedOut={onClose} />
-          ) : (
-            <EmployeeLogoutButton locale={locale} onLoggedOut={onClose} />
-          )}
+          <EmployeeLogoutButton locale={locale} variant="nav" compact={iconOnly} onLoggedOut={onClose} />
         </>
       )}
     />

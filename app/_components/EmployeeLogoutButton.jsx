@@ -8,7 +8,7 @@ import { employeeLoginUrl } from '../../lib/employee-client-session';
 import { Icon } from './Icon';
 import { Spinner } from './AppLoading';
 import { useAppFeedback } from './AppFeedback';
-import { SidebarRailButton } from './SidebarRail';
+import { SidebarNavItem } from './SidebarNav';
 
 /** Both employee menus share the same logout and failure behavior. */
 export function EmployeeLogoutButton({ locale, compact = false, role, onLoggedOut, className, variant }) {
@@ -43,9 +43,11 @@ export function EmployeeLogoutButton({ locale, compact = false, role, onLoggedOu
       pending.current = false;
     }
   };
-  if (variant === 'rail') {
-    return <SidebarRailButton icon="logout" tone="danger" label={busy ? t(locale, 'employeeHome.loggingOut') : label}
-      disabled={busy} onClick={logout} />;
+  if (variant === 'nav') {
+    return <SidebarNavItem collapsed={compact} item={{
+      id: 'logout', icon: 'logout', tone: 'danger', disabled: busy, onClick: logout,
+      label: busy ? t(locale, 'employeeHome.loggingOut') : label,
+    }} />;
   }
   return <button type="button" role={role} onClick={logout} disabled={busy} aria-busy={busy}
     aria-label={busy ? t(locale, 'employeeHome.loggingOut') : label} title={compact ? label : undefined}

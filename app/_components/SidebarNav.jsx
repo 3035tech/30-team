@@ -168,11 +168,13 @@ function NavGroup({ group, open, onToggle, locale, collapsed, isActiveGroup }) {
           {group.label}
           {!open ? <span className="font-normal normal-case tracking-normal text-ink-faint"> · {group.items.length}</span> : null}
         </span>
-        <DisclosureToggle
-          locale={locale}
-          open={open}
-          labelClassName="sr-only group-hover:not-sr-only group-focus-visible:not-sr-only"
-        />
+        <span aria-hidden className="flex-shrink-0">
+          <DisclosureToggle
+            locale={locale}
+            open={open}
+            labelClassName="sr-only group-hover:not-sr-only group-focus-visible:not-sr-only"
+          />
+        </span>
       </button>
       {open ? (
         <ul id={listId} className="m-0 list-none p-0">
@@ -255,10 +257,7 @@ export function SidebarNav({
       <nav
         ref={navRef}
         aria-label={ariaLabel}
-        className={cn(
-          'db-sidebar-nav relative min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4 [-webkit-overflow-scrolling:touch]',
-          iconOnly ? 'px-2' : 'px-2'
-        )}
+        className="db-sidebar-nav relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-4 [-webkit-overflow-scrolling:touch]"
       >
         {groups.map((group) => (
           <NavGroup
