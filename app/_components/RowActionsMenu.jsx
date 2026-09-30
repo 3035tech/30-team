@@ -17,7 +17,8 @@ const MENU_WIDTH = 224;
 
 /**
  * "More actions" menu for table rows. Rendered in a portal so `overflow` on
- * `AdminTableShell` does not clip it; flips above the trigger near the viewport bottom.
+ * `AdminTableShell` does not clip it; opens beside the trigger (falls back to below/above
+ * on narrow screens) and flips up near the viewport bottom.
  * @param {{ label: string, items: Array<{ id: string, label: string, onSelect: Function, danger?: boolean, disabled?: boolean }>, disabled?: boolean }} props
  */
 export function RowActionsMenu({ label, items = [], disabled = false, className }) {
@@ -37,6 +38,15 @@ export function RowActionsMenu({ label, items = [], disabled = false, className 
     const r = triggerRef.current?.getBoundingClientRect();
     if (!r) return;
     const estHeight = items.length * 44 + 12;
+    const sideLeft = r.left - MENU_WIDTH - 6;
+    if (sideLeft >= 8) {
+      const fitsBelow = r.top + estHeight + 8 <= window.innerHeight;
+      setPos({
+        left: sideLeft,
+        top: fitsBelow ? r.top : Math.max(8, r.bottom - estHeight),
+      });
+      return;
+    }
     const above = r.bottom + estHeight + 8 > window.innerHeight && r.top > estHeight + 8;
     setPos({
       left: Math.max(8, Math.min(r.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8)),

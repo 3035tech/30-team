@@ -63,7 +63,7 @@ export function SidebarRailButton({
     </>
   );
   return (
-    <IconActionTip label={label}>
+    <IconActionTip label={label} side="right">
       {href ? (
         <Link href={href} onClick={onClick} aria-label={label} aria-current={active ? 'page' : undefined} className={classes}>
           {content}
