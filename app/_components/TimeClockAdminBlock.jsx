@@ -20,6 +20,7 @@ import { DateField } from './DateField';
 import { FormField } from './FormField';
 import { InlineCallout } from './InlineCallout';
 import { StatusToneChip } from './StatusToneChip';
+import { localIsoToday } from '../../lib/time-clock-format.js';
 
 function formatTime(value, locale) {
   if (!value) return '—';
@@ -31,19 +32,10 @@ function formatTime(value, locale) {
   });
 }
 
-/** Local calendar YYYY-MM-DD (not UTC — avoids wrong day in BR evening). */
-function localIsoToday() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 /**
  * B-2721 — Admin day mirror + schedule + CSV (inside DP tab).
  */
-export function TimeClockAdminBlock({ locale = 'pt-BR', companyId, navigateDashboard }) {
+export function TimeClockAdminBlock({ locale = 'pt-BR', companyId, navigateDashboard, title = null }) {
   const { toast, promptForm } = useAppFeedback();
   const [day, setDay] = useState(localIsoToday);
   const [items, setItems] = useState([]);
@@ -271,7 +263,7 @@ export function TimeClockAdminBlock({ locale = 'pt-BR', companyId, navigateDashb
   return (
     <CollapsibleBlock
       locale={locale}
-      title={t(locale, 'panel.timeClock.title')}
+      title={title || t(locale, 'panel.timeClock.title')}
       count={flaggedCount || null}
       open={open}
       onOpenChange={setOpen}

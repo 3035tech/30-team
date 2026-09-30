@@ -32,6 +32,7 @@ const listQuerySchema = z.object({
   month: z.string().max(8).optional(),
   q: z.string().max(80).optional(),
   limit: z.coerce.number().int().min(1).max(300).optional(),
+  offset: z.coerce.number().int().min(0).max(100000).optional(),
 });
 
 const postBodySchema = z.object({
@@ -101,6 +102,7 @@ export const GET = withAdminApi(
       companyId,
       q: query.q || '',
       limit: query.limit,
+      offset: query.offset,
     });
     if (!result.ok) {
       return apiErrorFromResult(request, result, { fallbackCode: ERR.COMPANY_REQUIRED });

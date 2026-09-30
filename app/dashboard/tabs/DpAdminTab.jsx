@@ -32,8 +32,7 @@ import { AdminListFilters, AdminListFilterSelect } from '../../_components/Admin
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { useAppFeedback } from '../../_components/AppFeedback';
-import { TimeClockAdminBlock } from '../../_components/TimeClockAdminBlock';
-import { HourBankAdminBlock } from '../../_components/HourBankAdminBlock';
+import { TimeClockWorkspace } from '../../_components/TimeClockWorkspace';
 import { VacationPoolBlock } from '../../_components/VacationPoolBlock';
 import { PreOnboardingTemplateBlock } from '../../_components/PreOnboardingTemplateBlock';
 import { StatMetricTile } from '../../_components/StatMetricTile';
@@ -511,13 +510,7 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
         )
       ) : null}
 
-      {workspaceSection === 'time' ? <TimeClockAdminBlock
-        locale={locale}
-        companyId={companyId}
-        navigateDashboard={navigateDashboard}
-      /> : null}
-
-      {workspaceSection === 'time' ? <HourBankAdminBlock
+      {workspaceSection === 'time' ? <TimeClockWorkspace
         locale={locale}
         companyId={companyId}
         navigateDashboard={navigateDashboard}

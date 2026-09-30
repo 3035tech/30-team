@@ -20,23 +20,7 @@ import { DateField } from './DateField';
 import { FormField } from './FormField';
 import { InlineCallout } from './InlineCallout';
 import { StatusToneChip } from './StatusToneChip';
-
-function formatMinutesHm(totalMinutes) {
-  const n = Math.round(Number(totalMinutes) || 0);
-  const sign = n < 0 ? '-' : '';
-  const abs = Math.abs(n);
-  const h = Math.floor(abs / 60);
-  const m = abs % 60;
-  return `${sign}${h}h${String(m).padStart(2, '0')}`;
-}
-
-function localIsoToday() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+import { formatMinutesHm, localIsoToday } from '../../lib/time-clock-format.js';
 
 function localYearMonth() {
   return localIsoToday().slice(0, 7);
@@ -45,7 +29,15 @@ function localYearMonth() {
 /**
  * B-2722 — Hour bank admin (DP hub): settings, balances, pending, generate, CSV.
  */
-export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashboard }) {
+export function HourBankAdminBlock({
+  locale = 'pt-BR',
+  companyId,
+  navigateDashboard,
+  showBalances = true,
+  title = null,
+  reloadKey = 0,
+  onChanged = null,
+}) {
   const { toast, promptForm } = useAppFeedback();
   const [day, setDay] = useState(localIsoToday);
   const [month, setMonth] = useState(localYearMonth);
@@ -69,6 +61,7 @@ export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashbo
       const balParams = new URLSearchParams({
         companyId: String(companyId),
         mode: 'balances',
+        ...(showBalances ? {} : { limit: '1' }),
       });
       const entParams = new URLSearchParams({
         companyId: String(companyId),
@@ -94,11 +87,16 @@ export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashbo
     } finally {
       setLoading(false);
     }
-  }, [companyId, locale, toast]);
+  }, [companyId, locale, toast, showBalances]);
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, reloadKey]);
+
+  const reloadAll = async () => {
+    if (onChanged) onChanged();
+    else await load();
+  };
 
   const saveSettings = async () => {
     const values = await promptForm({
@@ -139,7 +137,7 @@ export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashbo
       if (!res.ok) throw new Error(data?.error || 'settings');
       setSchedule(data.schedule);
       toast(t(locale, 'panel.hourBank.settingsSaved'), 'ok');
-      await load();
+      await reloadAll();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.hourBank.saveError'), 'error');
     } finally {
@@ -213,7 +211,7 @@ export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashbo
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'manual');
       toast(t(locale, 'panel.hourBank.manualSaved'), 'ok');
-      await load();
+      await reloadAll();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.hourBank.saveError'), 'error');
     } finally {
@@ -243,7 +241,7 @@ export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashbo
         }),
         'ok'
       );
-      await load();
+      await reloadAll();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.hourBank.saveError'), 'error');
     } finally {
@@ -262,7 +260,7 @@ export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashbo
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'decide');
       toast(t(locale, 'panel.hourBank.decided'), 'ok');
-      await load();
+      await reloadAll();
     } catch (e) {
       toast(e?.message || t(locale, 'panel.hourBank.saveError'), 'error');
     } finally {
@@ -306,7 +304,7 @@ export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashbo
   return (
     <CollapsibleBlock
       locale={locale}
-      title={t(locale, 'panel.hourBank.title')}
+      title={title || t(locale, 'panel.hourBank.title')}
       count={pending.length || null}
       open={open}
       onOpenChange={setOpen}
@@ -441,7 +439,11 @@ export function HourBankAdminBlock({ locale = 'pt-BR', companyId, navigateDashbo
                 </div>
               ) : null}
 
-              {withBalance.length === 0 ? (
+              {!showBalances ? (
+                pending.length === 0 ? (
+                  <p className={cn(S.muted, 'm-0 text-prose')}>{t(locale, 'panel.hourBank.noPending')}</p>
+                ) : null
+              ) : withBalance.length === 0 ? (
                 <EmptyState
                   title={t(locale, 'panel.hourBank.emptyTitle')}
                   message={t(locale, 'panel.hourBank.emptyHint')}
