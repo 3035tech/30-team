@@ -1,11 +1,9 @@
 'use client';
 
-import { SelectField } from '../../_components/SelectField';
-
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '../../../lib/cn';
-import { t, t as i18nT, localeHtmlLang, contentLocale } from '../../../lib/i18n';
+import { t, t as i18nT, localeHtmlLang } from '../../../lib/i18n';
 import {
   PAGE_SIZE_OPTIONS,
   parseVacanciesPagination,
@@ -35,28 +33,24 @@ import { RowActionsMenu } from '../../_components/RowActionsMenu';
 import { IconActionTip } from '../../_components/IconActionTip';
 import { VacancyInterviewCandidates } from '../VacancyInterviewCandidates';
 import { VacancyClientReportBlock } from '../VacancyClientReportBlock';
-import { RichTextEditor } from '../../_components/RichTextEditor';
 import {
   AdminRichFormDrawer,
   dialogBtnGhostClass,
   dialogBtnPrimaryClass,
 } from '../../_components/AdminRichFormDrawer';
-import { formatSalaryBr, salaryToCentsDigits, stripSalary, digitsOnly } from '../../../lib/br-masks';
+import { salaryToCentsDigits, stripSalary } from '../../../lib/br-masks';
 import { useAppFeedback } from '../../_components/AppFeedback';
 import { EmptyState } from '../../_components/EmptyState';
 import { AppLoading, ContentEnter } from '../../_components/AppLoading';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
-import { VACANCY_EMPLOYMENT_TYPES, employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
+import { employmentTypeLabelKey } from '../../../lib/vacancy-employment-type';
 import { VACANCY_LIST_FILTER, VACANCY_STATUS, normalizeVacancyListFilter } from '../../../lib/domain-status.js';
 import { formatWorkplaceLabel } from '../../../lib/vacancy-workplace';
-import { VacancyWorkplaceFields } from '../../_components/VacancyWorkplaceFields';
 import { DateField } from '../../_components/DateField';
 import { publicVacancyPath } from '../../../lib/public-job-url';
 import { formatPublicVacancyDate } from '../../../lib/public-vacancy-lifecycle';
 import { formatVacancySalaryRange, toDatetimeLocalValue } from '../vacancies/vacancy-admin-shared';
-import { VacancyPublicFlagsFields } from '../vacancies/VacancyPublicFlagsFields';
-import { VacancyFormSection } from '../vacancies/VacancyFormSection';
-import { VacancyDescriptionAssistBar } from '../vacancies/VacancyDescriptionAssistBar';
+import { VacancyFormFields } from '../vacancies/VacancyFormFields';
 import { VacancyInviteByEmail } from '../vacancies/VacancyInviteByEmail';
 import { VacancyInvitesBlock } from '../vacancies/VacancyInvitesBlock';
 import { VacancyWhatsAppShareButton } from '../vacancies/VacancyWhatsAppShareButton';
@@ -68,9 +62,7 @@ import { VacancyKanbanBlock } from '../vacancies/VacancyKanbanBlock';
 import { PipelineStagesEditor } from '../vacancies/PipelineStagesEditor';
 import { PipelineTemplatesManager } from '../vacancies/PipelineTemplatesManager';
 import { CopyableLink } from '../../_components/CopyableLink';
-import { RubricEditor } from '../../_components/RubricEditor';
-import { FormField, formFieldRowClass } from '../../_components/FormField';
-import { fieldInputClass, fieldSelectClass } from '../../_components/form-control-styles';
+import { fieldInputClass } from '../../_components/form-control-styles';
 import { RECRUITING_UX_EVENT } from '../../../lib/recruiting-ux-events';
 import { VacancyDescriptionHtml } from '../vacancies/VacancyDescriptionHtml';
 import { Icon } from '../../_components/Icon';
@@ -84,7 +76,6 @@ const VACANCY_LIST_FILTER_OPTIONS = [
 ];
 
 const FIELD = `${fieldInputClass} w-full font-mono text-prose`;
-const FIELD_SELECT = `${fieldSelectClass} w-full font-mono text-prose`;
 const BTN_GHOST =
   'inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-transparent px-3 py-2 font-ui text-sm text-ink-muted transition-colors hover:border-ink/20 hover:bg-ink/[0.035] hover:text-ink disabled:cursor-default disabled:opacity-60';
 const BTN_BRAND =
@@ -93,8 +84,6 @@ const BTN_BRAND_SOFT =
   'inline-flex min-h-touch cursor-pointer items-center justify-center rounded-control border border-brand-500/25 bg-brand-500/[0.07] px-3 py-2 font-ui text-sm font-medium text-brand-500 transition-colors hover:bg-brand-500/[0.12] disabled:cursor-default disabled:opacity-60';
 const META = S.cardMuted;
 const META_FAINT = S.faint;
-const GRID_AUTO = 'grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5';
-const GRID_AUTO_LG = 'grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5';
 const VACANCY_DETAIL_SECTIONS = Object.freeze([
   'pipeline',
   'candidates',
@@ -268,6 +257,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
 
   const openCreate = useCallback(() => {
     setEditingVacancy(null);
+    setError('');
     setShowCreate(true);
     createOpenedAtRef.current = Date.now();
     trackRecruitingUx(RECRUITING_UX_EVENT.VACANCY_CREATE_OPENED);
@@ -848,6 +838,40 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
     }
   };
 
+  const createFormSetters = {
+    title: setTitle,
+    slug: setSlug,
+    status: setStatus,
+    positionsCount: setPositionsCount,
+    targetDate: setTargetDate,
+    description: setDescription,
+    employmentType: setEmploymentType,
+    salaryMin: setSalaryMin,
+    salaryMax: setSalaryMax,
+    workplaceModality: setWorkplaceModality,
+    workplaceState: setWorkplaceState,
+    workplaceCity: setWorkplaceCity,
+    publicPageEnabled: setPublicPageEnabled,
+    publicAllowIndex: setPublicAllowIndex,
+    publicShowCompanyInfo: setPublicShowCompanyInfo,
+    publicShowSalary: setPublicShowSalary,
+    companyId: setCompanyId,
+    jobRoleId: setJobRoleId,
+    pipelineTemplateId: setPipelineTemplateId,
+  };
+  const patchCreateForm = (patch) => {
+    Object.entries(patch).forEach(([key, value]) => createFormSetters[key]?.(value));
+    if (patch.pipelineTemplateId) {
+      trackRecruitingUx(RECRUITING_UX_EVENT.PIPELINE_TEMPLATE_SELECTED, { templateId: Number(patch.pipelineTemplateId) });
+    }
+  };
+  const createFormValues = {
+    title, slug, status, positionsCount, targetDate, description, employmentType, salaryMin, salaryMax,
+    workplaceModality, workplaceState, workplaceCity, publicPageEnabled, publicAllowIndex,
+    publicShowCompanyInfo, publicShowSalary, companyId, jobRoleId, pipelineTemplateId,
+  };
+  const createDisabled = loading || pipelineTemplatesLoading || !pipelineTemplateId || !title.trim() || (isAdmin && !companyId);
+
   const vacancyFormDrawers = (
     <>
       <AdminRichFormDrawer
@@ -868,274 +892,35 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             <button
               type="button"
               onClick={createVacancy}
-              disabled={loading || pipelineTemplatesLoading || !pipelineTemplateId || !title.trim() || (isAdmin && !companyId)}
-              className={cn(
-                dialogBtnPrimaryClass,
-                'inline-flex items-center gap-2',
-                (loading || pipelineTemplatesLoading || !pipelineTemplateId || !title.trim() || (isAdmin && !companyId)) && 'opacity-60'
-              )}
+              disabled={createDisabled}
+              className={cn(dialogBtnPrimaryClass, 'inline-flex items-center gap-2', createDisabled && 'opacity-60')}
             >
-              {loading ? <span className="spinner" /> : null}
+              {loading ? <span className="spinner" aria-hidden="true" /> : null}
               {t(locale, 'panel.admin.create')}
             </button>
           </>
         )}
       >
-        <div className="flex flex-col gap-3">
-          <VacancyFormSection locale={locale} titleKey="recruiting.formSectionEssentials" defaultOpen>
-            {isAdmin ? (
-              <FormField label={t(locale, 'panel.admin.companyLabel')} className="max-w-[420px]">
-                <SelectField
-                  value={companyId}
-                  onChange={(e) => setCompanyId(e.target.value)}
-                  aria-label={t(locale, 'panel.admin.companyLabel')}
-                  className={FIELD_SELECT}
-                >
-                  {companies.length === 0 ? (
-                    <option value="">{t(locale, 'panel.admin.loadingCompanies')}</option>
-                  ) : companies.map((c) => (
-                    <option key={c.id} value={String(c.id)}>{c.name} (#{c.id})</option>
-                  ))}
-                </SelectField>
-              </FormField>
-            ) : null}
-
-            {jobRoles.length > 0 && (
-              <div className="flex flex-col gap-1.5">
-                <FormField
-                  label={`${t(locale, 'jobRoles.title')} (${t(locale, 'common.optional')})`}
-                  className="max-w-[420px]"
-                >
-                  <SelectField
-                    value={jobRoleId}
-                    onChange={(e) => setJobRoleId(e.target.value)}
-                    className={FIELD_SELECT}
-                  >
-                    <option value="">{t(locale, 'recruiting.noJobRole')}</option>
-                    {jobRoles.map((jr) => (
-                      <option key={jr.id} value={String(jr.id)}>{jr.name}</option>
-                    ))}
-                  </SelectField>
-                </FormField>
-                {(() => {
-                  const selected = jobRoles.find((jr) => String(jr.id) === String(jobRoleId));
-                  const rubric =
-                    selected?.rubric && typeof selected.rubric === 'object' ? selected.rubric : {};
-                  if (!jobRoleId || Object.keys(rubric).length === 0) return null;
-                  return (
-                    <div className="max-w-[420px]">
-                      <p className="m-0 mb-1 font-ui text-prose text-ink/75">
-                        {t(locale, 'jobRoles.rubricPreview')}
-                      </p>
-                      <RubricEditor value={rubric} locale={locale} compact />
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            <FormField
-              label={t(locale, 'panel.pipelineTemplates.fieldLabel')}
-              hint={pipelineTemplatesError || t(locale, 'panel.pipelineTemplates.fieldHint')}
-              className="max-w-[420px]"
-            >
-              <SelectField
-                value={pipelineTemplateId}
-                onChange={(e) => {
-                  setPipelineTemplateId(e.target.value);
-                  if (e.target.value) {
-                    trackRecruitingUx(RECRUITING_UX_EVENT.PIPELINE_TEMPLATE_SELECTED, { templateId: Number(e.target.value) });
-                  }
-                }}
-                className={FIELD_SELECT}
-                disabled={pipelineTemplatesLoading || pipelineTemplates.length === 0}
-              >
-                {pipelineTemplatesLoading ? (
-                  <option value="">{t(locale, 'panel.pipelineTemplates.loading')}</option>
-                ) : null}
-                {!pipelineTemplatesLoading && pipelineTemplates.length === 0 ? (
-                  <option value="">{t(locale, 'panel.pipelineTemplates.empty')}</option>
-                ) : null}
-                {pipelineTemplates.map((template) => (
-                  <option key={template.id} value={String(template.id)}>
-                    {t(locale, 'panel.pipelineTemplates.optionLabel', {
-                      name: template.name,
-                      n: template.stageCount,
-                      default: template.isDefault ? ` · ${t(locale, 'panel.pipelineTemplates.defaultBadge')}` : '',
-                    })}
-                  </option>
-                ))}
-              </SelectField>
-            </FormField>
-            {(() => {
-              const selectedTemplate = pipelineTemplates.find((template) => String(template.id) === String(pipelineTemplateId));
-              if (!selectedTemplate?.stages?.length) return null;
-              return (
-                <div className="-mt-1 flex max-w-[760px] flex-wrap gap-1.5" aria-label={t(locale, 'panel.pipelineTemplates.previewLabel')}>
-                  {selectedTemplate.stages.map((stage, index) => (
-                    <span key={stage.id || stage.stageKey} className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-canvas px-2 py-1 font-ui text-prose text-ink-muted">
-                      <span className="font-ui text-prose text-ink/75">{index + 1}</span>
-                      {contentLocale(locale) === 'en' ? (stage.labelEn || stage.labelPt) : (stage.labelPt || stage.labelEn)}
-                    </span>
-                  ))}
-                </div>
-              );
-            })()}
-
-            <div className={cn(GRID_AUTO_LG, 'items-start')}>
-              <FormField label={t(locale, 'recruiting.vacancyTitlePh')}>
-                <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder={t(locale, 'recruiting.createTitlePh')}
-                  aria-label={t(locale, 'recruiting.vacancyTitlePh')}
-                  className={FIELD}
-                />
-              </FormField>
-              <FormField label={t(locale, 'recruiting.slugLabel')} className="max-w-[320px]">
-                <input
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder={t(locale, 'recruiting.createSlugPh')}
-                  aria-label={t(locale, 'recruiting.slugLabel')}
-                  className={FIELD}
-                />
-              </FormField>
-            </div>
-
-            <div className={cn(GRID_AUTO, 'items-start')}>
-              <FormField label={t(locale, 'recruiting.sortStatus')}>
-                <SelectField
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className={FIELD_SELECT}
-                >
-                  <option value="open">{t(locale, 'recruiting.openStatus')}</option>
-                  <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
-                </SelectField>
-              </FormField>
-              <FormField label={t(locale, 'recruiting.positionsLabel')}>
-                <input
-                  type="number"
-                  min="1"
-                  value={positionsCount}
-                  onChange={(e) => setPositionsCount(e.target.value)}
-                  aria-label={t(locale, 'recruiting.positionsLabel')}
-                  className={cn(FIELD, 'min-w-[72px] px-2')}
-                />
-              </FormField>
-              <FormField as="div" label={t(locale, 'recruiting.targetDateLabel')}>
-                <DateField
-                  value={targetDate}
-                  onChange={(e) => setTargetDate(e.target.value)}
-                  aria-label={t(locale, 'recruiting.targetDateLabel')}
-                  className={cn(FIELD, 'px-2 py-[9px]')}
-                />
-              </FormField>
-            </div>
-          </VacancyFormSection>
-
-          <VacancyFormSection locale={locale} titleKey="recruiting.formSectionRolePay" defaultOpen>
-            <div className={cn(GRID_AUTO, 'max-w-[640px] items-start')}>
-              <FormField label={t(locale, 'recruiting.employmentTypeLabel')}>
-                <SelectField
-                  value={employmentType}
-                  onChange={(e) => setEmploymentType(e.target.value)}
-                  className={FIELD_SELECT}
-                >
-                  <option value="">{t(locale, 'recruiting.employmentTypeNone')}</option>
-                  {VACANCY_EMPLOYMENT_TYPES.map((type) => (
-                    <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
-                  ))}
-                </SelectField>
-              </FormField>
-              <FormField label={t(locale, 'recruiting.salaryMinPh')}>
-                <input
-                  value={formatSalaryBr(salaryMin)}
-                  onChange={(e) => setSalaryMin(digitsOnly(e.target.value).slice(0, 15))}
-                  placeholder={t(locale, 'recruiting.salaryMinPh')}
-                  inputMode="numeric"
-                  aria-label={t(locale, 'recruiting.salaryMinPh')}
-                  className={FIELD}
-                />
-              </FormField>
-              <FormField label={t(locale, 'recruiting.salaryMaxPh')}>
-                <input
-                  value={formatSalaryBr(salaryMax)}
-                  onChange={(e) => setSalaryMax(digitsOnly(e.target.value).slice(0, 15))}
-                  placeholder={t(locale, 'recruiting.salaryMaxPh')}
-                  inputMode="numeric"
-                  aria-label={t(locale, 'recruiting.salaryMaxPh')}
-                  className={FIELD}
-                />
-              </FormField>
-            </div>
-
-            <VacancyWorkplaceFields
+        {showCreate ? (
+          <div aria-busy={loading}>
+            <VacancyFormFields
               locale={locale}
-              workplaceModality={workplaceModality}
-              workplaceState={workplaceState}
-              workplaceCity={workplaceCity}
-              onChange={(patch) => {
-                if (patch.workplaceModality !== undefined) setWorkplaceModality(patch.workplaceModality);
-                if (patch.workplaceState !== undefined) setWorkplaceState(patch.workplaceState);
-                if (patch.workplaceCity !== undefined) setWorkplaceCity(patch.workplaceCity);
-              }}
+              mode="create"
+              layout="stack"
+              values={createFormValues}
+              onChange={patchCreateForm}
+              error={error}
+              isAdmin={isAdmin}
+              companies={companies}
+              jobRoles={jobRoles}
+              pipelineTemplates={pipelineTemplates}
+              pipelineTemplatesLoading={pipelineTemplatesLoading}
+              pipelineTemplatesError={pipelineTemplatesError}
+              descAiBusy={descAiBusy}
+              onDescAiBusyChange={setDescAiBusy}
             />
-          </VacancyFormSection>
-
-          <VacancyFormSection locale={locale} titleKey="recruiting.formSectionPublic" defaultOpen={false}>
-            <VacancyPublicFlagsFields
-              locale={locale}
-              values={{
-                publicPageEnabled,
-                publicAllowIndex,
-                publicShowCompanyInfo,
-                publicShowSalary,
-              }}
-              seoContext={{
-                title,
-                description,
-                employmentType,
-                salaryMin,
-                salaryMax,
-                workplaceModality,
-                workplaceCity,
-                workplaceState,
-              }}
-              onChange={(patch) => {
-                if (patch.publicPageEnabled != null) setPublicPageEnabled(patch.publicPageEnabled);
-                if (patch.publicAllowIndex != null) setPublicAllowIndex(patch.publicAllowIndex);
-                if (patch.publicShowCompanyInfo != null) setPublicShowCompanyInfo(patch.publicShowCompanyInfo);
-                if (patch.publicShowSalary != null) setPublicShowSalary(patch.publicShowSalary);
-              }}
-            />
-          </VacancyFormSection>
-
-          <VacancyFormSection locale={locale} titleKey="recruiting.formSectionDescription" defaultOpen>
-            <VacancyDescriptionAssistBar
-              locale={locale}
-              busy={descAiBusy}
-              title={title}
-              descriptionHtml={description}
-              employmentType={employmentType}
-              salaryMin={salaryMin}
-              salaryMax={salaryMax}
-              onApplyDescription={setDescription}
-              onBusyChange={setDescAiBusy}
-            />
-            <FormField as="div" label={t(locale, 'recruiting.vacancyDescriptionLabel')}>
-              <RichTextEditor
-                value={description}
-                onChange={setDescription}
-                placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
-                minHeight={120}
-                locale={locale}
-                disabled={descAiBusy}
-              />
-            </FormField>
-          </VacancyFormSection>
-        </div>
+          </div>
+        ) : null}
       </AdminRichFormDrawer>
 
       <AdminRichFormDrawer
@@ -1146,6 +931,13 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         backLabel={i18nT(locale, 'ui.vacanciesAdminTab.backToVacancies')}
         closeLabel={i18nT(locale, 'ui.vacanciesAdminTab.closeVacancyEditor')}
         eyebrow={i18nT(locale, 'ui.vacanciesAdminTab.recruitmentVacancies')}
+        headerMeta={editingVacancy ? (
+          <>
+            <span className="font-mono tabular-nums text-ink-muted">#{editingVacancy.id}</span>
+            <span aria-hidden="true">·</span>
+            <span className="min-w-0 break-words">{editingVacancy.title || t(locale, 'recruiting.vacancyTitlePh')}</span>
+          </>
+        ) : null}
         onClose={() => void closeVacancyEditor()}
         footer={(
           <>
@@ -1161,7 +953,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               type="button"
               onClick={saveVacancyEdit}
               disabled={loading || !editingVacancy}
-              className={cn(dialogBtnPrimaryClass, (loading || !editingVacancy) && 'opacity-60')}
+              className={cn(dialogBtnPrimaryClass, 'inline-flex items-center gap-2', (loading || !editingVacancy) && 'opacity-60')}
             >
               {loading ? <span className="spinner" aria-hidden="true" /> : null}
               {t(locale, 'panel.admin.save')}
@@ -1170,194 +962,18 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         )}
       >
         {editingVacancy ? (
-          <div className="flex flex-col gap-3" aria-busy={loading}>
-            {error ? <p role="alert" className="m-0 text-sm text-red-800 dark:text-danger">{error}</p> : null}
-            <VacancyFormSection locale={locale} titleKey="recruiting.formSectionEssentials" defaultOpen>
-              {jobRoles.length > 0 ? (
-                <div className="flex flex-col gap-1.5">
-                  <FormField
-                    label={`${t(locale, 'jobRoles.title')} (${t(locale, 'common.optional')})`}
-                    className="max-w-[420px]"
-                  >
-                    <SelectField
-                      value={editingVacancy.jobRoleId || ''}
-                      onChange={(e) =>
-                        setEditingVacancy((cur) => ({ ...cur, jobRoleId: e.target.value }))
-                      }
-                      className={cn(FIELD_SELECT, 'text-prose')}
-                    >
-                      <option value="">{t(locale, 'recruiting.noJobRole')}</option>
-                      {jobRoles.map((jr) => (
-                        <option key={jr.id} value={String(jr.id)}>{jr.name}</option>
-                      ))}
-                    </SelectField>
-                  </FormField>
-                  {(() => {
-                    const selected = jobRoles.find(
-                      (jr) => String(jr.id) === String(editingVacancy.jobRoleId || '')
-                    );
-                    const rubric =
-                      selected?.rubric && typeof selected.rubric === 'object' ? selected.rubric : {};
-                    if (!editingVacancy.jobRoleId || Object.keys(rubric).length === 0) return null;
-                    return (
-                      <div className="max-w-[420px]">
-                        <p className="m-0 mb-1 font-ui text-prose text-ink/75">
-                          {t(locale, 'jobRoles.rubricPreview')}
-                        </p>
-                        <RubricEditor value={rubric} locale={locale} compact />
-                      </div>
-                    );
-                  })()}
-                </div>
-              ) : null}
-              <div className={formFieldRowClass}>
-                <FormField label={t(locale, 'recruiting.vacancyTitlePh')} className="min-w-0 flex-[2_1_280px]">
-                  <input
-                    value={editingVacancy.title}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, title: e.target.value }))}
-                    placeholder={t(locale, 'recruiting.vacancyTitlePh')}
-                    aria-label={t(locale, 'recruiting.vacancyTitlePh')}
-                    className={cn(FIELD, 'text-prose')}
-                  />
-                </FormField>
-                <FormField label={t(locale, 'recruiting.slugLabel')} className="min-w-0 flex-[1_1_200px]">
-                  <input
-                    value={editingVacancy.slug}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, slug: e.target.value }))}
-                    placeholder={t(locale, 'recruiting.vacancySlugPh')}
-                    aria-label={t(locale, 'recruiting.slugLabel')}
-                    className={cn(FIELD, 'text-prose')}
-                  />
-                </FormField>
-                <FormField label={t(locale, 'recruiting.sortStatus')} className="flex-[0_0_140px]">
-                  <SelectField
-                    value={editingVacancy.status}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, status: e.target.value }))}
-                    aria-label={t(locale, 'recruiting.sortStatus')}
-                    className={cn(FIELD_SELECT, 'text-prose text-ink')}
-                  >
-                    <option value="open">{t(locale, 'recruiting.openStatus')}</option>
-                    <option value="closed">{t(locale, 'recruiting.closedStatus')}</option>
-                  </SelectField>
-                </FormField>
-              </div>
-              <div className={formFieldRowClass}>
-                <FormField label={t(locale, 'recruiting.positionsLabel')}>
-                  <input
-                    type="number"
-                    min="1"
-                    value={editingVacancy.positionsCount}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, positionsCount: e.target.value }))}
-                    aria-label={t(locale, 'recruiting.positionsLabel')}
-                    className="w-[70px] rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-ui text-prose text-ink"
-                  />
-                </FormField>
-                <FormField as="div" label={t(locale, 'recruiting.targetDateLabel')}>
-                  <DateField
-                    value={editingVacancy.targetDate}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, targetDate: e.target.value }))}
-                    aria-label={t(locale, 'recruiting.targetDateLabel')}
-                    className="rounded-control border border-ink/12 bg-ink/[0.04] px-2.5 py-2 font-ui text-prose text-ink"
-                  />
-                </FormField>
-              </div>
-            </VacancyFormSection>
-
-            <VacancyFormSection locale={locale} titleKey="recruiting.formSectionRolePay" defaultOpen>
-              <div className={cn(GRID_AUTO, 'max-w-[640px] items-start')}>
-                <FormField label={t(locale, 'recruiting.employmentTypeLabel')}>
-                  <SelectField
-                    value={editingVacancy.employmentType}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, employmentType: e.target.value }))}
-                    aria-label={t(locale, 'recruiting.employmentTypeLabel')}
-                    className={cn(FIELD_SELECT, 'px-2.5 py-2 text-prose')}
-                  >
-                    <option value="">{t(locale, 'recruiting.employmentTypeNone')}</option>
-                    {VACANCY_EMPLOYMENT_TYPES.map((type) => (
-                      <option key={type} value={type}>{t(locale, employmentTypeLabelKey(type))}</option>
-                    ))}
-                  </SelectField>
-                </FormField>
-                <FormField label={i18nT(locale, 'ui.vacanciesAdminTab.minimumSalary')}>
-                  <input
-                    value={formatSalaryBr(editingVacancy.salaryMin)}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMin: digitsOnly(e.target.value).slice(0, 15) }))}
-                    placeholder={t(locale, 'recruiting.salaryMinPh')}
-                    inputMode="numeric"
-                    aria-label={t(locale, 'recruiting.salaryMinPh')}
-                    className={cn(FIELD, 'px-2.5 py-2 text-prose')}
-                  />
-                </FormField>
-                <FormField label={i18nT(locale, 'ui.vacanciesAdminTab.maximumSalary')}>
-                  <input
-                    value={formatSalaryBr(editingVacancy.salaryMax)}
-                    onChange={(e) => setEditingVacancy((cur) => ({ ...cur, salaryMax: digitsOnly(e.target.value).slice(0, 15) }))}
-                    placeholder={t(locale, 'recruiting.salaryMaxPh')}
-                    inputMode="numeric"
-                    aria-label={t(locale, 'recruiting.salaryMaxPh')}
-                    className={cn(FIELD, 'px-2.5 py-2 text-prose')}
-                  />
-                </FormField>
-              </div>
-              <VacancyWorkplaceFields
-                locale={locale}
-                compact
-                workplaceModality={editingVacancy.workplaceModality}
-                workplaceState={editingVacancy.workplaceState}
-                workplaceCity={editingVacancy.workplaceCity}
-                onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
-              />
-            </VacancyFormSection>
-
-            <VacancyFormSection locale={locale} titleKey="recruiting.formSectionPublic" defaultOpen={false}>
-              <VacancyPublicFlagsFields
-                locale={locale}
-                values={{
-                  publicPageEnabled: editingVacancy.publicPageEnabled,
-                  publicAllowIndex: editingVacancy.publicAllowIndex,
-                  publicShowCompanyInfo: editingVacancy.publicShowCompanyInfo,
-                  publicShowSalary: editingVacancy.publicShowSalary,
-                }}
-                seoContext={{
-                  title: editingVacancy.title,
-                  description: editingVacancy.description,
-                  employmentType: editingVacancy.employmentType,
-                  salaryMin: editingVacancy.salaryMin,
-                  salaryMax: editingVacancy.salaryMax,
-                  workplaceModality: editingVacancy.workplaceModality,
-                  workplaceCity: editingVacancy.workplaceCity,
-                  workplaceState: editingVacancy.workplaceState,
-                }}
-                onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
-              />
-            </VacancyFormSection>
-
-            <VacancyFormSection locale={locale} titleKey="recruiting.formSectionDescription" defaultOpen>
-              <VacancyDescriptionAssistBar
-                locale={locale}
-                busy={descAiBusy}
-                title={editingVacancy.title}
-                descriptionHtml={editingVacancy.description}
-                employmentType={editingVacancy.employmentType}
-                salaryMin={editingVacancy.salaryMin}
-                salaryMax={editingVacancy.salaryMax}
-                vacancyId={editingVacancy.id}
-                onApplyDescription={(html) =>
-                  setEditingVacancy((cur) => ({ ...cur, description: html }))
-                }
-                onBusyChange={setDescAiBusy}
-              />
-              <FormField as="div" label={t(locale, 'recruiting.vacancyDescriptionLabel')}>
-                <RichTextEditor
-                  value={editingVacancy.description}
-                  onChange={(html) => setEditingVacancy((cur) => ({ ...cur, description: html }))}
-                  placeholder={t(locale, 'recruiting.vacancyDescriptionPh')}
-                  minHeight={140}
-                  locale={locale}
-                  disabled={descAiBusy}
-                />
-              </FormField>
-            </VacancyFormSection>
+          <div aria-busy={loading}>
+            <VacancyFormFields
+              locale={locale}
+              mode="edit"
+              layout="split"
+              values={editingVacancy}
+              onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
+              error={error}
+              jobRoles={jobRoles}
+              descAiBusy={descAiBusy}
+              onDescAiBusyChange={setDescAiBusy}
+            />
           </div>
         ) : null}
       </AdminRichFormDrawer>

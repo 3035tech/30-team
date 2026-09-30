@@ -3,19 +3,19 @@
 import { cn } from '../../../lib/cn';
 import { t } from '../../../lib/i18n';
 import { computeJobSeoScore } from '../../../lib/job-seo-score';
+import { fieldCheckboxClass } from '../../_components/form-control-styles';
 
 function VacancyPublicFlagCheckbox({ locale, checked, onChange, labelKey, helpKey }) {
   return (
-    <label className="flex max-w-[520px] items-start gap-2.5 text-xs leading-[1.45] text-ink-muted">
+    <label className="flex cursor-pointer items-start gap-2.5 font-ui text-xs leading-[1.45] text-ink-muted">
       <input
         type="checkbox"
         checked={Boolean(checked)}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 accent-brand-500"
+        className={fieldCheckboxClass}
       />
-      <span>
-        <strong className="text-ink">{t(locale, labelKey)}</strong>
-        <br />
+      <span className="min-w-0">
+        <strong className="block text-prose font-medium text-ink">{t(locale, labelKey)}</strong>
         {t(locale, helpKey)}
       </span>
     </label>
@@ -39,7 +39,7 @@ export function VacancyPublicFlagsFields({ locale, values, onChange, seoContext 
   });
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-3">
       <VacancyPublicFlagCheckbox
         locale={locale}
         checked={values.publicPageEnabled}

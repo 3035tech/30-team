@@ -202,6 +202,8 @@ const role = await getJobRole(id);
 
 ### VacanciesAdminTab (Criar/Editar Vaga):
 
+Criar e editar usam o mesmo `VacancyFormFields` (`app/dashboard/vacancies/`): `mode="create"` + `layout="stack"` no drawer de criação; `mode="edit"` + `layout="split"` no editor em página cheia (conteúdo à esquerda: Essenciais, Contrato e remuneração, Descrição; configurações à direita: Situação e prazo, Cargo base, Página pública). Campo novo de vaga entra nesse componente, não na tab.
+
 - [ ] Adicionar `RubricEditor` na seção de rubrica
 - [ ] Pré-preencher com rubrica do cargo se `jobRoleId` selecionado
 - [ ] Permitir override manual
