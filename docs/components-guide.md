@@ -200,6 +200,10 @@ const role = await getJobRole(id);
 - [ ] Salvar via `PATCH /api/admin/job-roles/:id`
 - [ ] Modo compact na listagem
 
+### Telas de erro (error boundaries)
+
+`app/global-error.jsx`, `app/error.jsx` e `app/r/error.jsx` usam `AppErrorScreen` (`app/_components/AppErrorScreen.jsx`): ilustração animada (pessoa do RH carimbando o checklist), copy `panel.common.appError*`, "Tentar de novo" (`retry`/`reset`), link ao painel (`homeHref={null}` em fluxo público) e o `digest` como código de suporte. Envia ao Sentry. Animações `.app-err-*` em `globals.css`, desligadas com `prefers-reduced-motion`. Novo `error.jsx` de segmento reutiliza esse componente.
+
 ### VacanciesAdminTab (Criar/Editar Vaga):
 
 Criar e editar usam o mesmo `VacancyFormFields` (`app/dashboard/vacancies/`): `mode="create"` + `layout="stack"` no drawer de criação; `mode="edit"` + `layout="split"` no editor em página cheia (conteúdo à esquerda: Essenciais, Contrato e remuneração, Descrição; configurações à direita: Situação e prazo, Cargo base, Página pública). Campo novo de vaga entra nesse componente, não na tab.

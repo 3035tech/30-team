@@ -1,25 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useLocale } from '../../lib/useLocale';
-import { PublicFunnyError } from '../_components/PublicStatusScreens';
+import { AppErrorScreen } from '../_components/AppErrorScreen';
 
-/**
- * Route-level error UI for /r — funny “broken but fixing” screen.
- */
-export default function VacancyReportError({ error, reset }) {
-  const [locale] = useLocale();
-
-  useEffect(() => {
-    if (error) console.error('[/r error]', error);
-  }, [error]);
-
+/** Route-level error UI for the public /r report: no dashboard link (external audience). */
+export default function VacancyReportError({ error, retry, reset }) {
+  const onRetry = typeof retry === 'function' ? retry : reset;
   return (
     <div className="relative min-h-screen bg-canvas font-display text-ink">
       <div className="pointer-events-none fixed inset-0 bg-radial-glow-single" />
-      <main className="relative mx-auto max-w-[880px] px-5 pb-16 pt-10">
-        <PublicFunnyError locale={locale} onRetry={typeof reset === 'function' ? reset : undefined} />
-      </main>
+      <AppErrorScreen error={error} onRetry={onRetry} homeHref={null} className="relative min-h-screen" />
     </div>
   );
 }

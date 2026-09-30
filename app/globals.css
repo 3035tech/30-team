@@ -515,6 +515,47 @@ textarea:focus-visible {
   }
 }
 
+/* AppErrorScreen: HR person stamping a checklist while the screen gets fixed */
+@keyframes app-err-spin { to { transform: rotate(360deg); } }
+@keyframes app-err-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes app-err-stamp {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  70% { transform: rotate(-14deg); }
+  80% { transform: rotate(4deg); }
+}
+@keyframes app-err-check {
+  0%, 12% { stroke-dashoffset: 1; }
+  24%, 88% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 1; }
+}
+@keyframes app-err-steam {
+  0% { opacity: 0; transform: translateY(4px); }
+  40% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+.app-err-gear { animation: app-err-spin 6s linear infinite; }
+.app-err-float-a { animation: app-err-float 3.2s ease-in-out infinite; }
+.app-err-float-b { animation: app-err-float 3.8s ease-in-out -1.2s infinite; }
+.app-err-stamp { animation: app-err-stamp 1.8s ease-in-out infinite; }
+.app-err-check { stroke-dasharray: 1; stroke-dashoffset: 1; animation: app-err-check 5.4s ease-out infinite; }
+.app-err-check-2 { animation-delay: 0.6s; }
+.app-err-check-3 { animation-delay: 1.2s; }
+.app-err-steam { animation: app-err-steam 2.4s ease-out infinite; }
+.app-err-steam-2 { animation-delay: 1.2s; }
+@media (prefers-reduced-motion: reduce) {
+  .app-err-gear,
+  .app-err-float-a,
+  .app-err-float-b,
+  .app-err-stamp,
+  .app-err-steam {
+    animation: none;
+  }
+  .app-err-check {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
 /* Collaborator chrome — dark fine-tuning */
 .dark .emp-player {
   border-color: rgb(var(--brand-500) / 0.35);

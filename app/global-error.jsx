@@ -1,37 +1,19 @@
 'use client';
 
-import * as Sentry from '@sentry/nextjs';
-import { useEffect } from 'react';
+import './globals.css';
+import { AppErrorScreen } from './_components/AppErrorScreen';
 
 /**
- * App Router global error boundary — reports to Sentry when DSN is set.
- * @see https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#react-render-errors
+ * Root layout error boundary. Renders its own document, so global styles are imported here.
+ * Sentry capture happens inside `AppErrorScreen`.
  */
-export default function GlobalError({ error, reset }) {
-  useEffect(() => {
-    Sentry.captureException(error);
-  }, [error]);
-
+export default function GlobalError({ error, retry, reset }) {
+  const onRetry = typeof retry === 'function' ? retry : reset;
   return (
     <html lang="pt-BR">
-      <body style={{ fontFamily: 'system-ui, sans-serif', padding: 24 }}>
-        <h1 style={{ fontSize: 20, marginBottom: 8 }}>Algo deu errado</h1>
-        <p style={{ color: '#555', marginBottom: 16 }}>
-          O erro foi registrado. Tente novamente ou volte ao painel.
-        </p>
-        <button
-          type="button"
-          onClick={() => reset()}
-          style={{
-            padding: '10px 16px',
-            borderRadius: 8,
-            border: '1px solid #ccc',
-            background: '#f5f5f5',
-            cursor: 'pointer',
-          }}
-        >
-          Tentar de novo
-        </button>
+      <body className="min-h-screen bg-canvas font-ui text-ink antialiased">
+        <title>30Grow</title>
+        <AppErrorScreen error={error} onRetry={onRetry} className="min-h-screen" />
       </body>
     </html>
   );
