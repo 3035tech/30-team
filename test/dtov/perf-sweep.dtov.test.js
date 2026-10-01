@@ -12,7 +12,7 @@ import {
 } from '../../lib/succession-plans.js';
 import { recalculateCompanyScores } from '../../lib/hr-score.js';
 import { hydrateSessionPayload } from '../../lib/session.js';
-import { EMPLOYMENT_STATUS } from '../../lib/domain-status.js';
+import { EMPLOYMENT_STATUS, SUCCESSION_READINESS } from '../../lib/domain-status.js';
 
 const PERF_INDEXES = [
   'idx_manager_notifications_type_entity_created',
@@ -51,10 +51,10 @@ async function main() {
   const roleA = r1.role.id;
   const roleB = r2.role.id;
   for (const [roleId, successorId, readiness] of [
-    [roleA, a, 'developing'],
-    [roleA, b, 'ready_now'],
-    [roleA, c, 'ready'],
-    [roleB, c, 'not_ready'],
+    [roleA, a, SUCCESSION_READINESS.DEVELOPING],
+    [roleA, b, SUCCESSION_READINESS.NOW],
+    [roleA, c, SUCCESSION_READINESS.READY],
+    [roleB, c, SUCCESSION_READINESS.NOT_READY],
   ]) {
     const created = await createSuccessionPlan({ query }, { companyId, roleId, successorId, readiness });
     assert.equal(created.ok, true, created.errorCode);
@@ -68,6 +68,7 @@ async function main() {
   assert.equal(planA.successors.length, 3);
   assert.equal(planB.successors.length, 1);
   assert.ok(planA.successors.every((s) => String(s.roleId) === String(roleA)));
+  assert.equal(planA.successors[0].readiness, SUCCESSION_READINESS.NOW, 'readiness order');
   assert.ok(planA.successors[0].successorName, 'successor name joined');
 
   // HR Score batch: bounded concurrency keeps one result per employee, in input order.

@@ -136,7 +136,7 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                     <p className="m-0 mt-0.5 text-prose text-ink-muted">{copy.nextActionsBody}</p>
                   </div>
                   <span className="font-ui text-prose text-amber-800 dark:text-warning">
-                    {i18nT(locale, priorityItems.length === 1 ? 'ui.pdiAdminTab.casesShownOne' : 'ui.pdiAdminTab.casesShownOther', { count: priorityItems.length })}
+                    {t(locale, priorityItems.length === 1 ? 'ui.pdiAdminTab.casesShownOne' : 'ui.pdiAdminTab.casesShownOther', { count: priorityItems.length })}
                   </span>
                 </div>
                 <div className="divide-y divide-warning/15">

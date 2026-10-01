@@ -42,6 +42,8 @@ Wrappers legados em `scripts/test-*.js` só reexportam `test/unit/*`.
 | `db:test-motivators` | Fluxo de convite Motivadores (Postgres + migrate) |
 | `DTOV_SKIP_BROWSER=1 …` | Pula Chromium no full-app |
 
+Provas pontuais em `test/dtov/*.dtov.test.js` rodam com o env do harness (após `dtov:reset`), ex.: `node --input-type=module -e "import {dtovEnv} from './test/dtov/harness.js'; import {spawnSync} from 'node:child_process'; process.exit(spawnSync('node',['test/dtov/perf-sweep.dtov.test.js'],{env:dtovEnv(),stdio:'inherit'}).status)"` (sucessão em lote, HR Score com fan-out limitado, sessão em 1 query, índices da migration 138).
+
 ### Mocks SMTP / OpenAI (B-003)
 
 Sem serviços externos: envios de e-mail e assistentes de IA usam stub in-process.
