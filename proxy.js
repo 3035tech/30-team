@@ -197,8 +197,7 @@ async function isManagerSessionLive(request, payload) {
   } catch {
     /* Self-fetch do middleware falha em alguns deploys (ingress/edge) — ver fallback abaixo. */
   }
-  const sv = Number(payload?.sv);
-  return Number.isFinite(sv) && sv >= 1;
+  return claimHasSessionVersion(payload);
 }
 
 async function isEmployeeSessionLive(request, payload) {
@@ -214,8 +213,7 @@ async function isEmployeeSessionLive(request, payload) {
   } catch {
     /* Self-fetch falha em alguns deploys — fallback: claim sv presente. */
   }
-  const sv = Number(payload?.sv);
-  return Number.isFinite(sv) && sv >= 1;
+  return claimHasSessionVersion(payload);
 }
 
 export async function proxy(request) {

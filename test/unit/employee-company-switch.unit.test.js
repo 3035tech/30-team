@@ -38,7 +38,7 @@ describe('employee company switch contract', () => {
   it('keeps required credentials in the dialog until they are filled', () => {
     const dialog = source('app/_components/PromptFormDialog.jsx');
     assert.match(dialog, /const missingRequired = visibleFields\.some/);
-    assert.match(dialog, /disabled=\{Boolean\(uploadBusyKey\) \|\| missingRequired\}/);
+    assert.match(dialog, /disabled=\{(?:submitting \|\| )?Boolean\(uploadBusyKey\) \|\| missingRequired\}/);
     assert.match(dialog, /aria-required=\{Boolean\(f\.required\)\}/);
   });
 });

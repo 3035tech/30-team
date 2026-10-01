@@ -558,7 +558,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             <div className={cn('rounded-control border px-3 py-3', attentionCount > 0 ? 'border-warning/25 bg-warning/[0.045]' : 'border-success/20 bg-success/[0.04]')}>
               <div className="font-ui text-2xl font-semibold tabular-nums text-ink">{attentionCount}</div>
               <div className="mt-1 text-prose font-medium text-ink-muted">{t(locale, 'employeeHome.todaySummaryAttention')}</div>
-              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-prose">
                 {[
                   ['okr', okrUrgentCount, '#okr', 'employeeHome.okrTitle'],
                   ['lms', lmsOverdueCount, '/employee/lms', 'employeeHome.lmsTitle'],

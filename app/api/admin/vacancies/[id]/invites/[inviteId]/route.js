@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { verifySessionWithCapabilities } from '../../../../../../../lib/user-capabilities';
 import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../../../lib/auth';
-import { query, queryRead } from '../../../../../../../lib/db';
+import { query, queryRead, withTransaction } from '../../../../../../../lib/db';
 import { audit } from '../../../../../../../lib/audit';
 import { apiError, ERR } from '../../../../../../../lib/api-error';
 import { CAP, isAdminRole, requireCapability } from '../../../../../../../lib/permissions';
@@ -48,24 +48,31 @@ export async function DELETE(request, props) {
          WHERE ass.invite_id = $1 ${!isAdmin ? 'AND ass.company_id = $2' : ''}`,
         !isAdmin ? [inviteId, companyId] : [inviteId]
       );
+      const assessmentIds = (assessments.rows || []).map((r) => r.id);
       const candidateIds = [...new Set((assessments.rows || []).map((r) => r.candidateId).filter(Boolean))];
 
-      for (const row of assessments.rows || []) {
-        await query(`DELETE FROM assessments WHERE id = $1`, [row.id]);
-      }
-
-      await query(`DELETE FROM candidate_invites WHERE id = $1 AND vacancy_id = $2`, [inviteId, vacancyId]);
-
-      for (const cid of candidateIds) {
-        const left = await queryRead(`SELECT 1 FROM assessments WHERE candidate_id = $1 LIMIT 1`, [cid]);
-        if (left.rowCount === 0) {
-          const cand = await queryRead(`SELECT full_name AS "fullName" FROM candidates WHERE id = $1`, [cid]);
-          const fullName = cand.rows?.[0]?.fullName ?? null;
-          await query(`DELETE FROM candidates WHERE id = $1`, [cid]);
-          if (fullName) {
-            await query(`DELETE FROM results WHERE LOWER(name) = LOWER($1)`, [fullName]).catch(() => {});
-          }
+      const orphanNames = await withTransaction(async (client) => {
+        if (assessmentIds.length) {
+          await client.query(`DELETE FROM assessments WHERE id = ANY($1::bigint[])`, [assessmentIds]);
         }
+        await client.query(`DELETE FROM candidate_invites WHERE id = $1 AND vacancy_id = $2`, [inviteId, vacancyId]);
+        if (!candidateIds.length) return [];
+        // Same client: the replica could still see the assessments deleted above.
+        const orphans = await client.query(
+          `DELETE FROM candidates c
+           WHERE c.id = ANY($1::bigint[])
+             AND NOT EXISTS (SELECT 1 FROM assessments a WHERE a.candidate_id = c.id)
+           RETURNING c.full_name AS "fullName"`,
+          [candidateIds]
+        );
+        return orphans.rows.map((r) => r.fullName).filter(Boolean);
+      });
+
+      // `results` is a global legacy table keyed by name (no tenant): only touch it when this app writes it.
+      if (process.env.LEGACY_RESULTS_WRITE === 'true' && orphanNames.length) {
+        await query(`DELETE FROM results WHERE LOWER(name) = ANY($1::text[])`, [
+          orphanNames.map((n) => String(n).toLowerCase()),
+        ]).catch(() => {});
       }
     } else {
       await query(`DELETE FROM candidate_invites WHERE id = $1 AND vacancy_id = $2`, [inviteId, vacancyId]);

@@ -51,6 +51,7 @@ import { clusterCloseTypes, rankEnneagramScores } from '../../../lib/enneagram-c
 import { buildProfileSynthesis } from '../../../lib/profile-synthesis';
 import { EMPLOYMENT_STATUS, ROSTER_SCOPE } from '../../../lib/domain-status.js';
 import { PIPELINE_STAGE, PIPELINE_STAGES } from '../../../lib/pipeline';
+import { DB_FANOUT_CONCURRENCY, mapWithConcurrency } from '../../../lib/concurrency';
 import {
   ABSENCE_SUGGESTION,
 } from '../../../lib/people/list-absence-diagnostics-core.js';
@@ -800,18 +801,28 @@ export function TeamTab({
     setBulkBusy(true);
     setBulkMsg('');
     try {
-      await Promise.all(
-        [...selectedIds].map((id) =>
-          fetch(`/api/admin/assessments/${encodeURIComponent(id)}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pipelineStage: bulkStage, ...extras }),
-          })
-        )
+      const ids = [...selectedIds];
+      const outcomes = await mapWithConcurrency(ids, DB_FANOUT_CONCURRENCY, (id) =>
+        fetch(`/api/admin/assessments/${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pipelineStage: bulkStage, ...extras }),
+        }).then((res) => res.ok, () => false)
       );
+      const failed = ids.filter((_, i) => !outcomes[i]);
+      if (failed.length) {
+        // No refresh here: it would reset the selection. Show applied stages locally and
+        // keep only the failed rows selected so the manager can retry them.
+        const applied = Object.fromEntries(ids.filter((_, i) => outcomes[i]).map((id) => [id, bulkStage]));
+        setStageOverrides((prev) => ({ ...prev, ...applied }));
+        setSelectedIds(new Set(failed));
+        setBulkMsgIsError(true);
+        setBulkMsg(t(locale, 'panel.team.bulkUpdateError'));
+        return;
+      }
       setSelectedIds(new Set());
       setBulkMsgIsError(false);
-      setBulkMsg(t(locale, 'panel.team.bulkUpdatedCount', { n: selectedIds.size }));
+      setBulkMsg(t(locale, 'panel.team.bulkUpdatedCount', { n: ids.length }));
       setTimeout(() => setBulkMsg(''), 3000);
       router.refresh();
     } catch {

@@ -52,7 +52,7 @@ describe('B-2501 packaging', () => {
   });
 
   it('playbooksForTab filters by role', () => {
-    const hrVagas = playbooksForTab('vagas', 'hr');
+    const hrVagas = playbooksForTab('vacancies', 'hr');
     assert.ok(hrVagas.some((p) => p.id === PLAYBOOK_IDS.HR_HIRING));
     const dirOnly = playbooksForTab('analytics', 'hr');
     assert.equal(dirOnly.length, 0);
