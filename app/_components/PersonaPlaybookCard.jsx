@@ -40,6 +40,10 @@ const TASK_ROUTES = {
   review_succession: '/dashboard?tab=succession',
 };
 
+/** Per-tab progress reused while switching tabs; progress only moves after real work. */
+const PLAYBOOK_CACHE_MS = 60_000;
+const playbookCache = new Map();
+
 /**
  * Checklist contextual por aba + persona (B-2501 packaging).
  */
@@ -61,6 +65,19 @@ export function PersonaPlaybookCard({ tab, role, locale = 'pt-BR' }) {
 
   useEffect(() => {
     let cancelled = false;
+    const key = `${role || ''}|${tab || 'overview'}`;
+    const cached = playbookCache.get(key);
+    let isDismissed = false;
+    try {
+      isDismissed = localStorage.getItem(`${DISMISS_KEY}_${tab}`) === '1';
+    } catch {
+      /* ignore */
+    }
+    if (isDismissed) return undefined;
+    if (cached && Date.now() - cached.at < PLAYBOOK_CACHE_MS) {
+      setPlaybooks(cached.playbooks);
+      return undefined;
+    }
     (async () => {
       try {
         const res = await fetch(
@@ -68,7 +85,9 @@ export function PersonaPlaybookCard({ tab, role, locale = 'pt-BR' }) {
         );
         const data = await res.json().catch(() => ({}));
         if (!cancelled && res.ok) {
-          setPlaybooks(Array.isArray(data.playbooks) ? data.playbooks : []);
+          const next = Array.isArray(data.playbooks) ? data.playbooks : [];
+          playbookCache.set(key, { at: Date.now(), playbooks: next });
+          setPlaybooks(next);
         }
       } catch {
         if (!cancelled) setPlaybooks([]);

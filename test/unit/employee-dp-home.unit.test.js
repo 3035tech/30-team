@@ -17,6 +17,7 @@ const dependencies = {
   leaveInclusiveDays: () => 1, expandLeaveCalendarByDay: () => [],
   sanitizeRichTextHtml: (value) => value, stripCep: (value) => value,
   stripCpf: (value) => value, stripPhone: (value) => value,
+  DB_FANOUT_CONCURRENCY: 4,
 };
 const context = vm.createContext({ Buffer });
 const module = new vm.SourceTextModule(await readFile(new URL('../../lib/people/employee-dp.js', import.meta.url), 'utf8'), { context });

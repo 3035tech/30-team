@@ -176,7 +176,14 @@ async function sessionEdgeSaysLive(request) {
   }
 }
 
+/** Route handlers under /api re-hydrate the session (session_version) on their own. */
+function claimHasSessionVersion(payload) {
+  const sv = Number(payload?.sv);
+  return Number.isFinite(sv) && sv >= 1;
+}
+
 async function isManagerSessionLive(request, payload) {
+  if (request.nextUrl.pathname.startsWith('/api/')) return claimHasSessionVersion(payload);
   try {
     const checkUrl = new URL(SESSION_EDGE_PATH, request.url);
     const res = await fetch(checkUrl, {
@@ -195,6 +202,7 @@ async function isManagerSessionLive(request, payload) {
 }
 
 async function isEmployeeSessionLive(request, payload) {
+  if (request.nextUrl.pathname.startsWith('/api/')) return claimHasSessionVersion(payload);
   try {
     const checkUrl = new URL(EMPLOYEE_SESSION_EDGE_PATH, request.url);
     const res = await fetch(checkUrl, {

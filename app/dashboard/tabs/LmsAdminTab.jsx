@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { t, contentLocale } from '../../../lib/i18n';
 import { PAGE_SIZE_OPTIONS } from '../../../lib/assessment-filters';
@@ -109,13 +109,15 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
     navigateDashboard?.({ tab: 'lms', course: null, lmsSection: null });
   }, [navigateDashboard]);
 
+  // Full-panel skeleton only on the first load per company; reloads after saves stay in place.
+  const coursesLoadedForRef = useRef(null);
   const loadCourses = useCallback(async () => {
     if (!companyId) {
       setCourses([]);
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (coursesLoadedForRef.current !== companyId) setLoading(true);
     try {
       const res = await fetch(
         `/api/admin/lms/courses?${companyQs(companyId)}&includeInactive=1&limit=80`
@@ -126,6 +128,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
     } catch (e) {
       toast(e?.message || t(locale, 'panel.lms.loadError'), 'error');
     } finally {
+      coursesLoadedForRef.current = companyId;
       setLoading(false);
     }
   }, [companyId, locale, toast]);
@@ -289,8 +292,10 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'update');
       toast(t(locale, 'panel.lms.courseUpdated'), 'ok');
-      await loadCourses();
-      if (selectedId && Number(selectedId) === Number(c.id)) await loadDetail(c.id);
+      await Promise.all([
+        loadCourses(),
+        selectedId && Number(selectedId) === Number(c.id) ? loadDetail(c.id) : null,
+      ]);
     } catch (e) {
       toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
     }
@@ -419,8 +424,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
         );
       }
       toast(t(locale, 'panel.lms.lessonCreated'), 'ok');
-      await loadDetail(selectedId);
-      await loadCourses();
+      await Promise.all([loadDetail(selectedId), loadCourses()]);
     } catch (e) {
       toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
     } finally {
@@ -683,8 +687,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
         'ok'
       );
       setEnrollPick('');
-      await loadDetail(selectedId);
-      await loadCourses();
+      await Promise.all([loadDetail(selectedId), loadCourses()]);
     } catch (e) {
       toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
     } finally {
@@ -793,8 +796,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.error || 'reset progress');
-      await loadDetail(selectedId);
-      await loadCourses();
+      await Promise.all([loadDetail(selectedId), loadCourses()]);
     } catch (e) {
       toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
     } finally {
@@ -819,8 +821,7 @@ export function LmsAdminTab({ locale = 'pt-BR', companyId, courseId, courseSecti
         throw new Error(json?.error || 'remove');
       }
       toast(t(locale, 'panel.lms.enrollmentRemoved'), 'ok');
-      await loadDetail(selectedId);
-      await loadCourses();
+      await Promise.all([loadDetail(selectedId), loadCourses()]);
     } catch (e) {
       toast(e?.message || t(locale, 'panel.lms.saveError'), 'error');
     } finally {

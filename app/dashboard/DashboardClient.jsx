@@ -35,9 +35,10 @@ import { AppFeedbackProvider, useAppFeedbackOptional } from '../_components/AppF
 import { AppLoading, ContentEnter, NavLoadBar } from '../_components/AppLoading';
 import { DashboardTopBarMenus } from '../_components/DashboardTopBarMenus';
 import { HelpAssistantWidget } from './HelpAssistantWidget';
-import { OnboardingTour } from '../_components/OnboardingTour';
 import { useKeyboardShortcuts, KeyboardShortcutsHelp, GModePending } from '../_components/KeyboardShortcuts';
-import OnboardingWizard from '../_components/OnboardingWizard';
+
+const OnboardingTour = dynamic(() => import('../_components/OnboardingTour').then((mod) => mod.OnboardingTour), { ssr: false });
+const OnboardingWizard = dynamic(() => import('../_components/OnboardingWizard'), { ssr: false });
 import { PersonaPlaybookCard } from '../_components/PersonaPlaybookCard';
 import { FormField } from '../_components/FormField';
 import {
@@ -674,33 +675,28 @@ function DashboardClientContent({
   Object.assign(typeCount, compatMetrics.typeCount || {});
   const maxCount = Math.max(...Object.values(typeCount), 1);
 
-  const byAssessmentId = {};
-  interactionPeople.forEach((r) => {
-    byAssessmentId[String(r.assessmentId)] = r;
-  });
-
-  const groupBase = groupBaseId ? byAssessmentId[String(groupBaseId)] : null;
-  const groupMembers = groupIds.map((id) => byAssessmentId[String(id)]).filter(Boolean);
-
-  const suggestions = groupBase
-    ? interactionPeople
-        .filter((r) => String(r.assessmentId) !== String(groupBase.assessmentId))
-        .filter((r) => !dismissedIds.includes(String(r.assessmentId)))
-        .map((r) => ({ person: r, compat: getCompat(groupBase.topType, r.topType, locale) }))
-        .sort((x, y) => {
-          const order = { synergy: 0, neutral: 1, tension: 2 };
-          return (order[x.compat.level] ?? 9) - (order[y.compat.level] ?? 9);
-        })
-    : [];
-
-  const groupPairs = [];
-  for (let i = 0; i < groupMembers.length; i++) {
-    for (let j = i + 1; j < groupMembers.length; j++) {
-      const c = getCompat(groupMembers[i].topType, groupMembers[j].topType, locale);
-      groupPairs.push({ a: groupMembers[i], b: groupMembers[j], compat: c });
+  const { groupBase, suggestions, groupTensions } = useMemo(() => {
+    if (tab !== 'group') return { groupBase: null, suggestions: [], groupTensions: [] };
+    const byAssessmentId = new Map(interactionPeople.map((r) => [String(r.assessmentId), r]));
+    const base = groupBaseId ? byAssessmentId.get(String(groupBaseId)) || null : null;
+    const members = groupIds.map((id) => byAssessmentId.get(String(id))).filter(Boolean);
+    const dismissed = new Set(dismissedIds.map(String));
+    const order = { synergy: 0, neutral: 1, tension: 2 };
+    const nextSuggestions = base
+      ? interactionPeople
+          .filter((r) => String(r.assessmentId) !== String(base.assessmentId) && !dismissed.has(String(r.assessmentId)))
+          .map((r) => ({ person: r, compat: getCompat(base.topType, r.topType, locale) }))
+          .sort((x, y) => (order[x.compat.level] ?? 9) - (order[y.compat.level] ?? 9))
+      : [];
+    const tensions = [];
+    for (let i = 0; i < members.length; i++) {
+      for (let j = i + 1; j < members.length; j++) {
+        const compat = getCompat(members[i].topType, members[j].topType, locale);
+        if (compat.level === 'tension') tensions.push({ a: members[i], b: members[j], compat });
+      }
     }
-  }
-  const groupTensions = groupPairs.filter((p) => p.compat.level === 'tension');
+    return { groupBase: base, suggestions: nextSuggestions, groupTensions: tensions };
+  }, [tab, interactionPeople, groupBaseId, groupIds, dismissedIds, locale]);
 
   const compareQueryString = useMemo(() => {
     const sp = new URLSearchParams();

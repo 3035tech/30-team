@@ -4,7 +4,7 @@ import { CandidateOrgUnit, OrgUnitFilter } from '../../_components/OrgUnitField'
 import { SelectField } from '../../_components/SelectField';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '../../../lib/cn';
 import { TYPE_DATA } from '../../../lib/data';
 import { t, localeHtmlLang, contentLocale, t as i18nT } from '../../../lib/i18n';
@@ -40,7 +40,7 @@ import { FormField, formFieldGrowClass, formFieldRowClass } from '../../_compone
 import { RichTextEditor } from '../../_components/RichTextEditor';
 import { RichTextView } from '../../_components/RichTextView';
 import { HrScoreBadge } from '../../_components/HrScoreBadge';
-import { MotivatorsRadarChart } from '../../_components/MotivatorsRadarChart';
+import { MotivatorsRadarChart } from '../../_components/MotivatorsRadarChartLazy';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { useRehireEmployee } from '../../_components/useRehireEmployee';
@@ -288,6 +288,9 @@ export function TeamTab({
   const [createEmployeeBusy, setCreateEmployeeBusy] = useState(false);
   const { requestPipelineExtras } = usePipelineExtras();
   const { confirm, notice, promptForm, toast } = useAppFeedback();
+  const detailReqRef = useRef(null);
+  const detailIdRef = useRef(null);
+  detailIdRef.current = detail?.candidate?.id ?? null;
   const { rehire, busyId: rehireBusyId } = useRehireEmployee({ locale, companyId });
 
   const rehirePerson = async ({ candidateId, name, exitDate }) => {
@@ -386,6 +389,7 @@ export function TeamTab({
   useEffect(() => {
     if (!focusCandidateId) {
       setOpen(null);
+      detailReqRef.current = null;
       setDetail(null);
       setDetailErr('');
       return;
@@ -539,28 +543,46 @@ export function TeamTab({
     { k: 'pipeline', labelKey: 'recruiting.pipelineShort' },
   ];
 
-  const loadDetail = useCallback(async (candidateId) => {
-    setDetailLoading(true);
-    setDetailErr('');
-    setDetail(null);
-    setNotesEditing(false);
-    setNotesMsg('');
-    setProfileEditing(false);
-    setProfileMsg('');
+  /** `silent`: after a save, keep the open person mounted (no skeleton, child blocks keep state). */
+  const loadDetail = useCallback(async (candidateId, { silent = false } = {}) => {
+    const reqKey = String(candidateId);
+    detailReqRef.current = reqKey;
+    if (!silent) {
+      setDetailLoading(true);
+      setDetailErr('');
+      setDetail(null);
+      setNotesEditing(false);
+      setNotesMsg('');
+      setProfileEditing(false);
+      setProfileMsg('');
+    }
     try {
       const res = await fetch(`/api/admin/candidates/${encodeURIComponent(candidateId)}?locale=${encodeURIComponent(contentLocale(locale))}`);
       const data = await res.json().catch(() => ({}));
+      if (detailReqRef.current !== reqKey) return;
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.team.loadDetailError'));
       setDetail(data);
-      setNotesDraft(data?.candidate?.hrNotes || '');
-      setProfileDraft(profileFromCandidate(data?.candidate));
+      if (!silent) {
+        setNotesDraft(data?.candidate?.hrNotes || '');
+        setProfileDraft(profileFromCandidate(data?.candidate));
+      }
     } catch (e) {
+      if (detailReqRef.current !== reqKey) return;
+      if (silent) {
+        toast(e?.message || t(locale, 'panel.common.error'), 'error');
+        return;
+      }
       setDetailErr(e?.message || t(locale, 'panel.common.error'));
       setDetail(null);
     } finally {
-      setDetailLoading(false);
+      if (!silent && detailReqRef.current === reqKey) setDetailLoading(false);
     }
-  }, [locale]);
+  }, [locale, toast]);
+  const reloadDetailSilently = useCallback(() => {
+    const id = detailIdRef.current;
+    if (id) return loadDetail(id, { silent: true });
+    return undefined;
+  }, [loadDetail]);
 
   const addToVacancy = async (candidateId, personName) => {
     const cid = Number(candidateId);
@@ -657,7 +679,7 @@ export function TeamTab({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       router.refresh();
-      if (detail?.candidate?.id) await loadDetail(detail.candidate.id);
+      await reloadDetailSilently();
     } catch (e) {
       await notice({ message: e?.message || t(locale, 'panel.common.error'), tone: 'error' });
     } finally {
@@ -678,7 +700,7 @@ export function TeamTab({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || t(locale, 'panel.common.error'));
       router.refresh();
-      if (detail?.candidate?.id) await loadDetail(detail.candidate.id);
+      await reloadDetailSilently();
     } catch (e) {
       await notice({ message: e?.message || t(locale, 'panel.common.error'), tone: 'error' });
     } finally {
@@ -874,6 +896,7 @@ export function TeamTab({
     setPeopleSubTab(nextNavigation.peopleSubTab);
     if (row.candidateId) loadDetail(row.candidateId);
     else {
+      detailReqRef.current = null;
       setDetail(null);
       setDetailErr('');
     }
@@ -888,6 +911,7 @@ export function TeamTab({
       if (!ok) return;
     }
     setOpen(null);
+    detailReqRef.current = null;
     setDetail(null);
     setDetailErr('');
     setPersonTab('people');
@@ -1366,7 +1390,7 @@ export function TeamTab({
                     candidateId={detail.candidate.id}
                     people={detail.people}
                     employmentStatus={detail.candidate.employmentStatus}
-                    onRefresh={() => loadDetail(detail.candidate.id)}
+                    onRefresh={reloadDetailSilently}
                     section="context"
                   />
                 ) : null}
@@ -1475,7 +1499,7 @@ export function TeamTab({
                           candidateId={detail.candidate.id}
                           people={detail.people}
                           employmentStatus={detail.candidate.employmentStatus}
-                          onRefresh={() => loadDetail(detail.candidate.id)}
+                          onRefresh={reloadDetailSilently}
                           section="oneOnOne"
                         />
                       ) : null}
@@ -1493,7 +1517,7 @@ export function TeamTab({
                           candidateId={detail.candidate.id}
                           people={detail.people}
                           employmentStatus={detail.candidate.employmentStatus}
-                          onRefresh={() => loadDetail(detail.candidate.id)}
+                          onRefresh={reloadDetailSilently}
                           section="journey"
                         />
                       ) : null}
@@ -1658,7 +1682,7 @@ export function TeamTab({
                       candidateId={detail.candidate.id}
                       locale={locale}
                       embedded
-                      onApplied={() => loadDetail(detail.candidate.id)}
+                      onApplied={reloadDetailSilently}
                     />
                   </div>
                 ) : null}

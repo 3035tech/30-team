@@ -2,7 +2,7 @@
 
 import { SelectField } from './SelectField';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
@@ -38,9 +38,11 @@ export function DevelopmentPlansBlock({
   const [academyCatalog, setAcademyCatalog] = useState([]);
   const [lmsCatalog, setLmsCatalog] = useState([]);
 
+  // Skeleton only on first load per key; reloads after saves keep the block mounted.
+  const loadedKeyRef = useRef(null);
   const load = useCallback(async () => {
     if (!candidateId) return;
-    setLoading(true);
+    if (loadedKeyRef.current !== candidateId) setLoading(true);
     try {
       const res = await fetch(
         `/api/admin/candidates/${encodeURIComponent(candidateId)}/development-plans`
@@ -52,6 +54,7 @@ export function DevelopmentPlansBlock({
       toast(t(locale, 'panel.pdi.loadError'), 'error');
       setItems([]);
     } finally {
+      loadedKeyRef.current = candidateId;
       setLoading(false);
     }
   }, [candidateId, locale, toast]);

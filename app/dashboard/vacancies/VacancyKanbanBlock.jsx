@@ -37,8 +37,11 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
   const { promptForm, toast, confirm } = useAppFeedback();
   const { isDark } = useDarkMode();
   const effectiveCompanyStages = companyStages ?? fetchedStages;
-  const stages = getKanbanStages(locale, { isDark, companyStages: effectiveCompanyStages });
-  const stageById = Object.fromEntries(stages.map((s) => [s.id, s]));
+  const stages = useMemo(
+    () => getKanbanStages(locale, { isDark, companyStages: effectiveCompanyStages }),
+    [locale, isDark, effectiveCompanyStages]
+  );
+  const stageById = useMemo(() => Object.fromEntries(stages.map((s) => [s.id, s])), [stages]);
   const { requestPipelineExtras } = usePipelineExtras();
 
   const loadWorkspace = async () => {
@@ -110,6 +113,8 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
     if (extras == null) return;
     const key = cardKey(row);
     setMoving(key);
+    // Optimistic column move; restored from `row` if the PATCH fails.
+    setRows((prev) => prev.map((r) => (cardKey(r) === key ? { ...r, pipelineStage: stage } : r)));
     try {
       if (row.pendingTest || !row.assessmentId) {
         const res = await fetch(
@@ -148,6 +153,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
         );
       }
     } catch (e) {
+      setRows((prev) => prev.map((r) => (cardKey(r) === key ? { ...r, pipelineStage: row.pipelineStage } : r)));
       setErr(e?.message || t(locale, 'recruiting.moveCandidateError'));
     } finally {
       setMoving(null);
@@ -167,12 +173,15 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
     return true;
   }), [filters, locale, rows, stageById, workspace.currentUserId]);
 
-  const grouped = Object.fromEntries(stages.map((s) => [s.id, []]));
-  filteredRows.forEach((r) => {
-    const stage = r.pipelineStage || 'new';
-    if (grouped[stage]) grouped[stage].push(r);
-    else grouped['new'].push(r);
-  });
+  const grouped = useMemo(() => {
+    const out = Object.fromEntries(stages.map((s) => [s.id, []]));
+    filteredRows.forEach((r) => {
+      const stage = r.pipelineStage || 'new';
+      if (out[stage]) out[stage].push(r);
+      else out['new'].push(r);
+    });
+    return out;
+  }, [stages, filteredRows]);
 
   const hasAny = rows.length > 0;
   const hasFiltered = filteredRows.length > 0;

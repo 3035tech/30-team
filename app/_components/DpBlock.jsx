@@ -197,6 +197,8 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
   const baseUrl = `/api/admin/candidates/${encodeURIComponent(candidateId)}/dp`;
   const scopedCompanyId = companyId != null ? Number(companyId) : null;
 
+  // Skeleton only on first load per key; reloads after saves keep the block mounted.
+  const loadedKeyRef = useRef(null);
   const load = useCallback(async () => {
     if (!candidateId || !visible) {
       setProfile(null);
@@ -207,7 +209,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (loadedKeyRef.current !== baseUrl) setLoading(true);
     try {
       const res = await fetch(baseUrl);
       const data = await res.json().catch(() => ({}));
@@ -225,6 +227,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
       setLeaves([]);
       setBalance(null);
     } finally {
+      loadedKeyRef.current = baseUrl;
       setLoading(false);
     }
   }, [candidateId, visible, locale, toast, baseUrl]);

@@ -28,6 +28,7 @@ export function GlobalSearch({ locale = 'pt-BR', open: openProp, onOpenChange })
   const inputRef = useRef(null);
   const router = useRouter();
   const searchTimeoutRef = useRef(null);
+  const searchAbortRef = useRef(null);
 
   const categoryMeta = useMemo(
     () => ({
@@ -63,13 +64,19 @@ export function GlobalSearch({ locale = 'pt-BR', open: openProp, onOpenChange })
   }, [isOpen]);
 
   const performSearch = useCallback(async (searchQuery) => {
+    searchAbortRef.current?.abort();
     if (!searchQuery.trim()) {
       setResults({ candidates: [], vacancies: [], groups: [] });
+      setIsLoading(false);
       return;
     }
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/admin/search?q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`/api/admin/search?q=${encodeURIComponent(searchQuery)}`, {
+        signal: controller.signal,
+      });
       if (!res.ok) throw new Error('Search failed');
       const data = await res.json();
       setResults({
@@ -78,12 +85,18 @@ export function GlobalSearch({ locale = 'pt-BR', open: openProp, onOpenChange })
         groups: Array.isArray(data.groups) ? data.groups : [],
       });
     } catch (err) {
+      if (controller.signal.aborted) return;
       console.error('[GlobalSearch] Error:', err);
       setResults({ candidates: [], vacancies: [], groups: [] });
     } finally {
-      setIsLoading(false);
+      if (searchAbortRef.current === controller) {
+        searchAbortRef.current = null;
+        setIsLoading(false);
+      }
     }
   }, []);
+
+  useEffect(() => () => searchAbortRef.current?.abort(), []);
 
   useEffect(() => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);

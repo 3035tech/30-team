@@ -14,7 +14,18 @@ export async function resolveDashboardAuth() {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const rawPayload = token ? verifyToken(token) : null;
-  const payload = await attachCapabilityOverrides(rawPayload);
+  const rawUserId = rawPayload?.userId ?? null;
+  const [payload, profileRes] = await Promise.all([
+    attachCapabilityOverrides(rawPayload),
+    rawUserId
+      ? queryRead(
+        `SELECT email, display_name AS "displayName",
+                onboarding_completed AS "onboardingCompleted"
+         FROM users WHERE id = $1 AND deleted = FALSE LIMIT 1`,
+        [rawUserId]
+      ).catch(() => null)
+      : null,
+  ]);
   if (!isManagerRole(payload)) redirect('/login');
   const isAdmin = isAdminRole(payload);
   const companyId = payload?.companyId ?? null;
@@ -40,34 +51,20 @@ export async function resolveDashboardAuth() {
       ? payload.capabilityOverrides
       : [],
   };
-  try {
-    if (payload?.userId) {
-      const u = await queryRead(
-        `SELECT email, display_name AS "displayName",
-                onboarding_completed AS "onboardingCompleted",
-                signup_source AS "signupSource",
-                signup_pending AS "signupPending",
-                signup_metadata AS "signupMetadata"
-         FROM users WHERE id = $1 AND deleted = FALSE LIMIT 1`,
-        [payload.userId]
-      );
-      if (u.rowCount) {
-        const row = u.rows[0];
-        const onboardingCompleted = row.onboardingCompleted !== false;
-        // Todo gestor novo configura a empresa; super admin mantém acesso integral.
-        const showOnboardingWizard =
-          !isSuperAdminPayload(payload) && !onboardingCompleted;
-        authUser = {
-          ...authUser,
-          email: row.email,
-          displayName: row.displayName,
-          onboardingCompleted,
-          showOnboardingWizard,
-        };
-      }
-    }
-  } catch {
-    /* display_name / onboarding / signup columns may be missing before migrations */
+  // profileRes is null when display_name / onboarding columns are missing before migrations.
+  if (payload?.userId && profileRes?.rowCount) {
+    const row = profileRes.rows[0];
+    const onboardingCompleted = row.onboardingCompleted !== false;
+    // Todo gestor novo configura a empresa; super admin mantém acesso integral.
+    const showOnboardingWizard =
+      !isSuperAdminPayload(payload) && !onboardingCompleted;
+    authUser = {
+      ...authUser,
+      email: row.email,
+      displayName: row.displayName,
+      onboardingCompleted,
+      showOnboardingWizard,
+    };
   }
 
   return { authUser, locale, payload, isAdmin, companyId };

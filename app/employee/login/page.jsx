@@ -3,6 +3,7 @@ import { AppFeedbackProvider } from '../../_components/AppFeedback';
 import { AppLoading } from '../../_components/AppLoading';
 import { EmployeeLoginClient } from './EmployeeLoginClient';
 import { normalizeLocale } from '../../../lib/i18n';
+import { I18nBoot } from '../../_components/I18nBoot';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export default async function EmployeeLoginPage(props) {
   return (
     <AppFeedbackProvider locale={locale}>
       <Suspense fallback={<AppLoading variant="panel" />}>
-        <EmployeeLoginClient locale={locale} reason={reason} />
+        <I18nBoot locales={[locale]}><EmployeeLoginClient locale={locale} reason={reason} /></I18nBoot>
       </Suspense>
     </AppFeedbackProvider>
   );

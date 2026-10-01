@@ -21,6 +21,66 @@ import { buildTeamBehavioralIntel } from '../../../lib/people/team-behavioral-in
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { EmptyState } from '../../_components/EmptyState';
 
+/** Mesmo padrão visual dos cards de sugestão: emoji só no TypeBadge; nome ao lado; × no canto se onRemove. */
+function PersonMini({ person, right, baseCompat = null, onRemove = null, locale }) {
+  const showX = typeof onRemove === 'function';
+  return (
+    <div
+      className={cn(
+        'flex flex-col gap-2 rounded-xl border border-ink/12 bg-ink/[0.03] px-3.5 py-3',
+        showX ? 'relative pr-11' : null
+      )}
+    >
+      {showX && (
+        <button
+          type="button"
+          onClick={onRemove}
+          title={t(locale, 'panel.group.removeFromGroup')}
+          aria-label={t(locale, 'panel.group.removeFromGroup')}
+          className="absolute right-2.5 top-2.5 inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-ink/[0.06] font-mono text-base leading-none text-ink-muted"
+        >
+          ×
+        </button>
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <TypeBadge type={person.topType} locale={locale} compact />
+        <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-prose font-medium text-ink">
+          {person.name}
+        </span>
+        {baseCompat ? (
+          <>
+            <CompatBadge level={baseCompat.level} locale={locale} />
+            {baseCompat.level === 'tension' ? (
+              <span className="rounded-full border border-danger/30 bg-danger/[0.09] px-2 py-0.5 font-mono text-2xs text-danger">
+                {t(locale, 'panel.group.tensionWithBase')}
+              </span>
+            ) : null}
+          </>
+        ) : null}
+        {!showX ? <div className="shrink-0">{right}</div> : null}
+      </div>
+      {(person.areaLabel || (person.areaFitScore010 != null)) ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {person.areaLabel ? (
+            <StatusToneChip tone="neutral">{person.areaLabel}</StatusToneChip>
+          ) : null}
+          {person.areaFitScore010 != null ? (
+            <StatusToneChip tone="success">{person.areaFitScore010}/10</StatusToneChip>
+          ) : null}
+        </div>
+      ) : null}
+      {baseCompat ? (
+        <div className="text-xs leading-snug text-ink-muted">
+          {baseCompat.title ? (
+            <span className="mb-1 block font-mono text-2xs text-ink-faint">{baseCompat.title}</span>
+          ) : null}
+          {baseCompat.desc || ''}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function GroupTab({
   results,
   groupBase,
@@ -265,65 +325,6 @@ export function GroupTab({
     }
   };
 
-  /** Mesmo padrão visual dos cards de sugestão: emoji só no TypeBadge; nome ao lado; × no canto se onRemove. */
-  const PersonMini = ({ person, right, baseCompat = null, onRemove = null }) => {
-    const showX = typeof onRemove === 'function';
-    return (
-      <div
-        className={cn(
-          'flex flex-col gap-2 rounded-xl border border-ink/12 bg-ink/[0.03] px-3.5 py-3',
-          showX ? 'relative pr-11' : null
-        )}
-      >
-        {showX && (
-          <button
-            type="button"
-            onClick={onRemove}
-            title={t(locale, 'panel.group.removeFromGroup')}
-            aria-label={t(locale, 'panel.group.removeFromGroup')}
-            className="absolute right-2.5 top-2.5 inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-control border border-ink/12 bg-ink/[0.06] font-mono text-base leading-none text-ink-muted"
-          >
-            ×
-          </button>
-        )}
-        <div className="flex flex-wrap items-center gap-2">
-          <TypeBadge type={person.topType} locale={locale} compact />
-          <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-prose font-medium text-ink">
-            {person.name}
-          </span>
-          {baseCompat ? (
-            <>
-              <CompatBadge level={baseCompat.level} locale={locale} />
-              {baseCompat.level === 'tension' ? (
-                <span className="rounded-full border border-danger/30 bg-danger/[0.09] px-2 py-0.5 font-mono text-2xs text-danger">
-                  {t(locale, 'panel.group.tensionWithBase')}
-                </span>
-              ) : null}
-            </>
-          ) : null}
-          {!showX ? <div className="shrink-0">{right}</div> : null}
-        </div>
-        {(person.areaLabel || (person.areaFitScore010 != null)) ? (
-          <div className="flex flex-wrap items-center gap-2">
-            {person.areaLabel ? (
-              <StatusToneChip tone="neutral">{person.areaLabel}</StatusToneChip>
-            ) : null}
-            {person.areaFitScore010 != null ? (
-              <StatusToneChip tone="success">{person.areaFitScore010}/10</StatusToneChip>
-            ) : null}
-          </div>
-        ) : null}
-        {baseCompat ? (
-          <div className="text-xs leading-snug text-ink-muted">
-            {baseCompat.title ? (
-              <span className="mb-1 block font-mono text-2xs text-ink-faint">{baseCompat.title}</span>
-            ) : null}
-            {baseCompat.desc || ''}
-          </div>
-        ) : null}
-      </div>
-    );
-  };
 
   if ((results || []).length === 0) {
     return (
@@ -481,6 +482,7 @@ export function GroupTab({
         <span className={cn(S.label, 'mt-[18px]')}>{t(locale, 'panel.group.basePerson')}</span>
         {groupBase ? (
           <PersonMini
+            locale={locale}
             person={groupBase}
             right={
               <button
@@ -508,6 +510,7 @@ export function GroupTab({
               .slice(0, showAllBase ? 80 : 12)
               .map(r=>(
               <PersonMini
+                locale={locale}
                 key={r.assessmentId}
                 person={r}
                 right={
@@ -733,6 +736,7 @@ export function GroupTab({
                         : null;
                     return (
                       <PersonMini
+                        locale={locale}
                         key={id}
                         person={p}
                         baseCompat={baseCompat}

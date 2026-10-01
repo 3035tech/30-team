@@ -140,18 +140,16 @@ export function EmployeeTopBar({
     }
   };
 
-  const markReadAndGo = async (item) => {
-    try {
-      if (!item.readAt) {
-        await fetch('/api/employee/notifications', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: item.id }),
-        });
-      }
-    } catch {
-      /* ignore */
-    }
+  const markReadAndGo = (item) => {
+    // Navigation must not wait for the PATCH round-trip; refresh the list once it lands.
+    const marked = item.readAt
+      ? Promise.resolve()
+      : fetch('/api/employee/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id }),
+        keepalive: true,
+      }).catch(() => {});
     setNotifOpen(false);
     const href = item.href || '/employee';
     const hash = href.includes('#') ? href.split('#')[1] : '';
@@ -162,7 +160,7 @@ export function EmployeeTopBar({
     } else {
       router.push(href);
     }
-    void loadNotifs();
+    void marked.then(() => loadNotifs());
   };
 
   const markAll = async () => {

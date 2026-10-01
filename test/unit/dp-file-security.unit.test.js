@@ -67,6 +67,7 @@ async function fixture(options = {}) {
     putObject: async () => {}, deleteObjectBestEffort: async () => {}, isObjectStorageConfigured: () => true,
     leaveInclusiveDays: () => 1, expandLeaveCalendarByDay: () => [], sanitizeRichTextHtml: value => value,
     stripCep: value => value, stripCpf: value => value, stripPhone: value => value,
+    DB_FANOUT_CONCURRENCY: 4,
     privateAttachmentResponse,
     checkRateLimit: async key => { state.rateKeys.push(key); return { ok: !options.rateLimited }; },
   };

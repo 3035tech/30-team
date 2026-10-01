@@ -56,6 +56,33 @@ Operações nomeadas (warn + breadcrumb Sentry se DSN):
 
 Buscar em logs JSON: `"message":"Slow operation detected"` ou `"Slow Postgres query"`.
 
+## Varredura de performance (set/2026)
+
+Navegação, carregamento e salvamento. Sem mudança de API nem de regra de negócio.
+
+**Bundle / cliente**
+- Catálogos i18n fora do bundle inicial: `lib/i18n/bundled-catalogs.js` só no servidor; no browser o webpack troca por `bundled-catalogs.client.js` (vazio) e `lib/i18n-client.js` carrega o chunk do locale (`i18n-pt-BR`, `i18n-en-US`, …). `I18nBoot` (layouts/páginas) suspende a hidratação até o catálogo chegar; `useLocale.setLocale` carrega antes de trocar.
+- `next/dynamic` para tour/wizard de onboarding, radar de motivadores e Sentry Replay (lazy integration).
+- Grupo: derivados (`groupBase`, sugestões, tensões) só com a aba ativa, com `Map`/`Set`; `PersonMini` no escopo do módulo (não remonta a cada render).
+- Notificações: throttle de 2 s, sem fetch duplicado no mount; clique navega antes do PATCH (otimista, `keepalive`).
+- Playbook do persona: cache de 60 s por papel/aba e sem fetch quando o card foi dispensado.
+- Busca global com `AbortController` (resposta lenta não sobrescreve a nova).
+
+**Salvamento sem “piscar”**
+- Equipe: `loadDetail(id, { silent: true })` após salvar (1:1, PDI, OKR, etapa, retake): mantém a pessoa montada, descarta resposta atrasada se trocar de pessoa.
+- LMS, DP, PDI, OKR: skeleton só na primeira carga por chave; recargas após salvar ficam no lugar. LMS recarrega detalhe + lista em paralelo.
+- Kanban de vaga: mover card é otimista (rollback se o PATCH falhar).
+- Clima: lista + benchmark e detalhe + agregado em paralelo (antes 4 requests em série).
+
+**Servidor / SQL**
+- Sessão do gestor: `enabled_modules` vem no mesmo SELECT de `users`; overrides de capability e cache Redis em paralelo (4 idas sequenciais → 2). Perfil do chrome (`resolveDashboardAuth`) em paralelo com a hidratação.
+- Proxy: `/api/*` não faz mais self-fetch de `session-edge` (todas as rotas já re-hidratam a sessão com `session_version`); páginas continuam com a checagem para o redirect `reason=expired`.
+- `load-dashboard-data`: vagas, rubrica da vaga, contagem por área, cadeia de área e rubricas em `Promise.all`; página da Equipe especulativa em paralelo com a contagem (re-consulta só se a página for ajustada); onboarding em paralelo com o overview.
+- Sucessão: sucessores de todos os papéis em 1 query (`ROW_NUMBER() OVER (PARTITION BY critical_role_id)`), antes 1 por papel.
+- Migration `138_performance_indexes_hotpaths.sql`: `manager_notifications (type, entity_id, created_at)`, `ae_invites (company_id, candidate_id)`, `candidate_invites (vacancy_id, candidate_id)`, `ae_attempts (company_id, candidate_id, completed_at) WHERE completed`, `climate_survey_responses (company_id, submitted_at)`, `vacancy_candidates (company_id|vacancy_id, pipeline_stage)`, `assessment_pipeline_history (assessment_id, changed_at DESC NULLS LAST, id DESC)`.
+
+Pendências maiores (escopo/risco) estão em `docs/BACKLOG.md` § Performance.
+
 ## EXPLAIN checklist (DTOV)
 
 ```bash
@@ -85,4 +112,5 @@ Aceite manual: planos sem Seq Scan óbvio nas tabelas quentes (`assessments`, `c
 | Timeline events | 120 |
 | LMS lessons / course (employee list) | 60 |
 | Employee notify batch | 200 |
-| Cron notify chunk | 20 |
+| Cron notify chunk | 4 (`DB_FANOUT_CONCURRENCY`, `lib/concurrency.js`) |
+| Fan-out por item com várias queries (HR Score lote, resultados de avaliação formal) | 4 em paralelo (`mapWithConcurrency`) |

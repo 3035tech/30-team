@@ -95,6 +95,25 @@ Baseline documentada (`docs/performance-hotpaths.md`): SSR por aba, caps, export
 
 Home/`/e` em paralelo + PDI batch; inbox de pesquisas com batch invite (sem N+1); jornada GET sem ensure; clima aggregate SQL; sucessão batch; HR Score cache wired; caps assessments/timeline; LMS lessons `ROW_NUMBER` cap; `notifyCandidates` unnest; crons em chunks paralelos; índice trigram `079`; mail retry; Cache-Control em links públicos + health. Detalhe: `docs/performance-hotpaths.md`.
 
+### B-2803 — Varredura de performance (navegação / carregamento / salvamento) ✅ ENTREGUE
+
+i18n por chunk de locale (`I18nBoot`), lazy de tour/wizard/radar/Sentry Replay, sessão do gestor 4→2 idas ao banco, proxy sem self-fetch em `/api/*`, loader do dashboard em paralelo (+ página da Equipe especulativa), sucessão em 1 query, fan-out limitado (`lib/concurrency.js`), saves sem skeleton (Equipe/LMS/DP/PDI/OKR), kanban otimista, clima sem waterfall, migration `138` (índices de hot path). Detalhe: `docs/performance-hotpaths.md` § Varredura.
+
+### B-2804 — Performance: pendências da varredura (escopo maior)
+
+1. **Bug de correção: banco de horas diário** (`generateHourBankForCompanyDay`, `lib/people/hour-bank.js`): lê no máximo `HOUR_BANK_LIST_CAP` (200) marcações do dia; empresas com mais de ~50 colaboradores batendo ponto ficam sem crédito de extra para o restante. Corrigir com agregação SQL por `candidate_id` (ou paginação) + insert em lote `ON CONFLICT (company_id, dedupe_key) DO NOTHING`.
+2. **Publicar ciclo de avaliação formal**: ~20 queries por avaliação dentro de transação com lock; reescrever em set-based (raters `INSERT … SELECT`, um `UPDATE` por ciclo) + endpoint de matriz de respondentes para a confirmação (hoje N GETs no cliente).
+3. **Trocar questionário do ciclo**: DELETE + INSERT por item por rascunho → `INSERT … SELECT … CROSS JOIN unnest(...)`.
+4. **HR Score em lote**: `detectTrendChange` recalcula o radar por pessoa (reusa sinais já carregados em batch); `saveHrScore` em upsert `unnest`.
+5. **OKR hierarquia**: carrega áreas/atividades/assignees só para derivar ids; caps aplicados em JS; joins O(n·m) com `filter`.
+6. **Navegação client-only** para abas que buscam os próprios dados (Vagas, Usuários, LMS, OKR, Clima, PDI): hoje cada troca passa pelo loader SSR antes do fetch da aba.
+7. **Overview**: 8+ cards com fetch próprio após o SSR; avaliar dobrar resumos baratos em `buildOverviewMetrics`.
+8. **Notificações**: endpoint só de contagem para o polling (lista só ao abrir o dropdown), leitura em `queryRead`.
+9. **`DISTINCT ON` por empresa** (behavioral intel, liderança, cultura): dirigir por `candidates` + `LATERAL … LIMIT 1`.
+10. **Convites em lote de clima/pulso**: validação por convite + SMTP síncrono no request.
+11. **Purge de `candidate_notifications`** (gestor já tem `purgeOldManagerNotifications`).
+12. **Exclusão de convite concluído da vaga** (`app/api/admin/vacancies/[id]/invites/[inviteId]`): loop sem transação, leitura em réplica logo após delete e `DELETE FROM results WHERE LOWER(name)=…` global (risco cross-tenant em dado legado).
+
 ### B-202 — (opcional) caps/API restantes do audit
 _(fechado como “monitorar prod” — sem gap aberto claro.)_ Já entregue: vac-n1 LATERAL, export cap, purge batches, AE analytics sample, notify unnest, email unique idx (025), compat/leadership caps, indexes `061`. Reabrir só com evidência de produção.
 

@@ -9,6 +9,20 @@ const nextConfig = {
   logging: { incomingRequests: false },
   // Lets CI and migration checks use an isolated cache without touching a running app.
   distDir: process.env.NEXT_DIST_DIR || '.next',
+  webpack(config, { isServer, webpack }) {
+    if (!isServer) {
+      // Browser gets one locale catalog on demand (lib/i18n-client.js), not all of them.
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+          /[\\/]i18n[\\/]bundled-catalogs\.js$/,
+          (resource) => {
+            resource.request = resource.request.replace(/bundled-catalogs\.js$/, 'bundled-catalogs.client.js');
+          }
+        )
+      );
+    }
+    return config;
+  },
   async headers() {
     return [
       {

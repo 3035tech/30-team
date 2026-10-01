@@ -174,85 +174,6 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
       effectiveCompanyId == null &&
       (needOverview || needCompatPairs || needListMetrics);
 
-    if (needVacanciesFilter) {
-      const vWhereParts = ['v.deleted = FALSE', 'c.deleted = FALSE'];
-      const vParams = [];
-      if (effectiveCompanyId != null) {
-        vParams.push(effectiveCompanyId);
-        vWhereParts.push(`v.company_id = $${vParams.length}`);
-      }
-      const vWhere = `WHERE ${vWhereParts.join(' AND ')}`;
-      vParams.push(VACANCIES_FILTER_CAP);
-      const v = await queryRead(
-        `SELECT v.id, v.company_id AS "companyId", v.title, v.status, v.created_at AS "createdAt"
-         FROM vacancies v
-         JOIN companies c ON c.id = v.company_id
-         ${vWhere}
-         ORDER BY (v.status = 'open') DESC, v.created_at DESC
-         LIMIT $${vParams.length}`,
-        vParams
-      );
-      vacancies = v.rows;
-
-      // Keep the currently selected vacancy visible even if outside the cap window.
-      if (selectedVacancy !== 'all') {
-        const selId = parseInt(selectedVacancy, 10);
-        if (Number.isFinite(selId) && !vacancies.some((x) => Number(x.id) === selId)) {
-          const oneParams = [selId];
-          let oneExtra = '';
-          if (effectiveCompanyId != null) {
-            oneParams.push(effectiveCompanyId);
-            oneExtra = ` AND v.company_id = $2`;
-          }
-          const one = await queryRead(
-            `SELECT v.id, v.company_id AS "companyId", v.title, v.status, v.created_at AS "createdAt"
-             FROM vacancies v
-             JOIN companies c ON c.id = v.company_id AND c.deleted = FALSE
-             WHERE v.deleted = FALSE AND v.id = $1${oneExtra}
-             LIMIT 1`,
-            oneParams
-          );
-          if (one.rowCount) vacancies = [...vacancies, ...one.rows];
-        }
-      }
-    }
-
-    if (needTeam && selectedVacancy !== 'all') {
-      const selId = parseInt(selectedVacancy, 10);
-      if (Number.isFinite(selId) && vacancyRubricByVacancyId[String(selId)] == null) {
-        const vrOne = await queryRead(
-          `SELECT vacancy_id AS "vacancyId", desired_type_weights AS weights
-           FROM vacancy_rubrics WHERE vacancy_id = $1 LIMIT 1`,
-          [selId]
-        );
-        if (vrOne.rowCount) {
-          const row = vrOne.rows[0];
-          vacancyRubricByVacancyId[String(row.vacancyId)] =
-            row.weights && typeof row.weights === 'object' ? row.weights : {};
-        }
-      }
-    }
-
-    if (needAreaCounts) {
-      const countWhereParts = [];
-      const cParams = [];
-      if (effectiveCompanyId != null) {
-        cParams.push(effectiveCompanyId);
-        countWhereParts.push(`ass.company_id = $${cParams.length}`);
-      }
-      const cWhere = countWhereParts.length ? `WHERE ${countWhereParts.join(' AND ')}` : '';
-      const c = await queryRead(
-        `SELECT ar.key, ar.label, COUNT(*)::int AS count
-         FROM assessments ass
-         JOIN areas ar ON ar.id = ass.area_id
-         ${cWhere}
-         GROUP BY ar.key, ar.label
-         ORDER BY ar.label ASC`,
-        cParams
-      );
-      counts = c.rows;
-    }
-
     const { page, pageSize, enneagram: enneParsed } = parseDashboardPagination(searchParams);
     enneagram = enneParsed;
     pagination = { ...pagination, page, pageSize };
@@ -260,68 +181,160 @@ export async function loadDashboardTabData({ searchParams, payload, isAdmin, com
     const teamSortState = parseTeamSort(searchParams);
     const teamOrderSql = sqlTeamOrderBy(teamSortState.sort, teamSortState.dir);
 
-    if (needTeam && selectedArea !== 'all') {
-      const areaRow = await queryRead(`SELECT id FROM areas WHERE key = $1 LIMIT 1`, [selectedArea]);
-      const areaId = areaRow.rows?.[0]?.id;
-      if (areaId) {
-        if (isAdmin && scopeCompanyFilter != null) {
-          const raw = await queryRead(
-            `SELECT scores FROM assessments WHERE company_id = $1 AND area_id = $2 LIMIT $3`,
-            [scopeCompanyFilter, areaId, AREA_STATS_SCORES_CAP]
-          );
-          areaStats = computeStatsFromScores(raw.rows);
-        } else {
-          const statsRow = await queryRead(
-            `SELECT type_means AS "means", type_stds AS "stds", n FROM area_stats WHERE area_id = $1 LIMIT 1`,
-            [areaId]
-          );
-          if (statsRow.rowCount > 0) {
-            areaStats = {
-              means: statsRow.rows[0].means,
-              stds: statsRow.rows[0].stds,
-              n: statsRow.rows[0].n,
-            };
-          } else {
-            const rawWhere = isAdmin
-              ? `WHERE area_id = $1`
-              : `WHERE company_id = $1 AND area_id = $2`;
-            const rawParams = isAdmin
-              ? [areaId, AREA_STATS_SCORES_CAP]
-              : [companyId, areaId, AREA_STATS_SCORES_CAP];
-            const limIx = rawParams.length;
-            const raw = await queryRead(
-              `SELECT scores FROM assessments ${rawWhere} LIMIT $${limIx}`,
-              rawParams
+    const vacanciesTask = (async () => {
+      if (needVacanciesFilter) {
+        const vWhereParts = ['v.deleted = FALSE', 'c.deleted = FALSE'];
+        const vParams = [];
+        if (effectiveCompanyId != null) {
+          vParams.push(effectiveCompanyId);
+          vWhereParts.push(`v.company_id = $${vParams.length}`);
+        }
+        const vWhere = `WHERE ${vWhereParts.join(' AND ')}`;
+        vParams.push(VACANCIES_FILTER_CAP);
+        const v = await queryRead(
+          `SELECT v.id, v.company_id AS "companyId", v.title, v.status, v.created_at AS "createdAt"
+           FROM vacancies v
+           JOIN companies c ON c.id = v.company_id
+           ${vWhere}
+           ORDER BY (v.status = 'open') DESC, v.created_at DESC
+           LIMIT $${vParams.length}`,
+          vParams
+        );
+        vacancies = v.rows;
+
+        // Keep the currently selected vacancy visible even if outside the cap window.
+        if (selectedVacancy !== 'all') {
+          const selId = parseInt(selectedVacancy, 10);
+          if (Number.isFinite(selId) && !vacancies.some((x) => Number(x.id) === selId)) {
+            const oneParams = [selId];
+            let oneExtra = '';
+            if (effectiveCompanyId != null) {
+              oneParams.push(effectiveCompanyId);
+              oneExtra = ` AND v.company_id = $2`;
+            }
+            const one = await queryRead(
+              `SELECT v.id, v.company_id AS "companyId", v.title, v.status, v.created_at AS "createdAt"
+               FROM vacancies v
+               JOIN companies c ON c.id = v.company_id AND c.deleted = FALSE
+               WHERE v.deleted = FALSE AND v.id = $1${oneExtra}
+               LIMIT 1`,
+              oneParams
             );
-            areaStats = computeStatsFromScores(raw.rows);
-            // Persist via cron/ops — avoid write-on-read on the dashboard hot path.
+            if (one.rowCount) vacancies = [...vacancies, ...one.rows];
           }
         }
+      }
+    })();
 
-        const rub = await queryRead(
-          `SELECT desired_type_weights AS weights FROM area_rubrics WHERE area_id = $1 LIMIT 1`,
-          [areaId]
-        );
-        if (rub.rowCount > 0) {
-          areaRubric = rub.rows[0].weights || {};
-        } else {
-          await query(
-            `INSERT INTO area_rubrics (area_id, desired_type_weights) VALUES ($1, '{}'::jsonb) ON CONFLICT (area_id) DO NOTHING`,
-            [areaId]
+    const vacancyRubricTask = (async () => {
+      if (needTeam && selectedVacancy !== 'all') {
+        const selId = parseInt(selectedVacancy, 10);
+        if (Number.isFinite(selId) && vacancyRubricByVacancyId[String(selId)] == null) {
+          const vrOne = await queryRead(
+            `SELECT vacancy_id AS "vacancyId", desired_type_weights AS weights
+             FROM vacancy_rubrics WHERE vacancy_id = $1 LIMIT 1`,
+            [selId]
           );
-          areaRubric = {};
+          if (vrOne.rowCount) {
+            const row = vrOne.rows[0];
+            vacancyRubricByVacancyId[String(row.vacancyId)] =
+              row.weights && typeof row.weights === 'object' ? row.weights : {};
+          }
         }
       }
-    }
+    })();
 
-    if (needTeam || needLeadership) {
-      const rubAll = await queryRead(
-        `SELECT a.key AS "areaKey", r.desired_type_weights AS weights
-         FROM area_rubrics r
-         JOIN areas a ON a.id = r.area_id`
-      );
-      rubricByAreaKey = Object.fromEntries(rubAll.rows.map((x) => [x.areaKey, x.weights || {}]));
-    }
+    const areaCountsTask = (async () => {
+      if (needAreaCounts) {
+        const countWhereParts = [];
+        const cParams = [];
+        if (effectiveCompanyId != null) {
+          cParams.push(effectiveCompanyId);
+          countWhereParts.push(`ass.company_id = $${cParams.length}`);
+        }
+        const cWhere = countWhereParts.length ? `WHERE ${countWhereParts.join(' AND ')}` : '';
+        const c = await queryRead(
+          `SELECT ar.key, ar.label, COUNT(*)::int AS count
+           FROM assessments ass
+           JOIN areas ar ON ar.id = ass.area_id
+           ${cWhere}
+           GROUP BY ar.key, ar.label
+           ORDER BY ar.label ASC`,
+          cParams
+        );
+        counts = c.rows;
+      }
+    })();
+
+    const areaChainTask = (async () => {
+      if (needTeam && selectedArea !== 'all') {
+        const areaRow = await queryRead(`SELECT id FROM areas WHERE key = $1 LIMIT 1`, [selectedArea]);
+        const areaId = areaRow.rows?.[0]?.id;
+        if (areaId) {
+          if (isAdmin && scopeCompanyFilter != null) {
+            const raw = await queryRead(
+              `SELECT scores FROM assessments WHERE company_id = $1 AND area_id = $2 LIMIT $3`,
+              [scopeCompanyFilter, areaId, AREA_STATS_SCORES_CAP]
+            );
+            areaStats = computeStatsFromScores(raw.rows);
+          } else {
+            const statsRow = await queryRead(
+              `SELECT type_means AS "means", type_stds AS "stds", n FROM area_stats WHERE area_id = $1 LIMIT 1`,
+              [areaId]
+            );
+            if (statsRow.rowCount > 0) {
+              areaStats = {
+                means: statsRow.rows[0].means,
+                stds: statsRow.rows[0].stds,
+                n: statsRow.rows[0].n,
+              };
+            } else {
+              const rawWhere = isAdmin
+                ? `WHERE area_id = $1`
+                : `WHERE company_id = $1 AND area_id = $2`;
+              const rawParams = isAdmin
+                ? [areaId, AREA_STATS_SCORES_CAP]
+                : [companyId, areaId, AREA_STATS_SCORES_CAP];
+              const limIx = rawParams.length;
+              const raw = await queryRead(
+                `SELECT scores FROM assessments ${rawWhere} LIMIT $${limIx}`,
+                rawParams
+              );
+              areaStats = computeStatsFromScores(raw.rows);
+              // Persist via cron/ops — avoid write-on-read on the dashboard hot path.
+            }
+          }
+
+          const rub = await queryRead(
+            `SELECT desired_type_weights AS weights FROM area_rubrics WHERE area_id = $1 LIMIT 1`,
+            [areaId]
+          );
+          if (rub.rowCount > 0) {
+            areaRubric = rub.rows[0].weights || {};
+          } else {
+            await query(
+              `INSERT INTO area_rubrics (area_id, desired_type_weights) VALUES ($1, '{}'::jsonb) ON CONFLICT (area_id) DO NOTHING`,
+              [areaId]
+            );
+            areaRubric = {};
+          }
+        }
+      }
+    })();
+
+    const rubricsTask = (async () => {
+      if (needTeam || needLeadership) {
+        const rubAll = await queryRead(
+          `SELECT a.key AS "areaKey", r.desired_type_weights AS weights
+           FROM area_rubrics r
+           JOIN areas a ON a.id = r.area_id`
+        );
+        rubricByAreaKey = Object.fromEntries(rubAll.rows.map((x) => [x.areaKey, x.weights || {}]));
+      }
+    })();
+
+    // Independent chrome/rubric reads: one round-trip wall time instead of serial.
+    await Promise.all([vacanciesTask, vacancyRubricTask, areaCountsTask, areaChainTask, rubricsTask]);
 
     if (needListMetrics || needTeam || needCompatPairs || needGroupPeople || needOverview || needLeadership) {
       if (needsCompanyScope) {
@@ -387,6 +400,57 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
 
       let listTotal = 0;
       let typeCountAgg = { ...EMPTY_TYPE_COUNT };
+
+      // Onboarding progress (only for non-admins viewing their own company) does not depend on list data.
+      const onboardingPromise = needOverview && !isAdmin && companyId
+        ? getOnboardingProgress(queryRead, companyId).catch((err) => {
+          console.error('[dashboard/load] Onboarding progress error:', err);
+          return null;
+        })
+        : null;
+
+      const runTeamPage = (targetPage) => {
+        const pageParams = [...extParams];
+        pageParams.push(pageSize);
+        const limIx = pageParams.length;
+        pageParams.push(Math.max(0, (targetPage - 1) * pageSize));
+        const offIx = pageParams.length;
+        return queryRead(
+          `SELECT
+             ass.id AS "assessmentId",
+             c.id AS "candidateId",
+             c.full_name AS name,
+             ar.key AS "areaKey",
+             ar.label AS "areaLabel",
+             ass.vacancy_id AS "vacancyId",
+             v.title AS "vacancyTitle",
+             ass.top_type AS "topType",
+             ass.scores,
+             ass.created_at AS "createdAt",
+             COALESCE(stg.changed_at, ass.created_at) AS "stageEnteredAt",
+             ass.pipeline_stage AS "pipelineStage",
+             ass.invite_id AS "inviteId",
+             c.employment_status AS "employmentStatus",
+             CASE WHEN c.employment_status = '${EMPLOYMENT_STATUS.ALUMNI}' THEN (
+               SELECT MAX(e.exit_date) FROM exit_records e WHERE e.candidate_id = c.id
+             ) END AS "exitDate"
+           ${BASE_JOIN_LIST}
+           LEFT JOIN LATERAL (
+             SELECT h.changed_at
+             FROM assessment_pipeline_history h
+             WHERE h.assessment_id = ass.id
+             ORDER BY h.changed_at DESC NULLS LAST, h.id DESC
+             LIMIT 1
+           ) stg ON TRUE
+           ${candidateWhere}
+           ${teamOrderSql}
+           LIMIT $${limIx} OFFSET $${offIx}`,
+          pageParams
+        );
+      };
+      // Speculative: requested page in parallel with the count; re-run only if the page gets clamped.
+      const speculativeTeamPage = needTeam ? runTeamPage(page) : null;
+      speculativeTeamPage?.catch(() => {});
 
       if (needListMetrics) {
         const needHistogram = needCompatPairs || needOverview;
@@ -478,56 +542,14 @@ LEFT JOIN vacancies v ON v.id = ass.vacancy_id
           })
         );
 
-        // Onboarding progress (only for non-admins viewing their own company)
-        if (!isAdmin && companyId) {
-          try {
-            onboardingProgress = await getOnboardingProgress(queryRead, companyId);
-          } catch (err) {
-            console.error('[dashboard/load] Onboarding progress error:', err);
-            onboardingProgress = null;
-          }
-        }
+        if (onboardingPromise) onboardingProgress = await onboardingPromise;
       }
 
       if (needTeam) {
         const effectivePage = pagination.page;
-        const pageParams = [...extParams];
-        pageParams.push(pageSize);
-        const limIx = pageParams.length;
-        pageParams.push(Math.max(0, (effectivePage - 1) * pageSize));
-        const offIx = pageParams.length;
-        const pageRes = await queryRead(
-          `SELECT
-             ass.id AS "assessmentId",
-             c.id AS "candidateId",
-             c.full_name AS name,
-             ar.key AS "areaKey",
-             ar.label AS "areaLabel",
-             ass.vacancy_id AS "vacancyId",
-             v.title AS "vacancyTitle",
-             ass.top_type AS "topType",
-             ass.scores,
-             ass.created_at AS "createdAt",
-             COALESCE(stg.changed_at, ass.created_at) AS "stageEnteredAt",
-             ass.pipeline_stage AS "pipelineStage",
-             ass.invite_id AS "inviteId",
-             c.employment_status AS "employmentStatus",
-             CASE WHEN c.employment_status = '${EMPLOYMENT_STATUS.ALUMNI}' THEN (
-               SELECT MAX(e.exit_date) FROM exit_records e WHERE e.candidate_id = c.id
-             ) END AS "exitDate"
-           ${BASE_JOIN_LIST}
-           LEFT JOIN LATERAL (
-             SELECT h.changed_at
-             FROM assessment_pipeline_history h
-             WHERE h.assessment_id = ass.id
-             ORDER BY h.changed_at DESC NULLS LAST, h.id DESC
-             LIMIT 1
-           ) stg ON TRUE
-           ${candidateWhere}
-           ${teamOrderSql}
-           LIMIT $${limIx} OFFSET $${offIx}`,
-          pageParams
-        );
+        const pageRes = effectivePage === page
+          ? await speculativeTeamPage
+          : await runTeamPage(effectivePage);
 
         const pageVacIds = [
           ...new Set(

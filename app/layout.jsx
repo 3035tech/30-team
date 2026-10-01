@@ -3,7 +3,8 @@ import './globals.css';
 import './mobile-fixes.css';
 import './dark-mode.css';
 import { cookies } from 'next/headers';
-import { LOCALE_COOKIE, localeHtmlLang, normalizeLocale, t } from '../lib/i18n';
+import { DEFAULT_LOCALE, LOCALE_COOKIE, localeHtmlLang, normalizeLocale, t } from '../lib/i18n';
+import { I18nBoot } from './_components/I18nBoot';
 import { DarkModeProvider } from './_components/DarkModeProvider';
 import { versionedIcon } from '../lib/brand';
 import { themeInitScript } from '../lib/theme-mode';
@@ -42,7 +43,9 @@ export default async function RootLayout({ children }) {
       </head>
       <body className="m-0 bg-canvas p-0 font-ui text-prose text-ink antialiased">
         <DarkModeProvider>
-          {children}
+          <I18nBoot locales={[locale, DEFAULT_LOCALE]}>
+            {children}
+          </I18nBoot>
         </DarkModeProvider>
       </body>
     </html>

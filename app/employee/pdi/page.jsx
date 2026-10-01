@@ -6,6 +6,7 @@ import { EMPLOYEE_COOKIE_NAME } from '../../../lib/employee-auth-constants.js';
 import { isEmployeeSessionPayload, verifyEmployeeToken } from '../../../lib/employee-auth.js';
 import { normalizeLocale } from '../../../lib/i18n.js';
 import { EmployeePdiClient } from './EmployeePdiClient';
+import { I18nBoot } from '../../_components/I18nBoot';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +19,7 @@ export default async function EmployeePdiPage(props) {
   const locale = normalizeLocale(searchParams?.locale || payload.locale);
   return (
     <Suspense fallback={<AppLoading variant="panel" />}>
-      <EmployeePdiClient locale={locale} />
+      <I18nBoot locales={[locale]}><EmployeePdiClient locale={locale} /></I18nBoot>
     </Suspense>
   );
 }

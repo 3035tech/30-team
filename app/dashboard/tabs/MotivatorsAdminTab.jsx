@@ -14,7 +14,7 @@ import { CopyableLink } from '../../_components/CopyableLink';
 import { formatDisplayDate } from '../../../lib/format-display-date.js';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { InlineCallout } from '../../_components/InlineCallout';
-import { MotivatorsRadarChart } from '../../_components/MotivatorsRadarChart';
+import { MotivatorsRadarChart } from '../../_components/MotivatorsRadarChartLazy';
 import { CollapsibleBlock } from '../../_components/CollapsibleBlock';
 import { AdminListFilters, AdminListFilterSelect } from '../../_components/AdminListFilters';
 import { EmptyState } from '../../_components/EmptyState';

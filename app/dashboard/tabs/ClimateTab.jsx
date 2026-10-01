@@ -393,16 +393,18 @@ export function ClimateTab({ locale, isAdmin, companies = [], section, navigateD
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const bq = companyQs ? `${companyQs}&benchmark=1` : '?benchmark=1';
+      const benchmarkPromise = fetch(`/api/admin/climate-surveys${bq}`)
+        .then(async (br) => (br.ok ? br.json().catch(() => null) : null))
+        .catch(() => null);
       const res = await fetch(`/api/admin/climate-surveys${listQs}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || data?.errorCode || 'load');
       const next = Array.isArray(data.items) ? data.items : [];
       setItems(next);
       if (data.minResponses != null) setMinResponses(Number(data.minResponses) || 5);
-      const bq = companyQs ? `${companyQs}&benchmark=1` : '?benchmark=1';
-      const br = await fetch(`/api/admin/climate-surveys${bq}`);
-      const bd = await br.json().catch(() => ({}));
-      if (br.ok) setBenchmark(bd);
+      const bd = await benchmarkPromise;
+      if (bd) setBenchmark(bd);
       return next;
     } catch (e) {
       toast(e?.message || t(locale, 'panel.climate.loadError'), 'error');
@@ -419,17 +421,19 @@ export function ClimateTab({ locale, isAdmin, companies = [], section, navigateD
       setInviteUrls([]);
       setAggregate(null);
       try {
+        const aggregatePromise = fetch(
+          `/api/admin/climate-surveys/${encodeURIComponent(id)}?aggregate=1`
+        )
+          .then(async (ag) => (ag.ok ? ag.json().catch(() => ({})) : null))
+          .catch(() => null);
         const res = await fetch(`/api/admin/climate-surveys/${encodeURIComponent(id)}`);
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || 'load');
         setSelectedId(id);
         setDetail(data.survey);
         setShowQuestions(data.survey?.status === CLIMATE_SURVEY_STATUS.DRAFT);
-        const ag = await fetch(
-          `/api/admin/climate-surveys/${encodeURIComponent(id)}?aggregate=1`
-        );
-        const agData = await ag.json().catch(() => ({}));
-        if (ag.ok) setAggregate(agData);
+        const agData = await aggregatePromise;
+        if (agData) setAggregate(agData);
       } catch {
         toast(t(locale, 'panel.climate.loadError'), 'error');
       } finally {

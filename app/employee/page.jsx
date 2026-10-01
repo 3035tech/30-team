@@ -9,6 +9,7 @@ import {
   verifyEmployeeToken,
 } from '../../lib/employee-auth.js';
 import { normalizeLocale } from '../../lib/i18n.js';
+import { I18nBoot } from '../_components/I18nBoot';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,5 +23,5 @@ export default async function EmployeeHomePage(props) {
   }
   const locale = normalizeLocale(searchParams?.locale || payload.locale);
 
-  return <EmployeeHomeClient locale={locale} />;
+  return <I18nBoot locales={[locale]}><EmployeeHomeClient locale={locale} /></I18nBoot>;
 }

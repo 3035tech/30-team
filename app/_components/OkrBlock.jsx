@@ -2,7 +2,7 @@
 
 import { SelectField } from './SelectField';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { t, t as i18nT } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import {
@@ -150,6 +150,8 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
   const companyQs = companyId ? `?companyId=${encodeURIComponent(companyId)}` : '';
   const companyBody = companyId ? { companyId: Number(companyId) } : {};
 
+  // Skeleton only on first load per key; reloads after saves keep the block mounted.
+  const loadedKeyRef = useRef(null);
   const load = useCallback(async () => {
     if (!companyId) {
       setCycles([]);
@@ -157,7 +159,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
       setLoading(false);
       return;
     }
-    setLoading(true);
+    if (loadedKeyRef.current !== companyQs) setLoading(true);
     setLoadError(false);
     try {
       const res = await fetch(`/api/admin/okr/cycles${companyQs}`);
@@ -174,6 +176,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
       setLoadError(true);
       setCycles([]);
     } finally {
+      loadedKeyRef.current = companyQs;
       setLoading(false);
     }
   }, [companyId, companyQs, locale, toast]);

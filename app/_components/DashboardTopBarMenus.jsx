@@ -151,7 +151,13 @@ export function DashboardTopBarMenus({
   const wrapRef = useRef(null);
   const pollTimerRef = useRef(null);
 
+  const lastLoadRef = useRef(0);
+
   const loadNotifs = useCallback(async () => {
+    // focus + visibilitychange fire together when the user returns to the tab.
+    const now = Date.now();
+    if (now - lastLoadRef.current < 2000) return;
+    lastLoadRef.current = now;
     try {
       const res = await fetch('/api/me/notifications?limit=20');
       if (redirectManagerIfUnauthorized(res.status)) return;
@@ -177,7 +183,6 @@ export function DashboardTopBarMenus({
   }, [clearPoll, loadNotifs]);
 
   useEffect(() => {
-    loadNotifs();
     const syncPolling = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
         clearPoll();
@@ -228,22 +233,22 @@ export function DashboardTopBarMenus({
     };
   }, []);
 
-  const markReadAndGo = async (item) => {
-    try {
-      if (!item.readAt) {
-        const res = await fetch('/api/me/notifications', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: item.id }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (res.ok) {
-          setUnreadCount(typeof data.unreadCount === 'number' ? data.unreadCount : Math.max(0, unreadCount - 1));
-          setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, readAt: new Date().toISOString() } : x)));
-        }
-      }
-    } catch {
-      /* still navigate */
+  const markReadAndGo = (item) => {
+    if (!item.readAt) {
+      // Optimistic: navigation must not wait for the PATCH round-trip.
+      setUnreadCount((n) => Math.max(0, n - 1));
+      setItems((prev) => prev.map((x) => (x.id === item.id ? { ...x, readAt: new Date().toISOString() } : x)));
+      fetch('/api/me/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id }),
+        keepalive: true,
+      })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && typeof data.unreadCount === 'number') setUnreadCount(data.unreadCount);
+        })
+        .catch(() => {});
     }
     setNotifOpen(false);
     if (item.href && typeof onNavigateHref === 'function') {

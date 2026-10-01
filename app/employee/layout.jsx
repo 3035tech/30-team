@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { EmployeeShell } from '../_components/EmployeeShell';
+import { I18nBoot } from '../_components/I18nBoot';
 import {
   EMPLOYEE_COOKIE_NAME,
 } from '../../lib/employee-auth-constants.js';
@@ -15,8 +16,10 @@ export default async function EmployeeLayout({ children }) {
   const locale = isEmployeeSessionPayload(payload) ? normalizeLocale(payload.locale) : 'pt-BR';
 
   return (
-    <EmployeeShell initialLocale={locale}>
-      {children}
-    </EmployeeShell>
+    <I18nBoot locales={[locale]}>
+      <EmployeeShell initialLocale={locale}>
+        {children}
+      </EmployeeShell>
+    </I18nBoot>
   );
 }
