@@ -35,7 +35,6 @@ export default function LanguageSelect({ locale, onChange, persistUser = false, 
     >
       <span className="font-medium normal-case tracking-normal">{t(current, 'common.language')}</span>
       <SelectField
-        fitMenuToContent
         aria-label={t(current, 'common.language')}
         value={current}
         onChange={(e) => changeLocale(e.target.value)}
