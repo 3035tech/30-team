@@ -264,6 +264,7 @@ export function CompensationBlock({
       placeholder: t(locale, 'panel.compensation.amountPh'),
       defaultValue: defaults.amount ? salaryToCentsDigits(defaults.amount) : '',
       required: true,
+      row: 'amountDate',
     },
     {
       key: 'effectiveDate',
@@ -271,6 +272,7 @@ export function CompensationBlock({
       label: t(locale, 'panel.compensation.effectiveDateLabel'),
       defaultValue: defaults.effectiveDate || new Date().toISOString().slice(0, 10),
       required: true,
+      row: 'amountDate',
     },
     {
       key: 'notes',
