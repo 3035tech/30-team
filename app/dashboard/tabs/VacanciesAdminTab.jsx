@@ -927,10 +927,6 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         open={!!editingVacancy}
         title={t(locale, 'recruiting.editVacancyDrawerTitle')}
         locale={locale}
-        fullPage={Boolean(editingVacancy)}
-        backLabel={i18nT(locale, 'ui.vacanciesAdminTab.backToVacancies')}
-        closeLabel={i18nT(locale, 'ui.vacanciesAdminTab.closeVacancyEditor')}
-        eyebrow={i18nT(locale, 'ui.vacanciesAdminTab.recruitmentVacancies')}
         headerMeta={editingVacancy ? (
           <>
             <span className="font-mono tabular-nums text-ink-muted">#{editingVacancy.id}</span>
@@ -966,7 +962,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
             <VacancyFormFields
               locale={locale}
               mode="edit"
-              layout="split"
+              layout="stack"
               values={editingVacancy}
               onChange={(patch) => setEditingVacancy((cur) => ({ ...cur, ...patch }))}
               error={error}

@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
-import { LOCALE_COOKIE, normalizeLocale } from '../../lib/i18n';
+import { LOCALE_COOKIE, LOCALES, normalizeLocale } from '../../lib/i18n';
 import { buildPricingJsonLd, buildPricingMetadata } from '../../lib/pricing-plans';
+import { getPublicHeaderCopy } from '../../lib/product-landing-seo';
 import PricingPageClient from '../_components/PricingPageClient';
 
 export const dynamic = 'force-dynamic';
@@ -13,11 +14,12 @@ export async function generateMetadata() {
 export default async function PricingPage() {
   const locale = normalizeLocale(await (await cookies()).get(LOCALE_COOKIE)?.value);
   const jsonLd = buildPricingJsonLd(locale);
+  const headerCopyByLocale = Object.fromEntries(LOCALES.map((loc) => [loc, getPublicHeaderCopy(loc)]));
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
-      <PricingPageClient locale={locale} />
+      <PricingPageClient locale={locale} headerCopyByLocale={headerCopyByLocale} />
     </>
   );
 }

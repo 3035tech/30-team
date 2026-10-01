@@ -2,11 +2,17 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { BrandMark } from './BrandMark';
-import LanguageSelect from './LanguageSelect';
+import { PublicSiteHeader } from './PublicSiteHeader';
 import { useLocale } from '../../lib/useLocale';
-import { localeHtmlLang, t } from '../../lib/i18n';
-import { formatPublicPrice, getPublicPricing, publicPricingTextValues } from '../../lib/pricing-currency';
+import { localeHtmlLang, normalizeLocale, t } from '../../lib/i18n';
+import { CollapsibleBlock } from './CollapsibleBlock';
+import {
+  PRICING_TIER_TOLERANCE,
+  formatPublicPrice,
+  getPublicPricing,
+  publicPricingTextValues,
+  publicPricingTierList,
+} from '../../lib/pricing-currency';
 import {
   PRODUCT_LANDING_CONTACT_EMAIL,
   getPricingAddons,
@@ -25,42 +31,29 @@ function SectionLabel({ children }) {
   );
 }
 
-export default function PricingPageClient({ locale: initialLocale }) {
+export default function PricingPageClient({ locale: initialLocale, headerCopyByLocale }) {
   const [locale, setLocale] = useLocale(initialLocale);
   const [employeeCount, setEmployeeCount] = useState(20);
   const [billingCycle, setBillingCycle] = useState('monthly');
   const coreFeatures = getPricingCoreFeatures(locale);
   const addons = getPricingAddons(locale);
   const pricing = useMemo(() => getPublicPricing(locale, { employeeCount, billingCycle }), [locale, billingCycle, employeeCount]);
+  const tierList = useMemo(() => publicPricingTierList(locale, billingCycle), [locale, billingCycle]);
   const money = (value) => formatPublicPrice(locale, value);
+  const wholeMoney = (value) => formatPublicPrice(locale, value, { whole: true });
   const pricingTextValues = publicPricingTextValues(locale);
 
   return (
     <div className="min-h-screen bg-canvas font-display text-ink" lang={localeHtmlLang(locale)}>
       <div className="pointer-events-none fixed inset-0 bg-radial-glow opacity-80" aria-hidden />
 
-      <header className="sticky top-0 z-20 border-b border-ink/8 bg-canvas/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-5 py-3 sm:px-8">
-          <Link href="/" className="inline-flex items-center gap-2 no-underline" aria-label="30Grow">
-            <BrandMark size={28} withWordmark />
-          </Link>
-          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-            <LanguageSelect locale={locale} onChange={setLocale} compact />
-            <Link
-              href="/login"
-              className="hidden min-h-touch items-center rounded-control border border-ink/12 bg-transparent px-3 py-2 text-sm text-ink no-underline sm:inline-flex"
-            >
-              {t(locale, 'pricing.navLogin')}
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex min-h-touch items-center rounded-control bg-action hover:bg-action-hover text-action-ink px-3.5 py-2 text-sm font-semibold no-underline"
-            >
-              {t(locale, 'pricing.navEarly')}
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicSiteHeader
+        copy={headerCopyByLocale[normalizeLocale(locale)] || headerCopyByLocale['pt-BR']}
+        locale={locale}
+        onLocaleChange={setLocale}
+        sectionBase="/"
+        active="pricing"
+      />
 
       <main className="relative z-[1]">
         <section className="mx-auto max-w-5xl px-5 pb-8 pt-12 sm:px-8 sm:pt-16">
@@ -102,11 +95,32 @@ export default function PricingPageClient({ locale: initialLocale }) {
                       {t(locale, 'pricing.priceLabel')}
                     </p>
                     <p className="mb-1 mt-0 flex flex-wrap items-baseline gap-x-1 gap-y-1 text-3xl font-normal text-ink">
-                      <span className="whitespace-nowrap tabular-nums">{money(pricing.monthlyRate)}</span>
-                      <span className="text-sm text-ink-muted">{t(locale, 'pricing.perEmployeeMonth')}</span>
+                      {pricing.custom ? (
+                        <span>{t(locale, 'pricing.completePriceValue')}</span>
+                      ) : (
+                        <>
+                          <span className="whitespace-nowrap tabular-nums">{wholeMoney(pricing.monthlyTotal)}</span>
+                          <span className="text-sm text-ink-muted">{t(locale, 'pricing.perMonth')}</span>
+                        </>
+                      )}
                     </p>
+                    <p className="m-0 text-sm font-medium text-ink">
+                      {pricing.custom
+                        ? t(locale, 'pricing.tierAbove', { n: EARLY_ADOPTER_MAX_EMPLOYEES })
+                        : t(locale, 'pricing.tierRange', { min: pricing.tierMin, max: pricing.tierMax })}
+                    </p>
+                    {!pricing.custom ? (
+                      <>
+                        <p className="m-0 text-xs leading-relaxed text-ink-muted">
+                          {t(locale, 'pricing.perEmployeeEquivalent', { price: money(pricing.perEmployee) })}
+                        </p>
+                        <p className="mb-0 mt-1 text-xs font-medium leading-relaxed text-success">
+                          {t(locale, 'pricing.launchPriceNote')}
+                        </p>
+                      </>
+                    ) : null}
                     <p className="m-0 text-xs leading-relaxed text-ink-muted">{t(locale, `pricing.currency${pricing.currency}`)}</p>
-                    {billingCycle === 'annual' && (
+                    {billingCycle === 'annual' && !pricing.custom && (
                       <p className="mb-0 mt-1 text-xs leading-relaxed text-ink-muted">{t(locale, 'pricing.annualBillingNote')}</p>
                     )}
                   </div>
@@ -128,14 +142,14 @@ export default function PricingPageClient({ locale: initialLocale }) {
                       {t(locale, 'pricing.employeeCountLabel')}
                     </label>
                     <output htmlFor="pricing-employees" className="text-sm font-semibold tabular-nums text-ink">
-                      {employeeCount} {t(locale, 'pricing.employeeUnit')}
+                      {pricing.custom ? `${EARLY_ADOPTER_MAX_EMPLOYEES}+` : employeeCount} {t(locale, 'pricing.employeeUnit')}
                     </output>
                   </div>
                   <input
                     id="pricing-employees"
                     type="range"
                     min={EARLY_ADOPTER_MIN_EMPLOYEES}
-                    max={EARLY_ADOPTER_MAX_EMPLOYEES}
+                    max={EARLY_ADOPTER_MAX_EMPLOYEES + 1}
                     value={employeeCount}
                     onChange={(event) => setEmployeeCount(Number(event.target.value))}
                     className="w-full accent-brand-600"
@@ -161,21 +175,54 @@ export default function PricingPageClient({ locale: initialLocale }) {
                   </div>
                 </div>
                 <div className="mb-4 rounded-card border border-brand-100 bg-brand-50/70 p-3.5">
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1" aria-live="polite" aria-atomic="true">
-                    <span className="text-sm text-ink-muted">
-                      {billingCycle === 'annual' ? t(locale, 'pricing.annualTotalLabel') : t(locale, 'pricing.monthlyTotalLabel')}
-                    </span>
-                    <strong className="whitespace-nowrap text-2xl font-semibold tabular-nums text-ink">
-                      {billingCycle === 'annual' ? money(pricing.annualTotal) : money(pricing.monthlyTotal)}
-                    </strong>
-                  </div>
-                  <p className="mb-0 mt-1 text-xs text-ink-muted">
-                    {t(locale, 'pricing.totalAfterTrial', { n: EARLY_ADOPTER_FREE_DAYS })}
-                  </p>
-                  <p className="mb-0 mt-2 border-t border-brand-200/60 pt-2 text-[11px] leading-5 text-ink-muted">
-                    {t(locale, 'pricing.billingDefinition')}
+                  {pricing.custom ? (
+                    <p className="m-0 text-sm leading-relaxed text-ink" aria-live="polite">
+                      {t(locale, 'pricing.customQuoteBody')}
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1" aria-live="polite" aria-atomic="true">
+                        <span className="text-sm text-ink-muted">
+                          {billingCycle === 'annual' ? t(locale, 'pricing.annualTotalLabel') : t(locale, 'pricing.monthlyTotalLabel')}
+                        </span>
+                        <strong className="whitespace-nowrap text-2xl font-semibold tabular-nums text-ink">
+                          {wholeMoney(billingCycle === 'annual' ? pricing.annualTotal : pricing.monthlyTotal)}
+                        </strong>
+                      </div>
+                      <p className="mb-0 mt-1 text-xs text-ink-muted">
+                        {t(locale, 'pricing.totalAfterTrial', { n: EARLY_ADOPTER_FREE_DAYS })}
+                      </p>
+                    </>
+                  )}
+                  <p className="mb-0 mt-2 border-t border-brand-200/60 pt-2 text-2xs leading-5 text-ink-muted">
+                    {t(locale, 'pricing.billingDefinition', { tolerance: Math.round(PRICING_TIER_TOLERANCE * 100) })}
                   </p>
                 </div>
+                <CollapsibleBlock
+                  locale={locale}
+                  title={t(locale, 'pricing.tiersTitle')}
+                  className="mb-4"
+                >
+                  <ul className="m-0 list-none divide-y divide-ink/8 p-0">
+                    {tierList.map((tier) => {
+                      const active = !pricing.custom && tier.min === pricing.tierMin;
+                      return (
+                        <li
+                          key={tier.min}
+                          aria-current={active ? 'true' : undefined}
+                          className={`flex items-baseline justify-between gap-3 px-1 py-2 text-sm ${active ? 'font-semibold text-ink' : 'text-ink-muted'}`}
+                        >
+                          <span className="tabular-nums">{t(locale, 'pricing.tierRange', { min: tier.min, max: tier.max })}</span>
+                          <span className="whitespace-nowrap tabular-nums">{wholeMoney(tier.monthlyTotal)}{t(locale, 'pricing.perMonth')}</span>
+                        </li>
+                      );
+                    })}
+                    <li className={`flex items-baseline justify-between gap-3 px-1 py-2 text-sm ${pricing.custom ? 'font-semibold text-ink' : 'text-ink-muted'}`}>
+                      <span>{t(locale, 'pricing.tierAbove', { n: EARLY_ADOPTER_MAX_EMPLOYEES })}</span>
+                      <span>{t(locale, 'pricing.completePriceValue')}</span>
+                    </li>
+                  </ul>
+                </CollapsibleBlock>
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Link
                     href="/signup"

@@ -29,7 +29,7 @@ describe('vacancy list card layout', () => {
     assert.doesNotMatch(source, /title=\{t\(locale, 'recruiting\.linkActionsTitle'\)\}/);
   });
 
-  it('shares one form component between create and edit, split on the full-page editor', async () => {
+  it('shares one form component and the same drawer pattern between create and edit', async () => {
     const source = await readSource();
     const form = await readFile(
       new URL('../../app/dashboard/vacancies/VacancyFormFields.jsx', import.meta.url),
@@ -37,7 +37,8 @@ describe('vacancy list card layout', () => {
     );
 
     assert.match(source, /<VacancyFormFields[\s\S]*?mode="create"[\s\S]*?layout="stack"/);
-    assert.match(source, /<VacancyFormFields[\s\S]*?mode="edit"[\s\S]*?layout="split"/);
+    assert.match(source, /<VacancyFormFields[\s\S]*?mode="edit"[\s\S]*?layout="stack"/);
+    assert.doesNotMatch(source, /fullPage=/);
     assert.doesNotMatch(source, /<RichTextEditor|<VacancyWorkplaceFields|<VacancyPublicFlagsFields/);
     assert.match(form, /lg:grid-cols-\[minmax\(0,1fr\)_340px\]/);
     assert.match(form, /t\(locale, 'ui\.vacanciesAdminTab\.minimumSalary'\)/);

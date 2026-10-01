@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { BrandMark } from './BrandMark';
-import LanguageSelect from './LanguageSelect';
+import { PrimaryCta, PublicSiteHeader } from './PublicSiteHeader';
 import { Icon } from './Icon';
 import { PRODUCT_LANDING_CONTACT_EMAIL } from '../../lib/product-landing-seo';
 import { useLocale } from '../../lib/useLocale';
@@ -15,10 +15,6 @@ const TYPE_BARS = [54, 72, 45, 61, 84, 57, 68, 42, 76];
 
 function SectionHeading({ label, title, body, id }) {
   return <div className="max-w-2xl"><p className="mb-3 font-ui text-2xs font-medium text-brand-600">{label}</p><h2 id={id} className="m-0 font-display text-3xl font-semibold leading-[1.08] tracking-[-0.025em] text-ink sm:text-4xl lg:text-5xl">{title}</h2>{body ? <p className="mb-0 mt-5 font-ui text-base leading-7 text-ink-muted sm:text-lg">{body}</p> : null}</div>;
-}
-
-function PrimaryCta({ copy, compact = false }) {
-  return <Link href="/signup" className={`inline-flex min-h-touch items-center justify-center rounded-control bg-action font-ui font-semibold text-action-ink no-underline transition-colors hover:bg-action-hover ${compact ? 'px-3 py-2 text-xs sm:px-4 sm:py-2.5 sm:text-sm' : 'px-6 py-3.5 text-base'}`}>{compact ? copy.navEarly : copy.ctaEarly}</Link>;
 }
 
 function ProductPreview({ copy }) {
@@ -110,7 +106,7 @@ export default function ProductLandingClient({ copyByLocale, locale: initialLoca
     <div className="min-h-screen bg-canvas font-ui text-ink" lang={localeHtmlLang(locale)}>
       <LandingAnalytics />
       <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-white focus:px-3 focus:py-2">{copy.skipToContent}</a>
-      <header className="sticky top-0 z-30 border-b border-line bg-surface"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8"><BrandMark size={30} withWordmark className="brand-mark--responsive" /><nav className="hidden items-center gap-6 lg:flex" aria-label={u.mainNavigation}><a href="#como-funciona" className="text-sm text-ink-muted no-underline hover:text-ink">{u.navJourney}</a><a href="#modulos" className="text-sm text-ink-muted no-underline hover:text-ink">{u.navModules}</a><a href="#app-colaborador" className="text-sm text-ink-muted no-underline hover:text-ink">{copy.employeeApp.label}</a><Link href="/pricing" className="text-sm text-ink-muted no-underline hover:text-ink">{u.navPricing}</Link><a href="#faq" className="text-sm text-ink-muted no-underline hover:text-ink">FAQ</a></nav><div className="flex items-center gap-2 [&>label>span]:hidden"><LanguageSelect locale={locale} onChange={setLocale} compact /><Link href="/login" className="hidden min-h-touch items-center px-3 text-sm text-ink-muted no-underline hover:text-ink sm:inline-flex">{copy.navLogin}</Link><div className="hidden sm:block"><PrimaryCta copy={copy} compact /></div></div></div></header>
+      <PublicSiteHeader copy={copy} locale={locale} onLocaleChange={setLocale} />
       <ContentEnter animKey={locale}>
         <main id="conteudo">
           <section id="produto-hero" className="relative overflow-hidden border-b border-ink/8 bg-surface"><div className="relative mx-auto grid max-w-7xl gap-12 px-5 pb-16 pt-14 sm:px-8 sm:pb-24 sm:pt-20 lg:grid-cols-[.9fr_1.1fr] lg:items-center lg:py-24"><div className="max-w-2xl"><p className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-300/70 bg-brand-50 px-3 py-1.5 font-ui text-2xs font-medium text-brand-700"><span className="h-1.5 w-1.5 rounded-full bg-brand-500" />{copy.earlyBadge}</p><h1 className="m-0 font-display text-[clamp(2.5rem,4.7vw,4.5rem)] font-bold leading-[1.06] tracking-[-0.045em] text-ink">{copy.heroTitle}</h1><p className="mb-0 mt-7 max-w-xl text-lg leading-8 text-ink-muted sm:text-xl">{copy.heroLead}</p><p className="mb-0 mt-4 max-w-xl text-sm leading-6 text-ink-muted">{copy.heroBody}</p><div className="mt-6 flex max-w-xl flex-col gap-3 rounded-card border border-success/20 bg-success/5 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="m-0 text-sm font-semibold text-ink">{copy.pricingSnapshotTitle}</p><p className="mb-0 mt-1 text-xs leading-5 text-ink-muted">{copy.pricingSnapshotBody}</p></div><Link href="/pricing" className="shrink-0 text-sm font-semibold text-brand-700 no-underline hover:text-brand-800">{copy.pricingSnapshotCta}</Link></div><div className="mt-8 flex flex-wrap items-center gap-4"><PrimaryCta copy={copy} /><a href="#modulos" className="inline-flex min-h-touch items-center gap-2 px-2 text-sm font-semibold text-brand-700 no-underline hover:text-brand-800">{u.exploreProduct}<Icon name="chevronRight" className="h-4 w-4" /></a></div><div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 border-t border-ink/10 pt-5">{u.heroProof.map((item) => <span key={item} className="inline-flex items-center gap-2 text-xs text-ink-muted"><Icon name="check" className="h-4 w-4 text-success" />{item}</span>)}</div></div><ProductPreview copy={copy} /></div></section>
