@@ -41,6 +41,7 @@ export async function resolveDashboardAuth() {
     // the server payload. Navigation and deep-link parsing must use the same
     // source of truth as admin API authorization.
     companyModules: Array.isArray(payload?.companyModules) ? payload.companyModules : null,
+    companyOwner: payload?.companyOwner === true,
     locale,
     email: null,
     displayName: null,

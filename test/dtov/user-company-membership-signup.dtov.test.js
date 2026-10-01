@@ -7,11 +7,16 @@ import {
   SELF_SERVICE_COMPANY_ACTION,
 } from '../../lib/self-service-signup.js';
 import { completePasswordSetup, hashUnusablePassword, issuePasswordSetupInvite } from '../../lib/user-password-invite.js';
+import { hydrateSessionPayload } from '../../lib/session.js';
+import { CAP, can, canManageCompanyModules } from '../../lib/permissions.js';
+import { deactivateUser, listUsers, resendUserPasswordInvite, updateUser } from '../../lib/users-admin.js';
 
 async function main() {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const email = `membership-signup-${suffix}@dtov.test`;
   let userId = null;
+  let joinerId = null;
+  let tenantAdminId = null;
   let companyId = null;
 
   try {
@@ -62,7 +67,8 @@ async function main() {
     assert.ok(String(row.setupToken).length >= 16);
 
     const activated = await completePasswordSetup(row.setupToken, 'MembershipSignup!2026');
-    assert.deepEqual(activated, { ok: true, userId: Number(userId) });
+    assert.equal(activated.ok, true);
+    assert.equal(Number(activated.userId), Number(userId));
 
     const active = await query(
       `SELECT u.active AS "userActive", u.signup_pending AS "signupPending",
@@ -80,7 +86,47 @@ async function main() {
       membershipActive: true,
       membershipDeleted: false,
     });
+
+    const joiner = await query(
+      `INSERT INTO users (email, password_hash, role, active, company_id)
+       VALUES ($1, $2, 'hr', TRUE, $3)
+       RETURNING id, session_version AS "sv"`,
+      [`membership-joiner-${suffix}@dtov.test`, await hashUnusablePassword(), companyId]
+    );
+    joinerId = joiner.rows[0].id;
+    const ownerSv = await query(`SELECT session_version AS "sv" FROM users WHERE id = $1`, [userId]);
+    const ownerSession = await hydrateSessionPayload({ userId, sv: ownerSv.rows[0].sv });
+    const joinerSession = await hydrateSessionPayload({ userId: joinerId, sv: joiner.rows[0].sv });
+    assert.equal(ownerSession.companyOwner, true);
+    assert.equal(joinerSession.companyOwner, false);
+    assert.equal(can(ownerSession, CAP.USERS_MANAGE), true);
+    assert.equal(can(joinerSession, CAP.USERS_MANAGE), false);
+    assert.equal(canManageCompanyModules(ownerSession), true);
+    assert.equal(canManageCompanyModules(joinerSession), false);
+
+    const tenantAdmin = await query(
+      `INSERT INTO users (email, password_hash, role, active, company_id)
+       VALUES ($1, $2, 'admin', TRUE, $3) RETURNING id`,
+      [`membership-tadmin-${suffix}@dtov.test`, await hashUnusablePassword(), companyId]
+    );
+    tenantAdminId = tenantAdmin.rows[0].id;
+    const ownerScope = { isAdmin: false, scopeCompanyId: Number(companyId), actorUserId: userId };
+    const listed = await listUsers({ isAdmin: false, companyId: Number(companyId), pageSize: 50 });
+    assert.equal(listed.items.some((u) => String(u.id) === String(tenantAdminId)), false);
+    assert.equal(listed.items.some((u) => String(u.id) === String(joinerId)), true);
+    const demote = await updateUser({ userId: tenantAdminId, body: { role: 'hr' }, ...ownerScope });
+    assert.equal(demote.ok, false);
+    const deactivate = await deactivateUser({ userId: tenantAdminId, ...ownerScope });
+    assert.equal(deactivate.ok, false);
+    const resend = await resendUserPasswordInvite({ userId: tenantAdminId, appUrl: 'http://127.0.0.1:3210', ...ownerScope });
+    assert.equal(resend.ok, false);
+    const stillAdmin = await query(`SELECT role, active FROM users WHERE id = $1`, [tenantAdminId]);
+    assert.deepEqual(stillAdmin.rows[0], { role: 'admin', active: true });
+    const editJoiner = await updateUser({ userId: joinerId, body: { role: 'direction' }, ...ownerScope });
+    assert.equal(editJoiner.ok, true);
   } finally {
+    if (tenantAdminId) await query(`DELETE FROM users WHERE id = $1`, [tenantAdminId]).catch(() => {});
+    if (joinerId) await query(`DELETE FROM users WHERE id = $1`, [joinerId]).catch(() => {});
     if (userId) await query(`DELETE FROM users WHERE id = $1`, [userId]).catch(() => {});
     if (companyId) await query(`DELETE FROM companies WHERE id = $1`, [companyId]).catch(() => {});
     await closeRateLimitRedis().catch(() => {});
@@ -89,3 +135,8 @@ async function main() {
 
   console.log('user-company-membership-signup.dtov.test.js OK');
 }
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

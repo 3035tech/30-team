@@ -22,11 +22,11 @@ function moduleOptions(locale) {
   }));
 }
 
-function roleSelectOptions() {
+function roleSelectOptions(includeAdmin) {
   return [
     { value: 'hr', label: 'hr' },
     { value: 'direction', label: 'direction' },
-    { value: 'admin', label: 'admin' },
+    ...(includeAdmin ? [{ value: 'admin', label: 'admin' }] : []),
   ];
 }
 
@@ -40,7 +40,7 @@ function companySelectOptions(locale, companyOptions) {
   }));
 }
 
-export function UsersAdminTab({ navigateDashboard, locale }) {
+export function UsersAdminTab({ navigateDashboard, locale, canManageAllCompanies = true }) {
   const { promptForm, notice } = useAppFeedback();
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
@@ -84,6 +84,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
   };
 
   useEffect(() => {
+    if (!canManageAllCompanies) return undefined;
     let cancelled = false;
     (async () => {
       try {
@@ -99,7 +100,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [canManageAllCompanies]);
 
   useEffect(() => {
     let cancelled = false;
@@ -178,6 +179,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
   };
 
   const refreshCompanyOptions = async () => {
+    if (!canManageAllCompanies) return;
     try {
       const rc = await fetch('/api/admin/companies?forSelect=1');
       const dc = await rc.json();
@@ -213,18 +215,22 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
         {
           key: 'role',
           type: 'select',
-          label: t(locale, 'panel.admin.editUserRole'),
-          options: roleSelectOptions(),
+          label: t(locale, canManageAllCompanies ? 'panel.admin.editUserRole' : 'panel.admin.editUserRoleTenant'),
+          options: roleSelectOptions(canManageAllCompanies),
           defaultValue: 'hr',
         },
-        {
-          key: 'companyId',
-          type: 'select',
-          label: t(locale, 'panel.admin.editUserCompanyId'),
-          options: companySelectOptions(locale, companyOptions),
-          defaultValue: defaultCompanyId,
-          showWhen: (v) => v.role !== 'admin',
-        },
+        ...(canManageAllCompanies
+          ? [
+            {
+              key: 'companyId',
+              type: 'select',
+              label: t(locale, 'panel.admin.editUserCompanyId'),
+              options: companySelectOptions(locale, companyOptions),
+              defaultValue: defaultCompanyId,
+              showWhen: (v) => v.role !== 'admin',
+            },
+          ]
+          : []),
       ],
     });
     if (!step1) return;
@@ -355,18 +361,22 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
         {
           key: 'role',
           type: 'select',
-          label: t(locale, 'panel.admin.editUserRole'),
-          options: roleSelectOptions(),
+          label: t(locale, canManageAllCompanies ? 'panel.admin.editUserRole' : 'panel.admin.editUserRoleTenant'),
+          options: roleSelectOptions(canManageAllCompanies),
           defaultValue: u?.role ?? 'hr',
         },
-        {
-          key: 'companyId',
-          type: 'select',
-          label: t(locale, 'panel.admin.editUserCompanyId'),
-          options: companySelectOptions(locale, companyOptions),
-          defaultValue: u?.companyId != null ? String(u.companyId) : (companyOptions[0] ? String(companyOptions[0].id) : ''),
-          showWhen: (v) => v.role !== 'admin',
-        },
+        ...(canManageAllCompanies
+          ? [
+            {
+              key: 'companyId',
+              type: 'select',
+              label: t(locale, 'panel.admin.editUserCompanyId'),
+              options: companySelectOptions(locale, companyOptions),
+              defaultValue: u?.companyId != null ? String(u.companyId) : (companyOptions[0] ? String(companyOptions[0].id) : ''),
+              showWhen: (v) => v.role !== 'admin',
+            },
+          ]
+          : []),
         {
           key: 'active',
           type: 'boolean',
@@ -402,11 +412,11 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       active: nextActive,
       modules: Array.isArray(values.modules) ? values.modules : [],
     };
-    if (payload.role !== 'admin') {
-      payload.companyId = String(nextCompanyIdRaw || '').trim()
+    if (canManageAllCompanies) {
+      payload.companyId = payload.role !== 'admin' && String(nextCompanyIdRaw || '').trim()
         ? parseInt(String(nextCompanyIdRaw).trim(), 10)
         : null;
-    } else payload.companyId = null;
+    }
     if (String(nextPassword || '').trim()) payload.password = String(nextPassword).trim();
 
     setLoading(true);
@@ -446,11 +456,15 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
       <AdminPageHeader
         title={t(locale, 'panel.admin.usersTitle')}
         subtitle={
-          <>
-            {t(locale, 'panel.admin.usersIntro')}
-            <strong className="font-semibold text-ink">{t(locale, 'panel.admin.companiesTitle')}</strong>
-            {t(locale, 'panel.admin.usersIntroSuffix')}
-          </>
+          canManageAllCompanies ? (
+            <>
+              {t(locale, 'panel.admin.usersIntro')}
+              <strong className="font-semibold text-ink">{t(locale, 'panel.admin.companiesTitle')}</strong>
+              {t(locale, 'panel.admin.usersIntroSuffix')}
+            </>
+          ) : (
+            t(locale, 'panel.admin.usersIntroCompany')
+          )
         }
         actions={
           <>
@@ -514,7 +528,7 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
             <option value="">{t(locale, 'panel.admin.filterAll')}</option>
             <option value="hr">hr</option>
             <option value="direction">direction</option>
-            <option value="admin">admin</option>
+            {canManageAllCompanies ? <option value="admin">admin</option> : null}
           </AdminListFilterSelect>
           <AdminListFilterSelect
             label={t(locale, 'panel.admin.filterActive')}
@@ -581,7 +595,9 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                   <SortableTh columnKey="email" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colEmail')}</SortableTh>
                   <SortableTh columnKey="role" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colRole')}</SortableTh>
                   <AdminTh>{t(locale, 'panel.admin.colOrigin')}</AdminTh>
-                  <SortableTh columnKey="companyName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colCompany')}</SortableTh>
+                  {canManageAllCompanies ? (
+                    <SortableTh columnKey="companyName" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colCompany')}</SortableTh>
+                  ) : null}
                   <SortableTh columnKey="active" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserActive')}</SortableTh>
                   <SortableTh columnKey="createdAt" sortKey={listSort.sort} dir={listSort.dir} onSort={toggleUserSort}>{t(locale, 'panel.admin.colUserCreated')}</SortableTh>
                   <AdminActionsTh>{t(locale, 'panel.admin.colActions')}</AdminActionsTh>
@@ -632,7 +648,9 @@ export function UsersAdminTab({ navigateDashboard, locale }) {
                           </div>
                         ) : null}
                       </td>
-                      <td className="px-4 py-3 font-mono text-ink-muted">{companyLabel}</td>
+                      {canManageAllCompanies ? (
+                        <td className="px-4 py-3 font-mono text-ink-muted">{companyLabel}</td>
+                      ) : null}
                       <td className="px-4 py-3 font-mono text-ink-muted">{u.active ? t(locale, 'panel.common.yes') : t(locale, 'panel.common.no')}</td>
                       <td className="whitespace-nowrap px-3 py-3 font-mono text-ink-faint">
                         {createdAt ? createdAt.toLocaleString(dateLocale) : t(locale, 'panel.common.notApplicable')}

@@ -4,6 +4,7 @@
  */
 import assert from 'node:assert/strict';
 import { query, pool } from '../../lib/db.js';
+import { closeRateLimitRedis } from '../../lib/rate-limit.js';
 import { EMPLOYMENT_STATUS, DEVELOPMENT_PLAN_ITEM_STATUS, DEVELOPMENT_PLAN_STATUS } from '../../lib/domain-status.js';
 import {
   completeEmployeePasswordSetup,
@@ -370,6 +371,7 @@ async function main() {
   assert.equal(homeAfter.showWelcome, false);
 
   console.log('employee-home.dtov.test.js OK');
+  await closeRateLimitRedis().catch(() => {});
   await pool.end().catch(() => {});
 }
 

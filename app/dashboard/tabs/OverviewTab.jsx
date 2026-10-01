@@ -138,6 +138,8 @@ export function OverviewTab({
   const go = (opts) => {
     if (typeof navigateDashboard === 'function') navigateDashboard(opts);
   };
+  const canNavigate = typeof navigateDashboard === 'function';
+  const canOpenVacancies = typeof canOpenTab === 'function' ? canOpenTab('vacancies') : true;
 
   if (data.needsCompanyScope) {
     return (
@@ -183,22 +185,22 @@ export function OverviewTab({
               <EmptyState
                 message={t(locale, 'panel.overview.attentionEmpty')}
                 actionLabel={
-                  typeof navigateDashboard === 'function'
-                    ? t(locale, 'panel.overview.attentionEmptyCtaVacancies')
+                  canNavigate
+                    ? t(locale, canOpenVacancies ? 'panel.overview.attentionEmptyCtaVacancies' : 'panel.overview.attentionEmptyCtaTeam')
                     : undefined
                 }
                 onAction={
-                  typeof navigateDashboard === 'function'
-                    ? () => go({ tab: 'vacancies' })
+                  canNavigate
+                    ? () => go({ tab: canOpenVacancies ? 'vacancies' : 'team' })
                     : undefined
                 }
                 secondaryActionLabel={
-                  typeof navigateDashboard === 'function'
+                  canNavigate && canOpenVacancies
                     ? t(locale, 'panel.overview.attentionEmptyCtaTeam')
                     : undefined
                 }
                 onSecondaryAction={
-                  typeof navigateDashboard === 'function'
+                  canNavigate && canOpenVacancies
                     ? () => go({ tab: 'team' })
                     : undefined
                 }
@@ -208,16 +210,17 @@ export function OverviewTab({
             <div className="flex flex-col gap-2">
               {(data.attention || []).map((item) => {
                 const pr = PRIORITY_CLASS[item.priority] || PRIORITY_CLASS.low;
+                const nav = item.nav && (item.nav.tab !== 'vacancies' || canOpenVacancies) ? item.nav : null;
                 return (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => item.nav && go(item.nav)}
+                    onClick={() => nav && go(nav)}
                     className={cn(
                       'grid w-full grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1 rounded-control border px-3.5 py-2.5 text-left transition-colors sm:grid-cols-[56px_minmax(160px,0.9fr)_minmax(180px,1.1fr)_auto]',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35',
                       pr.card,
-                      item.nav ? 'cursor-pointer hover:border-ink/20' : 'cursor-default'
+                      nav ? 'cursor-pointer hover:border-ink/20' : 'cursor-default'
                     )}
                   >
                     <span className={cn('font-mono text-2xs uppercase tracking-wide', pr.label)}>
@@ -325,7 +328,7 @@ export function OverviewTab({
         </div>
         {!recruitingOpen ? (
           <p className="m-0 font-mono text-2xs text-ink-faint">
-            {t(locale, 'panel.overview.recruitingCollapsedHint', {
+            {t(locale, canOpenVacancies ? 'panel.overview.recruitingCollapsedHint' : 'panel.overview.recruitingCollapsedHintFunnel', {
               n: data.funnelTotal || 0,
               open: data.vacancies?.openCount ?? 0,
             })}
@@ -378,6 +381,7 @@ export function OverviewTab({
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3.5">
+        {canOpenVacancies ? (
         <div className={S.card}>
           <div className="mb-3 flex items-center justify-between">
             <span className={cn(S.label, 'mb-0')}>
@@ -462,6 +466,7 @@ export function OverviewTab({
             </div>
           )}
         </div>
+        ) : null}
 
         <div className={S.card}>
           <span className={S.label}>

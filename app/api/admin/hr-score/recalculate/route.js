@@ -30,7 +30,9 @@ export async function POST(request) {
 
     const body = await request.json();
     const candidateId = parseInt(body.candidateId, 10);
-    const companyId = parseInt(body.companyId);
+    const companyId = isAdminRole(payload)
+      ? parseInt(body.companyId)
+      : parseInt(payload.companyId);
     const limit = body.limit ? parseInt(body.limit) : 100;
 
     if (Number.isFinite(candidateId) && candidateId > 0) {

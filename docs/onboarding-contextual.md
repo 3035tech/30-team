@@ -94,9 +94,22 @@ import { EmptyVacancies } from '@/app/_components/EmptyStateActionable';
 
 - Saudação usa `display_name`; se vazio, o primeiro nome do cadastro (`signup_metadata.fullName`); sem nenhum, título genérico
 - Passo "Crie sua primeira vaga" só aparece se Recrutamento estiver na seleção de módulos e o papel puder gerir vagas; o CTA abre `?tab=vacancies&create=1`
-- Card "Convide seu time" só para quem tem `users.manage` (hoje: admin). Direção/RH veem só o card de link público, que abre o Guia em `helpSection=links`
+- Card "Convide seu time" só para quem tem `users.manage`: admin e o **criador da empresa** (`companies.signup_creator_user_id`, flag `companyOwner` na sessão). Os demais gestores veem só o card de link público, que abre o Guia em `helpSection=links`
+- Passos "Objetivo" e "Módulos" só para quem pode gerir módulos (`canManageCompanyModules`: admin ou criador). `POST /api/admin/onboarding/complete` ignora `modules` dos demais; `PUT /api/me/company-modules` responde `FORBIDDEN` e o `GET` devolve `canEdit: false` (Meu perfil esconde o editor)
 - "Guia completo" no passo final abre `helpSection=setupPath`
 - Concluir com módulos alterados recarrega o painel para o menu refletir a seleção
+
+## Criador da empresa
+
+- Sessão (`hydrateSessionPayload`) traz `companyOwner` na mesma query de users × companies; `resolveCapabilities` concede `users.manage` ao criador não-admin
+- Aba **Usuários** para o criador: sem papel `admin`, sem seletor/coluna de empresa (APIs já forçam o `company_id` da sessão); Leads, Auditoria, Feedback de produto e Empresas continuam só super admin
+- Gestor não-admin nunca lista, edita, desativa nem reenvia convite de usuário `admin`, mesmo vinculado à própria empresa (`assertUserInScope` em `lib/users-admin-scope.js` + filtro em `listUsers`)
+- Outras rotas abertas por `users.manage`: recálculo do HR Score usa sempre o `company_id` da sessão para não-admin; métricas de cache do HR Score (`/api/admin/hr-score/cache-metrics`) só super admin; módulos via `/api/admin/company-modules` ficam na empresa da sessão (`withAdminApi`)
+- Portal do colaborador (`/employee`, card de boas-vindas) usa sessão própria (`team30_employee_session`) e não passa por `resolveCapabilities`: a mudança não o afeta
+
+## Visão geral sem Recrutamento
+
+- `OverviewTab` usa `canOpenTab('vacancies')`: sem acesso, some o card de vagas, o CTA "Ver vagas" do estado vazio de Atenção (vira "Ver time") e itens de Atenção que apontam para vagas deixam de ser clicáveis
 
 **Admin:** `resetTour()` para limpar estado (testing)
 

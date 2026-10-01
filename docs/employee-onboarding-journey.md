@@ -28,6 +28,13 @@ Migration `103_pre_onboarding_require_meet.sql`: `require_meet` na instância do
 
 Confirmações do colaborador **não** alteram status do RH — só registram ack para visibilidade.
 
+### Card de boas-vindas (primeiro acesso)
+
+- `EmployeeWelcomeCard` no topo de `/employee` enquanto `candidates.employee_welcome_dismissed_at` é NULL (`showWelcome` em `GET /api/employee/home`).
+- Até 4 atalhos, na ordem: Minha chegada, Pesquisas, Ponto, PDI, Academy, DP, Mural; só os módulos/seções disponíveis aparecem.
+- "Entendi" ou qualquer atalho chama `POST /api/employee/home` `{ action: 'dismissWelcome' }` (escopo `company_id` + `candidate_id` da sessão, idempotente).
+- Migration `139_employee_welcome_card.sql`: coluna nova; quem já tinha senha (`password_hash`) entra como dispensado para o card não reaparecer a colaboradores antigos.
+
 ## API admin (existente)
 
 - `PATCH …/pre-onboarding` — `{ action: 'setMeetUrl', itemId, meetUrl }` ou status normal com `meetUrl` opcional.
@@ -35,4 +42,4 @@ Confirmações do colaborador **não** alteram status do RH — só registram ac
 
 ## i18n
 
-Chaves `employeeHome.journey*` e `panel.preOnboarding.item.access_sheet` (pt-BR + en).
+Chaves `employeeHome.journey*`, `employeeHome.welcomeCard*` e `panel.preOnboarding.item.access_sheet` (pt-BR, en, fr, de).

@@ -1464,7 +1464,13 @@ function DashboardClientContent({
                 <WhistleblowingAdminTab locale={locale} companyId={scopedCompanyId} />
               )}
               {tab === 'companies' && showCompanies && <CompaniesAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
-              {tab === 'users' && showUsers && <UsersAdminTab navigateDashboard={navigateWithOpts} locale={locale} />}
+              {tab === 'users' && showUsers && (
+                <UsersAdminTab
+                  navigateDashboard={navigateWithOpts}
+                  locale={locale}
+                  canManageAllCompanies={can(sessionAuth, CAP.COMPANIES_MANAGE)}
+                />
+              )}
               {tab === 'job-roles' && showJobRoles && <JobRolesAdminTab locale={locale} companyId={scopedCompanyId} />}
               {tab === 'performance-reviews' && showPerformance && <PerformanceReviewsAdminTab locale={locale} companyId={scopedCompanyId} isAdmin={isAdmin} />}
               {tab === 'pdi' && showPdi && (

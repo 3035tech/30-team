@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
-import { can, CAP } from '../../lib/permissions';
+import { can, canManageCompanyModules, CAP } from '../../lib/permissions';
 import { BrandMark } from './BrandMark';
 import { InlineCallout } from './InlineCallout';
 import { Icon } from './Icon';
@@ -72,10 +72,16 @@ export default function OnboardingWizard({ locale, userName, auth = null, onComp
     ? selectedModules.includes(COMPANY_MODULE.RECRUITING)
     : companyHasModule(auth?.companyModules ?? null, COMPANY_MODULE.RECRUITING);
   const showVacancyStep = canManageVacancies && recruitingEnabled;
+  const canManageModules = !auth || canManageCompanyModules(auth);
 
   const STEPS = useMemo(
-    () => ALL_STEPS.filter((s) => s.id !== 'vacancy' || showVacancyStep),
-    [showVacancyStep]
+    () =>
+      ALL_STEPS.filter((s) => {
+        if (s.id === 'vacancy') return showVacancyStep;
+        if (s.id === 'objective' || s.id === 'modules') return canManageModules;
+        return true;
+      }),
+    [showVacancyStep, canManageModules]
   );
   const step = STEPS[Math.min(currentStep, STEPS.length - 1)];
 
@@ -219,8 +225,10 @@ export default function OnboardingWizard({ locale, userName, auth = null, onComp
               <InlineCallout tone="info" className="mb-4 text-left text-sm text-ink-muted">
                 <strong className="text-ink">{t(locale, 'onboarding.welcome.trialTitle')}</strong>
                 <ul className="mt-2 space-y-1 text-xs">
-                  <li>• {t(locale, 'onboarding.welcome.trialVacancies')}</li>
-                  <li>• {t(locale, 'onboarding.welcome.trialCandidates')}</li>
+                  {canManageModules ? <li>• {t(locale, 'onboarding.welcome.trialVacancies')}</li> : null}
+                  {canManageModules || showVacancyStep ? (
+                    <li>• {t(locale, 'onboarding.welcome.trialCandidates')}</li>
+                  ) : null}
                   <li>• {t(locale, 'onboarding.welcome.trialUsers')}</li>
                 </ul>
               </InlineCallout>

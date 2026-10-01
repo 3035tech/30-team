@@ -4,7 +4,7 @@ import { COOKIE_NAME } from '../../../../lib/auth.js';
 import { query } from '../../../../lib/db.js';
 import { apiError, apiErrorFromResult, ERR } from '../../../../lib/api-error.js';
 import { verifySessionWithCapabilities } from '../../../../lib/session.js';
-import { isManagerRole } from '../../../../lib/permissions.js';
+import { canManageCompanyModules, isManagerRole } from '../../../../lib/permissions.js';
 import { listCompanyModuleCatalog, modulesSelectionForPersist } from '../../../../lib/company-modules.js';
 import {
   getCompanyEnabledModules,
@@ -41,7 +41,7 @@ export async function GET(request) {
       catalog: listCompanyModuleCatalog(),
       enabledModules,
       unrestricted: enabledModules == null,
-      canEdit: true,
+      canEdit: canManageCompanyModules(ctx.payload),
     });
   } catch (err) {
     if (err?.code === '42703') return apiError(request, ERR.SCHEMA_NOT_INITIALIZED, 503);
@@ -54,11 +54,14 @@ const putBodySchema = z.object({
   modules: z.array(z.string().trim().min(1).max(64)).max(32).nullable(),
 });
 
-/** PUT /api/me/company-modules — tenant manager updates own company allow-list */
+/** PUT /api/me/company-modules — company creator (or admin) updates own company allow-list */
 export async function PUT(request) {
   try {
     const ctx = await requireCompanyManager(request);
     if (ctx.error) return ctx.error;
+    if (!canManageCompanyModules(ctx.payload)) {
+      return apiError(request, ERR.FORBIDDEN, 403);
+    }
 
     const ip = clientIpFromRequest(request);
     const rl = await checkRateLimit(`me-company-modules:${ctx.payload.userId}:${ip}`, 30, 15 * 60 * 1000);

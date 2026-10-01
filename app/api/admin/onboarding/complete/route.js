@@ -5,6 +5,7 @@ import { apiError, apiErrorFromResult, ERR } from '../../../../../lib/api-error.
 import { hydrateSessionPayload } from '../../../../../lib/session.js';
 import { setCompanyEnabledModules } from '../../../../../lib/company-module-entitlements.js';
 import { modulesSelectionForPersist } from '../../../../../lib/company-modules.js';
+import { canManageCompanyModules } from '../../../../../lib/permissions.js';
 import { audit } from '../../../../../lib/audit.js';
 
 /**
@@ -28,8 +29,10 @@ export async function POST(request) {
 
     const userId = payload.userId;
     const body = await request.json().catch(() => ({}));
+    const applyModules =
+      Array.isArray(body.modules) && payload.companyId && canManageCompanyModules(payload);
 
-    if (Array.isArray(body.modules) && payload.companyId) {
+    if (applyModules) {
       const result = await setCompanyEnabledModules(query, {
         companyId: payload.companyId,
         modules: modulesSelectionForPersist(body.modules),
@@ -58,11 +61,7 @@ export async function POST(request) {
 
     return Response.json({
       ok: true,
-      companyModules: payload.companyId
-        ? body.modules != null
-          ? body.modules
-          : undefined
-        : undefined,
+      companyModules: applyModules ? body.modules : undefined,
     });
   } catch (err) {
     if (err?.code === '42703') {
