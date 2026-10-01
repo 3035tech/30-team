@@ -10,7 +10,7 @@ import { getTypeData, localizeAreaLabel } from '../../lib/i18n-data';
 import { typeHintTooltip } from '../../lib/type-en';
 import { t } from '../../lib/i18n';
 import { useLocale } from '../../lib/useLocale';
-import { CAP, can, isAdminRole, isSuperAdminPayload } from '../../lib/permissions';
+import { CAP, can, canAccessDashboardTab, isAdminRole, isSuperAdminPayload } from '../../lib/permissions';
 import { VACANCY_STATUS, ROSTER_SCOPE } from '../../lib/domain-status.js';
 import { cn } from '../../lib/cn';
 import { managerLoginUrl } from '../../lib/manager-client-session';
@@ -39,6 +39,7 @@ import { useKeyboardShortcuts, KeyboardShortcutsHelp, GModePending } from '../_c
 
 const OnboardingTour = dynamic(() => import('../_components/OnboardingTour').then((mod) => mod.OnboardingTour), { ssr: false });
 const OnboardingWizard = dynamic(() => import('../_components/OnboardingWizard'), { ssr: false });
+const ONBOARDING_WIZARD_SESSION_KEY = 'team30_onboarding_wizard_done';
 import { PersonaPlaybookCard } from '../_components/PersonaPlaybookCard';
 import { FormField } from '../_components/FormField';
 import {
@@ -327,6 +328,21 @@ function DashboardClientContent({
   useEffect(() => {
     setSessionAuth(auth);
   }, [auth]);
+
+  // onboardingProgress only ships with the Overview payload; keep the tour mounted while it moves across tabs.
+  const [tourEligible, setTourEligible] = useState(false);
+  const [wizardShownThisVisit, setWizardShownThisVisit] = useState(() => Boolean(auth?.showOnboardingWizard));
+  useEffect(() => {
+    if (onboardingProgress && onboardingProgress.progress < 100) setTourEligible(true);
+  }, [onboardingProgress]);
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(ONBOARDING_WIZARD_SESSION_KEY) === '1') setWizardShownThisVisit(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const showOnboardingTour = tourEligible && !wizardShownThisVisit && !sessionAuth?.showOnboardingWizard;
 
   const logout = async () => {
     if (loggingOut || logoutConfirmPendingRef.current) return;
@@ -901,7 +917,7 @@ function DashboardClientContent({
     <PipelineExtrasProvider>
     <div className="relative min-h-screen bg-canvas font-ui text-ink">
       {/* Onboarding Tour */}
-      {onboardingProgress && onboardingProgress.progress < 100 && <OnboardingTour />}
+      {showOnboardingTour ? <OnboardingTour auth={sessionAuth} /> : null}
 
       {/* Keyboard Shortcuts Help Modal */}
       <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} locale={locale} />
@@ -1283,6 +1299,7 @@ function DashboardClientContent({
                   locale={locale}
                   companyId={scopedCompanyId}
                   onboardingProgress={onboardingProgress}
+                  canOpenTab={(id) => canAccessDashboardTab(sessionAuth, id)}
                   filters={{
                     companyLabel:
                       isAdmin && company !== 'all'
@@ -1557,8 +1574,14 @@ function DashboardClientContent({
     {sessionAuth?.showOnboardingWizard ? (
       <OnboardingWizard
         locale={locale}
-        userName={sessionAuth?.displayName || sessionAuth?.email || t(locale, 'common.user')}
+        userName={sessionAuth?.displayName || sessionAuth?.signupFirstName || ''}
+        auth={sessionAuth}
         onComplete={() => {
+          try {
+            sessionStorage.setItem(ONBOARDING_WIZARD_SESSION_KEY, '1');
+          } catch {
+            /* ignore */
+          }
           setSessionAuth((prev) => ({
             ...(prev || {}),
             onboardingCompleted: true,

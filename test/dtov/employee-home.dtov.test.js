@@ -16,7 +16,7 @@ import {
   signEmployeeToken,
   verifyEmployeeToken,
 } from '../../lib/employee-auth.js';
-import { getEmployeeHome } from '../../lib/employee-home.js';
+import { dismissEmployeeWelcome, getEmployeeHome } from '../../lib/employee-home.js';
 import {
   employeeAckOnboardingItem,
   getEmployeeOnboardingJourney,
@@ -330,6 +330,44 @@ async function main() {
   });
   assert.equal(notifs.ok, true);
   assert.ok(notifs.unreadCount >= 2);
+
+  // First-access welcome card: shown until dismissed, idempotent, scoped by company.
+  await query(
+    `UPDATE candidates SET employee_welcome_dismissed_at = NULL WHERE id = $1 AND company_id = $2`,
+    [person.candidateId, person.companyId]
+  );
+  const homeWelcome = await getEmployeeHome(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+  });
+  assert.equal(homeWelcome.showWelcome, true);
+  const wrongTenant = await dismissEmployeeWelcome(query, {
+    companyId: Number(person.companyId) + 999999,
+    candidateId: person.candidateId,
+  });
+  assert.equal(wrongTenant.ok, true);
+  const stillShown = await getEmployeeHome(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+  });
+  assert.equal(stillShown.showWelcome, true, 'other company id must not dismiss');
+  assert.equal((await dismissEmployeeWelcome(query, person)).ok, true);
+  const firstAt = (await query(
+    `SELECT employee_welcome_dismissed_at AS at FROM candidates WHERE id = $1`,
+    [person.candidateId]
+  )).rows[0].at;
+  assert.ok(firstAt);
+  assert.equal((await dismissEmployeeWelcome(query, person)).ok, true);
+  const secondAt = (await query(
+    `SELECT employee_welcome_dismissed_at AS at FROM candidates WHERE id = $1`,
+    [person.candidateId]
+  )).rows[0].at;
+  assert.equal(new Date(secondAt).getTime(), new Date(firstAt).getTime(), 'dismiss keeps first timestamp');
+  const homeAfter = await getEmployeeHome(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+  });
+  assert.equal(homeAfter.showWelcome, false);
 
   console.log('employee-home.dtov.test.js OK');
   await pool.end().catch(() => {});

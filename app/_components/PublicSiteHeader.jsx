@@ -18,7 +18,7 @@ export function PublicSiteHeader({ copy, locale, onLocaleChange, sectionBase = '
   const linkClass = (isActive) => cn('text-sm no-underline hover:text-ink', isActive ? 'font-semibold text-ink' : 'text-ink-muted');
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8">
         <Link href="/" className="inline-flex items-center no-underline" aria-label="30Grow">
           <BrandMark size={30} withWordmark className="brand-mark--responsive" />
         </Link>

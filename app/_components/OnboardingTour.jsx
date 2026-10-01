@@ -4,11 +4,12 @@
  * Optional guided tour — targets real sidebar `id={tab}-tab` anchors.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from '../../lib/useLocale';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { canAccessDashboardTab } from '../../lib/permissions';
 import { S } from '../dashboard/dashboard-shared';
 
 const TOUR_STORAGE_KEY = 'team30_tour_completed';
@@ -20,12 +21,16 @@ const TOUR_STEP_DEFS = [
   { id: 'help', target: '#help-tab', tab: 'help', titleKey: 'panel.tour.stepHelpTitle', messageKey: 'panel.tour.stepHelpBody' },
 ];
 
-export function OnboardingTour({ onComplete }) {
+export function OnboardingTour({ auth = null, onComplete }) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(-1);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const [locale] = useLocale();
+  const TOUR_STEPS = useMemo(
+    () => (auth ? TOUR_STEP_DEFS.filter((s) => canAccessDashboardTab(auth, s.tab)) : TOUR_STEP_DEFS),
+    [auth]
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -40,15 +45,15 @@ export function OnboardingTour({ onComplete }) {
 
   const handleStart = () => {
     setCurrentStep(0);
-    const step = TOUR_STEP_DEFS[0];
+    const step = TOUR_STEPS[0];
     if (step?.tab) router.push(`/dashboard?tab=${step.tab}`);
   };
 
   const handleNext = () => {
-    if (currentStep < TOUR_STEP_DEFS.length - 1) {
+    if (currentStep < TOUR_STEPS.length - 1) {
       const nextStep = currentStep + 1;
       setCurrentStep(nextStep);
-      const step = TOUR_STEP_DEFS[nextStep];
+      const step = TOUR_STEPS[nextStep];
       if (step?.tab) router.push(`/dashboard?tab=${step.tab}`);
     } else {
       handleFinish();
@@ -59,7 +64,7 @@ export function OnboardingTour({ onComplete }) {
     if (currentStep > 0) {
       const prevStep = currentStep - 1;
       setCurrentStep(prevStep);
-      const step = TOUR_STEP_DEFS[prevStep];
+      const step = TOUR_STEPS[prevStep];
       if (step?.tab) router.push(`/dashboard?tab=${step.tab}`);
     }
   };
@@ -96,8 +101,8 @@ export function OnboardingTour({ onComplete }) {
     );
   }
 
-  if (isOpen && currentStep >= 0 && currentStep < TOUR_STEP_DEFS.length) {
-    const step = TOUR_STEP_DEFS[currentStep];
+  if (isOpen && currentStep >= 0 && currentStep < TOUR_STEPS.length) {
+    const step = TOUR_STEPS[currentStep];
     return (
       <>
         <div className="fixed inset-0 z-40 bg-ink/40" onClick={handleFinish} aria-hidden />
@@ -106,7 +111,7 @@ export function OnboardingTour({ onComplete }) {
             <div className="h-1 bg-ink/10">
               <div
                 className="h-full bg-brand-500 transition-all duration-300"
-                style={{ width: `${((currentStep + 1) / TOUR_STEP_DEFS.length) * 100}%` }}
+                style={{ width: `${((currentStep + 1) / TOUR_STEPS.length) * 100}%` }}
               />
             </div>
             <div className="p-4">
@@ -115,7 +120,7 @@ export function OnboardingTour({ onComplete }) {
                   <div className={cn(S.label, 'mb-1')}>
                     {t(locale, 'panel.tour.stepOf', {
                       n: currentStep + 1,
-                      total: TOUR_STEP_DEFS.length,
+                      total: TOUR_STEPS.length,
                     })}
                   </div>
                   <h3 className="m-0 font-display text-lg font-semibold text-ink">{t(locale, step.titleKey)}</h3>
@@ -140,7 +145,7 @@ export function OnboardingTour({ onComplete }) {
                   {t(locale, 'panel.tour.prev')}
                 </button>
                 <div className="flex gap-1">
-                  {TOUR_STEP_DEFS.map((s, idx) => (
+                  {TOUR_STEPS.map((s, idx) => (
                     <div
                       key={s.id}
                       className={cn(
@@ -151,7 +156,7 @@ export function OnboardingTour({ onComplete }) {
                   ))}
                 </div>
                 <button type="button" className={S.btnPrimary} onClick={handleNext}>
-                  {currentStep === TOUR_STEP_DEFS.length - 1
+                  {currentStep === TOUR_STEPS.length - 1
                     ? t(locale, 'panel.tour.finish')
                     : t(locale, 'panel.tour.next')}
                 </button>

@@ -63,6 +63,7 @@ export function OverviewTab({
   companyId = null,
   navigateDashboard,
   onboardingProgress = null,
+  canOpenTab = null,
 }) {
   const [peopleOpsOpen, setPeopleOpsOpen] = useState(false);
   const [recruitingOpen, setRecruitingOpen] = useState(false);
@@ -164,7 +165,7 @@ export function OverviewTab({
       ) : null}
       {/* Onboarding Checklist */}
       {onboardingProgress && onboardingProgress.progress < 100 && (
-        <OnboardingChecklist locale={locale} initialProgress={onboardingProgress} />
+        <OnboardingChecklist locale={locale} initialProgress={onboardingProgress} canOpenTab={canOpenTab} />
       )}
 
       <div className={cn('grid grid-cols-1 gap-4', companyId && 'xl:grid-cols-12 xl:items-start')}>

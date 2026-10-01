@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { can, CAP } from '../../lib/permissions';
 import { BrandMark } from './BrandMark';
 import { InlineCallout } from './InlineCallout';
 import { Icon } from './Icon';
@@ -11,9 +12,11 @@ import { CompanyModulesField } from './CompanyModulesField';
 import {
   COMPANY_MODULE,
   SELECTABLE_COMPANY_MODULE_IDS,
+  companyHasModule,
+  modulesSelectionForUi,
 } from '../../lib/company-modules';
 
-const STEPS = [
+const ALL_STEPS = [
   { id: 'welcome', icon: 'sparkles' },
   { id: 'objective', icon: 'overview' },
   { id: 'modules', icon: 'clipboard' },
@@ -50,16 +53,31 @@ const OBJECTIVE_MODULES = Object.freeze({
  * Wizard guiado para todo gestor novo vinculado a uma empresa.
  * Super admin não recebe o wizard e mantém todos os módulos disponíveis.
  */
-export default function OnboardingWizard({ locale, userName, onComplete }) {
+export default function OnboardingWizard({ locale, userName, auth = null, onComplete }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completing, setCompleting] = useState(false);
   const [completeError, setCompleteError] = useState('');
   const [modulesTouched, setModulesTouched] = useState(false);
   const [objective, setObjective] = useState('');
-  const [selectedModules, setSelectedModules] = useState(() => [...SELECTABLE_COMPANY_MODULE_IDS]);
+  const [selectedModules, setSelectedModules] = useState(() =>
+    modulesSelectionForUi(auth?.companyModules ?? null)
+  );
   const stepTitleRef = useRef(null);
 
-  const step = STEPS[currentStep];
+  // Role capabilities only: the module selection made here is not in the session yet.
+  const roleAuth = auth ? { ...auth, companyModules: null } : null;
+  const canManageVacancies = !auth || can(roleAuth, CAP.VACANCIES_MANAGE);
+  const canInviteManagers = Boolean(auth) && can(roleAuth, CAP.USERS_MANAGE);
+  const recruitingEnabled = modulesTouched
+    ? selectedModules.includes(COMPANY_MODULE.RECRUITING)
+    : companyHasModule(auth?.companyModules ?? null, COMPANY_MODULE.RECRUITING);
+  const showVacancyStep = canManageVacancies && recruitingEnabled;
+
+  const STEPS = useMemo(
+    () => ALL_STEPS.filter((s) => s.id !== 'vacancy' || showVacancyStep),
+    [showVacancyStep]
+  );
+  const step = STEPS[Math.min(currentStep, STEPS.length - 1)];
 
   useEffect(() => {
     stepTitleRef.current?.focus();
@@ -82,7 +100,12 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
     await markComplete({ skipModules: true });
   };
 
-  const handleComplete = async () => {
+  const handleComplete = async (event) => {
+    // Module changes only reach the menu after a fresh session read.
+    if (modulesTouched) {
+      await completeAndNavigate(event, '/dashboard?tab=overview');
+      return;
+    }
     await markComplete({ skipModules: false });
   };
 
@@ -114,7 +137,7 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
   };
 
   const completeAndNavigate = async (event, href) => {
-    event.preventDefault();
+    event?.preventDefault?.();
     const completed = await markComplete();
     if (completed && typeof window !== 'undefined') window.location.assign(href);
   };
@@ -186,7 +209,9 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                 <Icon name={step.icon} className="h-12 w-12" />
               </div>
               <h2 id="onboarding-step-title" ref={stepTitleRef} tabIndex={-1} className="mb-3 text-2xl font-normal text-ink outline-none">
-                {t(locale, 'onboarding.welcome.title', { name: userName })}
+                {userName
+                  ? t(locale, 'onboarding.welcome.title', { name: userName })
+                  : t(locale, 'onboarding.welcome.titleNoName')}
               </h2>
               <p className="mb-6 text-base leading-relaxed text-ink-muted">
                 {t(locale, 'onboarding.welcome.body')}
@@ -339,8 +364,8 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
 
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href="/dashboard?tab=vacancies"
-                  onClick={(event) => void completeAndNavigate(event, '/dashboard?tab=vacancies')}
+                  href="/dashboard?tab=vacancies&create=1"
+                  onClick={(event) => void completeAndNavigate(event, '/dashboard?tab=vacancies&create=1')}
                   aria-disabled={completing}
                   className="flex-1 rounded-control border border-brand-500 bg-action px-4 py-3 text-center text-base text-action-ink no-underline hover:bg-action-hover"
                 >
@@ -369,7 +394,8 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                 {t(locale, 'onboarding.invite.body')}
               </p>
 
-              <div className="mb-6 grid gap-3 sm:grid-cols-2">
+              <div className={cn('mb-6 grid gap-3', canInviteManagers && 'sm:grid-cols-2')}>
+                {canInviteManagers ? (
                 <div className="rounded-card border border-ink/8 bg-ink/[0.02] p-4">
                   <div className="mb-2 text-brand-500">
                     <Icon name="users" className="h-6 w-6" />
@@ -389,24 +415,26 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                     {t(locale, 'onboarding.invite.teamCta')}
                   </Link>
                 </div>
+                ) : null}
 
                 <div className="rounded-card border border-ink/8 bg-ink/[0.02] p-4">
                   <div className="mb-2 text-brand-500">
                     <Icon name="externalLink" className="h-6 w-6" />
                   </div>
                   <h3 className="mb-1 text-sm font-medium text-ink">
-                    {t(locale, 'onboarding.invite.linkTitle')}
+                    {t(locale, canInviteManagers ? 'onboarding.invite.linkTitle' : 'onboarding.invite.linkTitleSolo')}
                   </h3>
                   <p className="mb-3 text-xs text-ink-muted">
                     {t(locale, 'onboarding.invite.linkBody')}
                   </p>
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    className="inline-block rounded-control border border-ink/20 bg-white px-3 py-1.5 text-xs text-ink hover:bg-ink/5"
+                  <Link
+                    href="/dashboard?tab=help&helpSection=links"
+                    onClick={(event) => void completeAndNavigate(event, '/dashboard?tab=help&helpSection=links')}
+                    aria-disabled={completing}
+                    className="inline-block rounded-control border border-ink/20 bg-white px-3 py-1.5 text-xs text-ink no-underline hover:bg-ink/5"
                   >
                     {t(locale, 'onboarding.invite.linkCta')}
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -451,8 +479,8 @@ export default function OnboardingWizard({ locale, userName, onComplete }) {
                 </Link>
 
                 <Link
-                  href="/dashboard?tab=help"
-                  onClick={(event) => void completeAndNavigate(event, '/dashboard?tab=help')}
+                  href="/dashboard?tab=help&helpSection=setupPath"
+                  onClick={(event) => void completeAndNavigate(event, '/dashboard?tab=help&helpSection=setupPath')}
                   aria-disabled={completing}
                   className="rounded-card border border-ink/8 bg-ink/[0.02] p-4 no-underline hover:border-brand-300"
                 >

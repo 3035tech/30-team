@@ -403,6 +403,12 @@ Copiloto no painel para perguntas do tipo **“por que o João não aparece na m
 
 ---
 
+## Aberto — Epic B-2700 (controle de custo de IA)
+
+Teto por empresa, registro de tokens/custo, kill switch, fornecedor/modelo configuráveis e cache. Análise completa (estado atual, estimativa de custo, recomendação de fornecedor e itens B-2701–B-2706): [`docs/BACKLOG-AI-COST-CONTROL.md`](./BACKLOG-AI-COST-CONTROL.md).
+
+---
+
 ## Aberto — Logo da empresa (UX de upload)
 
 _(entregue — B-1401: crop 1:1 + compressão cliente ≤512 KB / lado ≤768 px; origem até 20 MB; servidor mantém MIME+tamanho.)_

@@ -3,7 +3,7 @@ import { query } from '../../../../lib/db.js';
 import { apiError, apiErrorFromResult, ERR } from '../../../../lib/api-error.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../lib/rate-limit.js';
 import { getEmployeeSessionPayload } from '../../../../lib/employee-session.js';
-import { getEmployeeHome } from '../../../../lib/employee-home.js';
+import { dismissEmployeeWelcome, getEmployeeHome } from '../../../../lib/employee-home.js';
 import { completeLmsLesson, uncompleteLmsLesson } from '../../../../lib/lms.js';
 import { updateEmployeePdiItemStatus } from '../../../../lib/employee-pdi.js';
 import { submitEmployeeOneOnOnePrep } from '../../../../lib/employee-one-on-one-prep.js';
@@ -62,6 +62,17 @@ export async function POST(request) {
     }
 
     const body = await request.json().catch(() => ({}));
+
+    if (body.action === 'dismissWelcome') {
+      const result = await dismissEmployeeWelcome(query, {
+        companyId: session.companyId,
+        candidateId: session.candidateId,
+      });
+      if (!result.ok) {
+        return apiErrorFromResult(request, result, { fallbackCode: ERR.UNAUTHORIZED });
+      }
+      return NextResponse.json({ ok: true });
+    }
 
     if (body.action === 'submitOneOnOnePrep') {
       const result = await submitEmployeeOneOnOnePrep(query, {

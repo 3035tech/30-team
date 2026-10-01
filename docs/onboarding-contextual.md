@@ -46,7 +46,8 @@ import { ContextualTooltip } from '@/app/_components/ContextualTooltip';
 **Integração:**
 - Aparece automaticamente no Overview quando progresso < 100%
 - Colapsável e dismissível
-- Clique na tarefa navega para a tab correspondente
+- Clique na tarefa navega para a tab correspondente ("Criar primeira vaga" abre `?tab=vacancies&create=1`)
+- Tarefas cuja aba o gestor não acessa (módulo desligado ou sem capability, ex.: "Convidar gestor" sem `users.manage`) ficam ocultas; o % é recalculado só com as tarefas visíveis (`canOpenTab` vindo de `canAccessDashboardTab`)
 
 **SQL:** Verifica automaticamente conclusão via queries existentes (assessments, vacancies, climate_surveys, users, etc.)
 
@@ -76,19 +77,26 @@ import { EmptyVacancies } from '@/app/_components/EmptyStateActionable';
 
 **Arquivo:** `app/_components/OnboardingTour.jsx`
 
-**5 steps:**
+**Steps (filtrados por `canAccessDashboardTab`):**
 1. Overview — resumo do que precisa atenção
-2. Vagas — pipeline kanban + rubricas
+2. Vagas — pipeline kanban + rubricas (some se Recrutamento estiver desligado)
 3. Equipe — perfis + compatibilidade + PDI
-4. Analytics — métricas e alertas
-5. Ajuda — guia completo
+4. Ajuda — guia completo
 
 **Flow:**
 1. Modal de boas-vindas (auto após 1s no primeiro acesso)
-2. Usuário escolhe "Fazer tour" ou "Pular"
-3. Tour com navegação automática entre tabs
-4. Progress bar + spotlight simulado (overlay)
+2. Não abre junto com o wizard "Primeiros passos" nem na mesma sessão do navegador em que o wizard foi concluído (`sessionStorage` `team30_onboarding_wizard_done`); aparece na próxima visita
+3. Usuário escolhe "Fazer tour" ou "Pular"
+4. Tour com navegação automática entre tabs; fica montado ao trocar de aba (o `onboardingProgress` só vem no payload do Overview)
 5. Marca como completo em `localStorage`
+
+## Wizard "Primeiros passos" (`OnboardingWizard.jsx`)
+
+- Saudação usa `display_name`; se vazio, o primeiro nome do cadastro (`signup_metadata.fullName`); sem nenhum, título genérico
+- Passo "Crie sua primeira vaga" só aparece se Recrutamento estiver na seleção de módulos e o papel puder gerir vagas; o CTA abre `?tab=vacancies&create=1`
+- Card "Convide seu time" só para quem tem `users.manage` (hoje: admin). Direção/RH veem só o card de link público, que abre o Guia em `helpSection=links`
+- "Guia completo" no passo final abre `helpSection=setupPath`
+- Concluir com módulos alterados recarrega o painel para o menu refletir a seleção
 
 **Admin:** `resetTour()` para limpar estado (testing)
 

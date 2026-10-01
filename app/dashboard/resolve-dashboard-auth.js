@@ -20,7 +20,8 @@ export async function resolveDashboardAuth() {
     rawUserId
       ? queryRead(
         `SELECT email, display_name AS "displayName",
-                onboarding_completed AS "onboardingCompleted"
+                onboarding_completed AS "onboardingCompleted",
+                signup_metadata->>'fullName' AS "signupFullName"
          FROM users WHERE id = $1 AND deleted = FALSE LIMIT 1`,
         [rawUserId]
       ).catch(() => null)
@@ -43,6 +44,7 @@ export async function resolveDashboardAuth() {
     locale,
     email: null,
     displayName: null,
+    signupFirstName: null,
     onboardingCompleted: true, // default true (coluna pode não existir ainda)
     /** Wizard “Primeiros passos” — todo gestor novo, exceto super admin. */
     showOnboardingWizard: false,
@@ -62,6 +64,7 @@ export async function resolveDashboardAuth() {
       ...authUser,
       email: row.email,
       displayName: row.displayName,
+      signupFirstName: String(row.signupFullName || '').trim().split(/\s+/)[0] || null,
       onboardingCompleted,
       showOnboardingWizard,
     };

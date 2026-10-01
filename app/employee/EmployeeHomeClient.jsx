@@ -24,6 +24,7 @@ import { EmployeeFeedbackSection } from '../_components/ContinuousFeedbackBlock'
 import { EmployeeFeedPanel, EmployeeKudosPanel } from '../_components/EmployeeFeedKudosSections';
 import { Icon } from '../_components/Icon';
 import { EmployeeFormalReviewsSection } from '../_components/EmployeeFormalReviewsSection';
+import { EmployeeWelcomeCard } from '../_components/EmployeeWelcomeCard';
 import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
 import { employeeSectionAllowedByCompanyModules } from '../../lib/company-modules';
 
@@ -177,6 +178,17 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   });
   const [prepNote, setPrepNote] = useState('');
   const [loadFailed, setLoadFailed] = useState(false);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
+
+  const dismissWelcome = useCallback(() => {
+    setWelcomeDismissed(true);
+    // Best effort: if it fails, the card simply returns on the next visit.
+    void fetch('/api/employee/home', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'dismissWelcome' }),
+    }).catch(() => {});
+  }, []);
 
   const load = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setLoading(true);
@@ -539,6 +551,23 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             <Icon name="chevronRight" className="h-4 w-4 rotate-180" />
             {t(locale, 'employeeHome.backToToday')}
           </a>
+        ) : null}
+        {data.showWelcome && !welcomeDismissed && !detailView ? (
+          <EmployeeWelcomeCard
+            locale={locale}
+            firstName={String(data.person?.fullName || '').trim().split(/\s+/)[0] || ''}
+            isAvailable={(id) => (id === 'journey' ? sectionOk('journey') && hasJourney : sectionOk(id))}
+            onDismiss={dismissWelcome}
+            onShortcut={(id, href) => {
+              dismissWelcome();
+              if (href.startsWith('#')) {
+                focusSection(id);
+                window.history.replaceState(null, '', href);
+              } else {
+                router.push(href);
+              }
+            }}
+          />
         ) : null}
         <div className="mb-6" hidden={Boolean(detailView)}>
           <p className={cn(S.label, 'mb-2 mt-0')}>{t(locale, 'employeeHome.eyebrow')}</p>

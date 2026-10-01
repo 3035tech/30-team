@@ -39,7 +39,7 @@ for (const locale of ['pt-BR', 'pt-PT', 'en', 'es-419']) {
   const brazil = locale === 'pt-BR';
 
   test(`${locale}: fixed band price, annual discount and totals`, () => {
-    const cases = [[5, 99, 59], [10, 99, 59], [26, 449, 269], [100, 889, 529], [500, 3490, 2090]];
+    const cases = [[5, 69, 39], [10, 69, 39], [26, 299, 179], [100, 549, 329], [500, 1990, 1190]];
     for (const [employeeCount, brl, usd] of cases) {
       const list = brazil ? brl : usd;
       const monthly = getPublicPricing(locale, { employeeCount, billingCycle: 'monthly' });
@@ -60,7 +60,7 @@ for (const locale of ['pt-BR', 'pt-PT', 'en', 'es-419']) {
   test(`${locale}: landing, FAQ, signup and structured data agree`, () => {
     const copy = getProductLandingCopy(locale);
     const values = publicPricingTextValues(locale);
-    const price = formatPublicPrice(locale, brazil ? 99 : 59, { whole: true });
+    const price = formatPublicPrice(locale, brazil ? 69 : 39, { whole: true });
     const currency = brazil ? 'BRL' : 'USD';
     assert.equal(values.monthlyPrice, price);
     assert.ok(t(locale, `pricing.currency${currency}`).includes(currency));
@@ -86,6 +86,6 @@ for (const locale of ['pt-BR', 'pt-PT', 'en', 'es-419']) {
 
 test('public pricing does not change regional currencies for payroll and expenses', () => {
   assert.equal(localeRegionConfig('pt-PT').currency, 'EUR');
-  assert.equal(getPublicPricing('en-US').monthlyTotal, 59);
+  assert.equal(getPublicPricing('en-US').monthlyTotal, 39);
   assert.equal(getPublicPricing('pt_pt').currency, 'USD');
 });

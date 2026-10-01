@@ -21,14 +21,21 @@ const TASK_TABS = Object.freeze({
   invite_manager: 'users',
 });
 
-export function OnboardingChecklist({ locale = 'pt-BR', initialProgress, initialTasks }) {
+export function OnboardingChecklist({ locale = 'pt-BR', initialProgress, initialTasks, canOpenTab = null }) {
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('team30_onboarding_dismissed') === 'true';
   });
   const router = useRouter();
 
-  const { progress, tasks } = initialProgress || { progress: 0, tasks: initialTasks || [] };
+  const allTasks = initialProgress?.tasks || initialTasks || [];
+  // Tasks pointing at tabs this manager cannot open (module off / no capability) are not actionable.
+  const tasks = typeof canOpenTab === 'function'
+    ? allTasks.filter((task) => !TASK_TABS[task.id] || canOpenTab(TASK_TABS[task.id]))
+    : allTasks;
+  const totalWeight = tasks.reduce((sum, task) => sum + (task.weight || 0), 0);
+  const doneWeight = tasks.reduce((sum, task) => sum + (task.completed ? task.weight || 0 : 0), 0);
+  const progress = totalWeight > 0 ? Math.round((doneWeight / totalWeight) * 100) : 100;
 
   if (progress >= 100 || dismissed) {
     return null;
@@ -39,7 +46,8 @@ export function OnboardingChecklist({ locale = 'pt-BR', initialProgress, initial
 
   const handleTaskClick = (taskId) => {
     const tab = TASK_TABS[taskId];
-    if (tab) router.push(`/dashboard?tab=${tab}`);
+    if (!tab) return;
+    router.push(taskId === 'create_vacancy' ? `/dashboard?tab=${tab}&create=1` : `/dashboard?tab=${tab}`);
   };
 
   const handleDismiss = () => {
