@@ -3,7 +3,7 @@
  */
 import assert from 'node:assert/strict';
 import { query } from '../../lib/db.js';
-import { createCompanyPost, listCompanyPosts, softDeleteCompanyPost } from '../../lib/company-posts.js';
+import { createCompanyPost, listCompanyPosts, softDeleteCompanyPost, updateCompanyPost } from '../../lib/company-posts.js';
 import {
   createCompanyKudo,
   listCompanyKudos,
@@ -76,6 +76,16 @@ async function main() {
   assert.ok(kudos.kudos.some((k) => k.id === kudo.kudo.id));
   const n = await countRecentCompanyKudos(null, { companyId, days: 7 });
   assert.ok(n >= 1);
+
+  for (const bodyHtml of [undefined, null, '', '<p></p>']) {
+    const titleOnly = await createCompanyPost(null, { companyId, title: 'DTOV só título', bodyHtml, createdByUserId: null });
+    assert.equal(titleOnly.ok, true, `create with bodyHtml=${JSON.stringify(bodyHtml)}`);
+    assert.equal(typeof titleOnly.post.bodyHtml, 'string');
+    await softDeleteCompanyPost(null, { companyId, postId: titleOnly.post.id });
+  }
+  const cleared = await updateCompanyPost(null, { companyId, postId: post.post.id, title: 'DTOV mural', bodyHtml: null });
+  assert.equal(cleared.ok, true, cleared.errorCode);
+  assert.equal(cleared.post.bodyHtml, '');
 
   const del = await softDeleteCompanyPost(null, { companyId, postId: post.post.id });
   assert.equal(del.ok, true);
