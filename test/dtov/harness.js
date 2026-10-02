@@ -77,6 +77,8 @@ export function assertDtovTarget(env = process.env) {
 
 export function dtovEnv(extra = {}) {
   return {
+    // Invite/password flows fail with APP_URL_MISSING without a base URL.
+    NEXT_PUBLIC_APP_URL: 'http://127.0.0.1:3010',
     ...process.env,
     ...DTOV_DEFAULTS,
     ...extra,

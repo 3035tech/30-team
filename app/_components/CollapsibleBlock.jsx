@@ -111,7 +111,7 @@ export function CollapsibleBlock({
           {title}
         </span>
         {hasCount ? (
-          <span className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-ink/[0.07] px-1.5 font-ui text-xs font-medium tabular-nums text-ink-muted">
+          <span className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-ink/[0.07] px-1.5 font-ui text-xs font-medium tabular-nums text-ink/80">
             {count}
           </span>
         ) : null}

@@ -42,7 +42,9 @@ Wrappers legados em `scripts/test-*.js` só reexportam `test/unit/*`.
 | `db:test-motivators` | Fluxo de convite Motivadores (Postgres + migrate) |
 | `DTOV_SKIP_BROWSER=1 …` | Pula Chromium no full-app |
 
-Provas pontuais em `test/dtov/*.dtov.test.js` rodam com o env do harness (após `dtov:reset`), ex.: `node --input-type=module -e "import {dtovEnv} from './test/dtov/harness.js'; import {spawnSync} from 'node:child_process'; process.exit(spawnSync('node',['test/dtov/perf-sweep.dtov.test.js'],{env:dtovEnv(),stdio:'inherit'}).status)"` (sucessão em lote, HR Score com fan-out limitado, sessão em 1 query, índices da migration 138).
+Provas pontuais em `test/dtov/*.dtov.test.js` rodam com o env do harness (após `dtov:reset`), ex.: `node --input-type=module -e "import {dtovEnv} from './test/dtov/harness.js'; import {spawnSync} from 'node:child_process'; process.exit(spawnSync('node',['test/dtov/perf-sweep.dtov.test.js'],{env:dtovEnv(),stdio:'inherit'}).status)"` (sucessão em lote, HR Score com fan-out limitado, sessão em 1 query, índices da migration 138). `dtovEnv()` já define `NEXT_PUBLIC_APP_URL=http://127.0.0.1:3010` se ausente (fluxos de convite/senha). Testes que tocam Redis devem chamar `closeRateLimitRedis()` no fim, senão o processo não encerra.
+
+Playwright aceita `BASE_URL` em `127.0.0.1` ou `localhost`: `next.config.js` libera `127.0.0.1` em `allowedDevOrigins` (sem isso o Next 16 bloqueia o HMR e a página não hidrata).
 
 ### Mocks SMTP / OpenAI (B-003)
 

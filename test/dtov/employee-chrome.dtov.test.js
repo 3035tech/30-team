@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import { query, pool } from '../../lib/db.js';
 import { EMPLOYMENT_STATUS } from '../../lib/domain-status.js';
+import { closeRateLimitRedis } from '../../lib/rate-limit.js';
 import {
   changeEmployeePassword,
   getEmployeeProfile,
@@ -101,12 +102,14 @@ async function main() {
   assert.ok(list.unreadCount >= 1);
 
   console.log('employee-chrome.dtov.test.js OK');
+  await closeRateLimitRedis();
   await pool.end().catch(() => {});
 }
 
 main().catch(async (err) => {
   console.error(err);
   try {
+    await closeRateLimitRedis();
     await pool.end();
   } catch {
     /* ignore */

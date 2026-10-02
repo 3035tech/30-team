@@ -43,7 +43,7 @@ async function captureThemes(page, name, target) {
       await page.screenshot({ path: `/private/tmp/p3-final-${name}-${dark ? 'dark' : 'light'}-${width}.png`, animations: 'disabled' });
       // Snapshot the live set atomically: async loading can enable/disable buttons
       // between calls, making a previously collected nth() locator point elsewhere.
-      const contrasts = await textContrasts(page.locator('button.bg-brand-500:enabled'));
+      const contrasts = await textContrasts(page.locator('button.bg-action:enabled'));
       if (new URL(page.url()).pathname === '/dashboard') expect(contrasts.length).toBeGreaterThan(0);
       for (const contrast of contrasts) expect(contrast, `Primary CTA contrast: ${name}`).toBeGreaterThanOrEqual(4.5);
     }
@@ -87,6 +87,8 @@ test('P3: admin modules share readable page titles on desktop and mobile', async
     await noPageOverflow(page);
     await page.screenshot({ path: `/private/tmp/p3-${tab}-mobile.png` });
     if (tab === 'vacancies') {
+      // Meta tiles live in the vacancy detail; the tab opens on the list.
+      await page.getByRole('button', { name: 'Ver candidatos' }).first().click();
       const values = page.locator('[data-vacancy-meta-value]');
       await expect(values.first()).toBeVisible();
       expect(await values.evaluateAll(elements => elements.every(element =>
@@ -168,12 +170,15 @@ test('P3: employee sections, empty state and course navigation work in both them
     await noPageOverflow(page);
     await page.screenshot({ path: `/private/tmp/p3-employee-${dark ? 'dark' : 'light'}-mobile.png` });
   }
-  await page.getByRole('navigation', { name: 'Seções do espaço' }).getByRole('link', { name: 'Meus cursos' }).first().click();
+  // Sections are reached from the sidebar (no duplicate chip row on Today).
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await page.getByRole('link', { name: 'Meus cursos' }).first().click();
   await expect(page).toHaveURL(/\/employee\/lms/);
   await expect(page.getByRole('heading', { name: 'Meus cursos', exact: true })).toBeVisible();
   await page.goto('/employee/pdi');
   await expect(page.getByRole('heading', { level: 1 })).toHaveCSS('font-size', '24px');
   await noPageOverflow(page);
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
 });
 
 test('P3: populated employee modules and management details keep their layout', async ({ page }) => {
@@ -184,7 +189,10 @@ test('P3: populated employee modules and management details keep their layout', 
   await page.goto('/employee');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   for (const id of ['journey', 'surveys', 'pdi', 'oneOnOne']) {
+    // PDI and 1:1 are detail views on the Today page (opened via hash, like the sidebar links).
+    if (id === 'pdi' || id === 'oneOnOne') await page.evaluate(hash => { window.location.hash = hash; }, id);
     const section = page.locator(`#${id}`);
+    await expect(section).toBeVisible();
     const toggle = section.getByRole('button').first();
     if (await toggle.getAttribute('aria-expanded') !== 'true') await toggle.click();
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');

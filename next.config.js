@@ -9,6 +9,8 @@ const nextConfig = {
   logging: { incomingRequests: false },
   // Lets CI and migration checks use an isolated cache without touching a running app.
   distDir: process.env.NEXT_DIST_DIR || '.next',
+  // Dev only: DTOV/Playwright hit http://127.0.0.1:3010; without this, HMR is blocked and pages never hydrate.
+  allowedDevOrigins: ['127.0.0.1'],
   webpack(config, { isServer, webpack }) {
     if (!isServer) {
       // Browser gets one locale catalog on demand (lib/i18n-client.js), not all of them.

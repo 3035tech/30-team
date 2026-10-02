@@ -20,7 +20,7 @@ test('final polish: English destinations remain readable in both themes and size
   test.setTimeout(120000);
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  for (const [tab, title] of [['team', 'Team'], ['vacancies', 'Vacancies'], ['performance-reviews', 'Performance Reviews'], ['job-roles', 'Job Roles'], ['okr', 'OKRs'], ['pdi', 'IDP'], ['lms', 'Courses']]) {
+  for (const [tab, title] of [['team', 'Team'], ['vacancies', 'Jobs'], ['performance-reviews', 'Performance reviews'], ['job-roles', 'Job roles'], ['okr', 'OKRs'], ['pdi', 'IDP'], ['lms', 'Courses']]) {
     await page.goto(`/dashboard?tab=${tab}&lang=en`);
     await dismissManagerOnboarding(page);
     await expect(page.locator('.db-page-title')).toHaveText(title);
