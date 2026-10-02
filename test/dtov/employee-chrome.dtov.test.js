@@ -18,6 +18,7 @@ import {
   completeEmployeePasswordSetup,
   issueEmployeePasswordInvite,
 } from '../../lib/employee-auth.js';
+import { loadEmployeeSessionVersion } from '../../lib/employee-session-revocation.js';
 
 async function main() {
   const emp = await query(
@@ -57,6 +58,23 @@ async function main() {
   });
   assert.equal(updated.ok, true);
   assert.equal(updated.person.city, 'São Paulo');
+
+  // Saved language survives as-is (fr/de were collapsed to en) and reaches the login session loader.
+  const fr = await updateEmployeeProfile(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+    patch: { preferredLocale: 'fr-FR' },
+  });
+  assert.equal(fr.ok, true);
+  assert.equal(fr.person.preferredLocale, 'fr-FR');
+  const live = await loadEmployeeSessionVersion(person.candidateId, person.companyId);
+  assert.equal(live.preferredLocale, 'fr-FR');
+  await query(`UPDATE candidates SET preferred_locale = NULL WHERE id = $1`, [person.candidateId]);
+  const unset = await getEmployeeProfile(query, {
+    companyId: person.companyId,
+    candidateId: person.candidateId,
+  });
+  assert.equal(unset.person.preferredLocale, null);
 
   const pwd = await changeEmployeePassword(query, {
     companyId: person.companyId,

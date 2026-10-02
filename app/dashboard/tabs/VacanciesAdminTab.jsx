@@ -1609,15 +1609,11 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
         ) : (
           <>
             {attentionCount > 0 ? (
-              <InlineCallout tone="warning" role="status" className="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                <span className="min-w-0">
-                  <strong className="font-semibold">
-                    {attentionCount === 1
-                      ? i18nT(locale, 'ui.vacanciesAdminTab.attentionOne')
-                      : i18nT(locale, 'ui.vacanciesAdminTab.attentionMany', { n: attentionCount })}
-                  </strong>{' '}
-                  {i18nT(locale, 'ui.vacanciesAdminTab.attentionBody')}
-                </span>
+              <InlineCallout
+                tone="warning"
+                role="status"
+                className="mt-4"
+                action={(
                 <button
                   type="button"
                   onClick={() =>
@@ -1631,6 +1627,14 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
                     ? i18nT(locale, 'ui.vacanciesAdminTab.attentionShowAll')
                     : i18nT(locale, 'ui.vacanciesAdminTab.attentionShow')}
                 </button>
+                )}
+              >
+                <strong className="font-semibold">
+                  {attentionCount === 1
+                    ? i18nT(locale, 'ui.vacanciesAdminTab.attentionOne')
+                    : i18nT(locale, 'ui.vacanciesAdminTab.attentionMany', { n: attentionCount })}
+                </strong>{' '}
+                {i18nT(locale, 'ui.vacanciesAdminTab.attentionBody')}
               </InlineCallout>
             ) : null}
 

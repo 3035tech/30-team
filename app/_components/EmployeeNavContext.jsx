@@ -35,7 +35,7 @@ export const EMPLOYEE_SECTION_IDS = Object.freeze([
  * Shared nav state for collaborator chrome (badges, scroll-spy, collapse, section focus).
  * Menu always lists functionalities; empty sections show EmptyState when focused.
  */
-export function EmployeeNavProvider({ children }) {
+export function EmployeeNavProvider({ children, changeLocale = null }) {
   const [activeSection, setActiveSection] = useState('tasks');
   const [badges, setBadges] = useState({});
   const [navCollapsed, setNavCollapsedState] = useState(false);
@@ -98,8 +98,10 @@ export function EmployeeNavProvider({ children }) {
       focusSection,
       companyModules,
       timeClockEnabled,
+      changeLocale,
     }),
     [
+      changeLocale,
       activeSection,
       badges,
       setNavMeta,
@@ -129,6 +131,7 @@ export function useEmployeeNav() {
       focusSection: () => {},
       companyModules: null,
       timeClockEnabled: null,
+      changeLocale: null,
     };
   }
   return ctx;

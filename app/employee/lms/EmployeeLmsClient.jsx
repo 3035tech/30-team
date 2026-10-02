@@ -390,7 +390,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
     if (course && lesson) openLesson(course, lesson);
   };
 
-  if (loading) return <EmployeePageLoading locale={locale} />;
+  if (loading) return <EmployeePageLoading locale={locale} titleKey="employeeHome.lmsPageTitle" />;
 
   const dueSuffix = continueDueSuffix(locale, continueInfo);
   const inCourseView = Boolean(activeCourse);

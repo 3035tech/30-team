@@ -9,7 +9,6 @@ import { formatDisplayDateTime } from '../../lib/format-display-date';
 import { S } from '../dashboard/dashboard-shared';
 import { BrandMark } from './BrandMark';
 import { DarkModeToggle } from './DarkModeProvider';
-import LanguageSelect from './LanguageSelect';
 import { EmptyState } from './EmptyState';
 import { Icon } from './Icon';
 import { AppLoading } from './AppLoading';
@@ -20,12 +19,12 @@ import { EmployeeLogoutButton } from './EmployeeLogoutButton';
 import { ProfileMenuTrigger, profileMenuPanelClass, profileMenuItemClass } from './ProfileUi';
 
 /**
- * Collaborator chrome — theme, locale, notifications, profile menu.
+ * Collaborator chrome — theme, notifications, profile menu.
  * Brand lives in the sidebar; this bar stays compact for notebook/desktop.
+ * Language lives in Meu perfil (saved on the account).
  */
 export function EmployeeTopBar({
   locale,
-  onLocaleChange,
   displayName,
   companyName,
 }) {
@@ -124,21 +123,6 @@ export function EmployeeTopBar({
       window.removeEventListener('keydown', onKey);
     };
   }, []);
-
-  const persistLocale = async (next) => {
-    onLocaleChange?.(next);
-    try {
-      const response = await fetch('/api/employee/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ preferredLocale: next }),
-      });
-      // Page content receives its locale from the refreshed session on the server.
-      if (response.ok) router.refresh();
-    } catch {
-      /* ignore */
-    }
-  };
 
   const markReadAndGo = (item) => {
     // Navigation must not wait for the PATCH round-trip; refresh the list once it lands.
@@ -283,10 +267,7 @@ export function EmployeeTopBar({
         </p>
 
         <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-1.5">
-          <div className="hidden items-center gap-1.5 sm:flex">
-            <LanguageSelect locale={locale} onChange={persistLocale} compact />
-            <DarkModeToggle />
-          </div>
+          <DarkModeToggle />
 
           <div className="relative">
             <button
@@ -396,10 +377,6 @@ export function EmployeeTopBar({
                     </span>
                   </div>
                 ) : null}
-                <div className="mb-1 flex items-center justify-between gap-2 border-b border-ink/8 px-2.5 py-2 sm:hidden">
-                  <LanguageSelect locale={locale} onChange={persistLocale} compact />
-                  <DarkModeToggle />
-                </div>
                 {companyChoicesLoading ? (
                   <div className="px-2.5 py-2">
                     <AppLoading

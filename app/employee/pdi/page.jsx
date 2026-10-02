@@ -18,7 +18,7 @@ export default async function EmployeePdiPage(props) {
   if (!isEmployeeSessionPayload(payload)) redirect('/employee/login?reason=expired');
   const locale = normalizeLocale(searchParams?.locale || payload.locale);
   return (
-    <Suspense fallback={<EmployeePageLoading locale={locale} />}>
+    <Suspense fallback={<EmployeePageLoading locale={locale} titleKey="employeeHome.pdiPageTitle" hintKey="employeeHome.pdiPageHint" />}>
       <I18nBoot locales={[locale]}><EmployeePdiClient locale={locale} /></I18nBoot>
     </Suspense>
   );

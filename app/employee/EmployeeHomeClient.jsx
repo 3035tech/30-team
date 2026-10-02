@@ -600,30 +600,17 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
               </div>
             </div>
           </section>
-          <nav className="mt-3 flex flex-wrap gap-2" aria-label={t(locale, 'employeeHome.sectionNavAria')}>
-            {sectionOk('pdi') ? (
-              <a href="/employee/pdi" className={cn(S.btnGhost, 'min-h-9 no-underline')}>{t(locale, 'employeeHome.pdiPageTitle')}</a>
-            ) : null}
-            {sectionOk('lms') ? (
-              <a href="/employee/lms" className={cn(S.btnGhost, 'min-h-9 no-underline')}>{t(locale, 'employeeHome.lmsTitle')}</a>
-            ) : null}
-            {sectionOk('dp') ? (
-              <a href="/employee/dp" className={cn(S.btnGhost, 'min-h-9 no-underline')}>{t(locale, 'employeeHome.dpTitle')}</a>
-            ) : null}
-            {sectionOk('timeClock') ? (
-              <a href="/employee/time-clock" className={cn(S.btnGhost, 'min-h-9 no-underline')}>{t(locale, 'employeeHome.timeClockTitle')}</a>
-            ) : null}
-          </nav>
-          {startHere ? (
-            <InlineCallout tone="info" className="mt-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span>
-                  {t(locale, startHere.labelKey, { count: startHere.count })}
-                </span>
-                <a href={startHere.href} onClick={() => { if (startHere.href.startsWith('#')) focusSection(startHere.href.slice(1)); }} className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 no-underline')}>
+          {startHere && !(startHere.href === '#tasks' && openMap.tasks !== false) ? (
+            <InlineCallout
+              tone="info"
+              className="mt-3"
+              action={(
+                <a href={startHere.href} onClick={() => { if (startHere.href.startsWith('#')) focusSection(startHere.href.slice(1)); }} className={cn(S.btnBrandSoft, 'min-h-touch no-underline')}>
                   {t(locale, 'employeeHome.startHereCta')}
                 </a>
-              </div>
+              )}
+            >
+              {t(locale, startHere.labelKey, { count: startHere.count })}
             </InlineCallout>
           ) : null}
         </div>

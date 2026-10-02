@@ -333,7 +333,7 @@ export function ProfileTab({ locale, onLocaleChange, onProfileSaved }) {
                         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
                       </FormField>
                       <FormField as="div" label={t(locale, 'dashboard.profileLocale')}>
-                        <LanguageSelect locale={locale} onChange={onLocaleChange} persistUser />
+                        <LanguageSelect locale={locale} onChange={onLocaleChange} persistUser bare />
                       </FormField>
                       <div className="self-end rounded-control border border-ink/10 bg-surface px-3.5 py-3">
                         <p className="m-0 font-ui text-xs text-ink-muted">{t(locale, 'dashboard.profileRole')}</p>

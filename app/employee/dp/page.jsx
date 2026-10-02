@@ -20,7 +20,7 @@ export default async function EmployeeDpPage(props) {
   }
   const locale = normalizeLocale(searchParams?.locale || payload.locale);
   return (
-    <Suspense fallback={<EmployeePageLoading locale={locale} />}>
+    <Suspense fallback={<EmployeePageLoading locale={locale} titleKey="employeeHome.dpPageTitle" hintKey="employeeHome.dpPageHint" />}>
       <I18nBoot locales={[locale]}><EmployeeDpClient locale={locale} /></I18nBoot>
     </Suspense>
   );

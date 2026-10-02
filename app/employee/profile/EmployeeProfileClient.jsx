@@ -18,12 +18,16 @@ import { StatusToneChip } from '../../_components/StatusToneChip';
 import { InlineCallout } from '../../_components/InlineCallout';
 import { EmptyState } from '../../_components/EmptyState';
 import { TotpQrCode } from '../../_components/TotpQrCode';
+import LanguageSelect from '../../_components/LanguageSelect';
+import { useEmployeeNav } from '../../_components/EmployeeNavContext';
 import { BR_STATES } from '../../../lib/candidate-profile';
 import { redirectEmployeeIfUnauthorized } from '../../../lib/employee-client-session';
 
 export function EmployeeProfileClient({ locale = 'pt-BR' }) {
   const router = useRouter();
   const { toast } = useAppFeedback();
+  const { changeLocale } = useEmployeeNav();
+  const [uiLocale, setUiLocale] = useState(locale);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [profileSection, setProfileSection] = useState('account');
@@ -86,6 +90,19 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setUiLocale(locale);
+  }, [locale]);
+
+  const onLocalePick = async (next) => {
+    setUiLocale(next);
+    const ok = changeLocale ? await changeLocale(next) : false;
+    toast(
+      t(locale, ok ? 'employeeHome.profileLocaleSaved' : 'employeeHome.profileSaveError'),
+      ok ? 'ok' : 'error'
+    );
+  };
 
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
@@ -221,7 +238,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
     }
   };
 
-  if (loading) return <EmployeePageLoading locale={locale} />;
+  if (loading) return <EmployeePageLoading locale={locale} titleKey="employeeHome.profileTitle" />;
 
   if (loadFailed) {
     return (
@@ -343,6 +360,18 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                 <button type="submit" disabled={busy} className={S.btnPrimary}>{t(locale, 'employeeHome.saveProfile')}</button>
               </div>
             </form>
+          </section>
+
+          <section hidden={profileSection !== 'account'} className={cn(profilePanelClass, 'mt-4')} aria-labelledby="employee-profile-locale-title">
+            <div className={profilePanelHeaderClass}>
+              <h2 id="employee-profile-locale-title" className="m-0 font-ui text-base font-semibold text-ink">{t(locale, 'dashboard.profileLocale')}</h2>
+              <p className="mb-0 mt-1 text-sm leading-relaxed text-ink-muted">{t(locale, 'employeeHome.profileLocaleHint')}</p>
+            </div>
+            <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
+              <FormField as="div" label={t(locale, 'dashboard.profileLocale')}>
+                <LanguageSelect locale={uiLocale} onChange={(next) => void onLocalePick(next)} bare />
+              </FormField>
+            </div>
           </section>
 
           <div hidden={profileSection !== 'security'} role="tabpanel" id="employee-profile-panel-security" aria-labelledby="employee-profile-tab-security">

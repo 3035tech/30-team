@@ -6,7 +6,8 @@ import { LOCALES, LOCALE_COOKIE, localeAccessibleLabel, localeFlag, localeLabel,
 import { cn } from '../../lib/cn';
 import { fieldSelectClass } from './form-control-styles';
 
-export default function LanguageSelect({ locale, onChange, persistUser = false, compact = false }) {
+/** `bare`: select only, full width; use inside `FormField`, which already renders the label. */
+export default function LanguageSelect({ locale, onChange, persistUser = false, compact = false, bare = false }) {
   const current = normalizeLocale(locale);
 
   const changeLocale = async (nextRaw) => {
@@ -26,6 +27,25 @@ export default function LanguageSelect({ locale, onChange, persistUser = false, 
     }
   };
 
+  const options = LOCALES.map((loc) => (
+    <option key={loc} value={loc} aria-label={localeAccessibleLabel(loc)}>
+      {localeFlag(loc)} {localeLabel(loc)}
+    </option>
+  ));
+
+  if (bare) {
+    return (
+      <SelectField
+        aria-label={t(current, 'common.language')}
+        value={current}
+        onChange={(e) => changeLocale(e.target.value)}
+        className={cn(fieldSelectClass, 'w-full')}
+      >
+        {options}
+      </SelectField>
+    );
+  }
+
   return (
     <label
       className={cn(
@@ -44,11 +64,7 @@ export default function LanguageSelect({ locale, onChange, persistUser = false, 
           compact ? 'min-h-touch' : ''
         )}
       >
-        {LOCALES.map((loc) => (
-          <option key={loc} value={loc} aria-label={localeAccessibleLabel(loc)}>
-            {localeFlag(loc)} {localeLabel(loc)}
-          </option>
-        ))}
+        {options}
       </SelectField>
     </label>
   );

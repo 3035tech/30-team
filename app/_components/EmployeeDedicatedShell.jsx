@@ -35,8 +35,21 @@ export function EmployeeDedicatedShell({
   );
 }
 
-/** Panel skeleton inside the same container as collaborator pages, so content does not jump on load. */
-export function EmployeePageLoading({ locale = 'pt-BR' }) {
+/**
+ * Panel skeleton inside the same container as collaborator pages, so content does not jump on load.
+ * With `titleKey`, keeps back link + title visible while data loads. Keys (not strings) because
+ * Suspense fallbacks render before I18nBoot; a missing catalog falls back to the bare skeleton.
+ */
+export function EmployeePageLoading({ locale = 'pt-BR', titleKey = '', hintKey = '' }) {
+  const title = titleKey ? t(locale, titleKey) : '';
+  if (title && title !== titleKey) {
+    const hint = hintKey ? t(locale, hintKey) : '';
+    return (
+      <EmployeeDedicatedShell locale={locale} title={title} hint={hint && hint !== hintKey ? hint : null}>
+        <AppLoading variant="panel" locale={locale} />
+      </EmployeeDedicatedShell>
+    );
+  }
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
       <AppLoading variant="panel" locale={locale} />

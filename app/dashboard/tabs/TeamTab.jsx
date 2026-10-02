@@ -1036,9 +1036,10 @@ export function TeamTab({
         ) : null}
       </AdminListFilters>
       {listFilter === 'turnover_risk' ? (
-        <InlineCallout tone="warning" className="flex flex-wrap items-center justify-between gap-2 text-sm text-ink">
-          <span>{t(locale, 'panel.team.filterTurnoverRisk')}</span>
-          {typeof onClearListFilter === 'function' ? (
+        <InlineCallout
+          tone="warning"
+          className="text-sm text-ink"
+          action={typeof onClearListFilter === 'function' ? (
             <button
               type="button"
               onClick={onClearListFilter}
@@ -1047,6 +1048,8 @@ export function TeamTab({
               {t(locale, 'panel.team.clearListFilter')}
             </button>
           ) : null}
+        >
+          {t(locale, 'panel.team.filterTurnoverRisk')}
         </InlineCallout>
       ) : null}
       <div
@@ -1443,13 +1446,10 @@ export function TeamTab({
                       </div>
                     ) : null}
                     {detail.candidate.employmentStatus === EMPLOYMENT_STATUS.ALUMNI ? (
-                      <InlineCallout tone="neutral" className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-ink">
-                        <span>
-                          {openRow.exitDate
-                            ? t(locale, 'panel.rehire.detailLeftOn', { date: formatDisplayDate(openRow.exitDate, locale) })
-                            : t(locale, 'panel.rehire.detailFormer')}
-                        </span>
-                        {canRehire ? (
+                      <InlineCallout
+                        tone="neutral"
+                        className="mb-3 text-sm text-ink"
+                        action={canRehire ? (
                           <button
                             type="button"
                             className={S.btnBrandSoft}
@@ -1463,6 +1463,10 @@ export function TeamTab({
                             {t(locale, 'panel.rehire.action')}
                           </button>
                         ) : null}
+                      >
+                        {openRow.exitDate
+                          ? t(locale, 'panel.rehire.detailLeftOn', { date: formatDisplayDate(openRow.exitDate, locale) })
+                          : t(locale, 'panel.rehire.detailFormer')}
                       </InlineCallout>
                     ) : null}
                     <PanelSubNav

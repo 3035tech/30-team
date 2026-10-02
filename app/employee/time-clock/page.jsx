@@ -27,7 +27,7 @@ export default async function EmployeeTimeClockPage(props) {
   if (!access.ok || !access.enabled) redirect('/employee');
   const locale = normalizeLocale(searchParams?.locale || payload.locale);
   return (
-    <Suspense fallback={<EmployeePageLoading locale={locale} />}>
+    <Suspense fallback={<EmployeePageLoading locale={locale} titleKey="employeeHome.timeClockPageTitle" hintKey="employeeHome.timeClockPageHint" />}>
       <I18nBoot locales={[locale]}><EmployeeTimeClockClient locale={locale} /></I18nBoot>
     </Suspense>
   );

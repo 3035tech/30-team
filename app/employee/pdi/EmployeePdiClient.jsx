@@ -72,7 +72,7 @@ export function EmployeePdiClient({ locale = 'pt-BR' }) {
     }
   };
 
-  if (loading) return <EmployeePageLoading locale={locale} />;
+  if (loading) return <EmployeePageLoading locale={locale} titleKey="employeeHome.pdiPageTitle" hintKey="employeeHome.pdiPageHint" />;
   if (failed || !data) {
     return <EmptyState message={t(locale, 'employeeHome.loadError')} actionLabel={t(locale, 'employeeHome.loadRetry')} onAction={() => void load()} />;
   }

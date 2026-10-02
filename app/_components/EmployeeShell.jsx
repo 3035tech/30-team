@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { EMPLOYEE_PUBLIC_PATHS } from '../../lib/employee-paths';
 import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
@@ -17,22 +17,32 @@ import { Icon } from './Icon';
 /**
  * Shared chrome for authenticated collaborator pages — sidebar + top bar.
  */
-export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = '', companyName = '' }) {
+export function EmployeeShell({
+  children,
+  initialLocale = 'pt-BR',
+  personName = '',
+  companyName = '',
+  companyLogoUrl: initialLogoUrl = '',
+}) {
   const pathname = usePathname() || '';
   const router = useRouter();
   const isPublic = EMPLOYEE_PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-  const [locale, setLocale] = useLocale(initialLocale);
+  const [locale, setLocale] = useLocale(initialLocale, { fromAccount: Boolean(personName) });
   const [displayName, setDisplayName] = useState(personName);
   const [company, setCompany] = useState(companyName);
-  const [companyLogoUrl, setCompanyLogoUrl] = useState('');
+  const [companyLogoUrl, setCompanyLogoUrl] = useState(initialLogoUrl);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const hasServerPerson = Boolean(personName);
 
   useEffect(() => {
-    if (personName) setDisplayName(personName);
-  }, [personName]);
+    if (!personName) return;
+    setDisplayName(personName);
+    setCompany(companyName);
+    setCompanyLogoUrl(initialLogoUrl);
+  }, [personName, companyName, initialLogoUrl]);
 
   useEffect(() => {
-    if (isPublic) return;
+    if (isPublic || hasServerPerson) return;
     let cancelled = false;
     (async () => {
       try {
@@ -52,7 +62,25 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
     return () => {
       cancelled = true;
     };
-  }, [isPublic, setLocale, router]);
+  }, [isPublic, hasServerPerson, setLocale, router]);
+
+  /** Applies at once in the chrome, saves on the account, then refreshes server-rendered pages. */
+  const changeLocale = useCallback(async (next) => {
+    setLocale(next);
+    try {
+      const res = await fetch('/api/employee/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preferredLocale: next }),
+      });
+      if (redirectEmployeeIfUnauthorized(router, res.status)) return false;
+      if (!res.ok) return false;
+      router.refresh();
+      return true;
+    } catch {
+      return false;
+    }
+  }, [router, setLocale]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
@@ -86,7 +114,7 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
 
   return (
     <AppFeedbackProvider locale={locale}>
-      <EmployeeNavProvider>
+      <EmployeeNavProvider changeLocale={changeLocale}>
         <div className="relative min-h-screen bg-canvas font-ui text-ink">
           <button
             type="button"
@@ -116,7 +144,6 @@ export function EmployeeShell({ children, initialLocale = 'pt-BR', personName = 
             <div className="flex min-w-0 flex-1 flex-col">
               <EmployeeTopBar
                 locale={locale}
-                onLocaleChange={setLocale}
                 displayName={displayName}
                 companyName={company}
               />

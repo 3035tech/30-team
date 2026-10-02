@@ -20,7 +20,7 @@ export default async function EmployeeLmsPage(props) {
   }
   const locale = normalizeLocale(searchParams?.locale || payload.locale);
   return (
-    <Suspense fallback={<EmployeePageLoading locale={locale} />}>
+    <Suspense fallback={<EmployeePageLoading locale={locale} titleKey="employeeHome.lmsPageTitle" />}>
       <I18nBoot locales={[locale]}><EmployeeLmsClient locale={locale} /></I18nBoot>
     </Suspense>
   );

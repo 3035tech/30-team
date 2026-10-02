@@ -247,7 +247,9 @@ const ProfileTab = dynamic(
 
 const SIDEBAR_COLLAPSED_KEY = '30team_sidebar_collapsed';
 export default function DashboardClient(props) {
-  const [locale, setLocale] = useLocale(props.auth?.locale || props.initialLocale || 'pt-BR');
+  const [locale, setLocale] = useLocale(props.auth?.locale || props.initialLocale || 'pt-BR', {
+    fromAccount: Boolean(props.auth?.locale),
+  });
   return (
     <AppFeedbackProvider locale={locale}>
       <DashboardClientContent {...props} locale={locale} setLocale={setLocale} />
