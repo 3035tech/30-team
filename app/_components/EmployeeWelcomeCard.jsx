@@ -12,7 +12,7 @@ const WELCOME_SHORTCUTS = Object.freeze([
   { id: 'journey', href: '#journey', icon: 'check', titleKey: 'employeeHome.journeyTitle', bodyKey: 'employeeHome.welcomeCardJourney' },
   { id: 'surveys', href: '#surveys', icon: 'climate', titleKey: 'employeeHome.surveysTitle', bodyKey: 'employeeHome.welcomeCardSurveys' },
   { id: 'timeClock', href: '/employee/time-clock', icon: 'timeClock', titleKey: 'employeeHome.timeClockTitle', bodyKey: 'employeeHome.welcomeCardTimeClock' },
-  { id: 'pdi', href: '/employee/pdi', icon: 'target', titleKey: 'panel.employeePortal.pdiTitle', bodyKey: 'employeeHome.welcomeCardPdi' },
+  { id: 'pdi', href: '/employee/pdi', icon: 'target', titleKey: 'employeeHome.pdiPageTitle', bodyKey: 'employeeHome.welcomeCardPdi' },
   { id: 'lms', href: '/employee/lms', icon: 'academy', titleKey: 'employeeHome.lmsTitle', bodyKey: 'employeeHome.welcomeCardLms' },
   { id: 'dp', href: '/employee/dp', icon: 'dp', titleKey: 'employeeHome.dpTitle', bodyKey: 'employeeHome.welcomeCardDp' },
   { id: 'feed', href: '#feed', icon: 'bell', titleKey: 'employeeHome.feedTitle', bodyKey: 'employeeHome.welcomeCardFeed' },

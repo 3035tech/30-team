@@ -1,12 +1,13 @@
 'use client';
 
+import { EmployeePageLoading } from '../../../_components/EmployeeDedicatedShell';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { t, localeHtmlLang } from '../../../../lib/i18n';
 import { cn } from '../../../../lib/cn';
 import { S } from '../../../dashboard/dashboard-shared';
-import { AppLoading, ContentEnter } from '../../../_components/AppLoading';
+import { ContentEnter } from '../../../_components/AppLoading';
 import { EmptyState } from '../../../_components/EmptyState';
 import { useAppFeedback } from '../../../_components/AppFeedback';
 import { redirectEmployeeIfUnauthorized } from '../../../../lib/employee-client-session';
@@ -65,7 +66,7 @@ export function EmployeeLmsCertificateClient({ locale = 'pt-BR' }) {
     };
   }, [locale]);
 
-  if (loading) return <AppLoading variant="panel" />;
+  if (loading) return <EmployeePageLoading locale={locale} />;
 
   if (!cert) {
     return (

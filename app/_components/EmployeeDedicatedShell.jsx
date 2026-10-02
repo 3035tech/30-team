@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S } from '../dashboard/dashboard-shared';
+import { AppLoading } from './AppLoading';
 
 /**
  * Shared chrome for heavy collaborator modules (back + title + body).
@@ -30,6 +31,15 @@ export function EmployeeDedicatedShell({
         {trailing ? <div className="shrink-0 pt-8 sm:pt-10">{trailing}</div> : null}
       </div>
       {children}
+    </div>
+  );
+}
+
+/** Panel skeleton inside the same container as collaborator pages, so content does not jump on load. */
+export function EmployeePageLoading({ locale = 'pt-BR' }) {
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+      <AppLoading variant="panel" locale={locale} />
     </div>
   );
 }

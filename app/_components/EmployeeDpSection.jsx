@@ -4,7 +4,7 @@ import { DP_ADDRESS_NUMBER_MAX_LENGTH } from '../../lib/dp-profile-constants';
 import { dpUploadValidationKey, dpUploadResponseKey } from '../../lib/dp-upload-validation';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { t, localeHtmlLang } from '../../lib/i18n';
+import { t, tCount, localeHtmlLang } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { S, PanelSubNav } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
@@ -563,7 +563,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
 
         {pendingDocs > 0 ? (
           <InlineCallout tone="warning">
-            {t(locale, 'employeeHome.dpDocsPending', { n: pendingDocs })}
+            {tCount(locale, 'employeeHome.dpDocsPending', pendingDocs)}
           </InlineCallout>
         ) : null}
 
@@ -594,41 +594,40 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
               {t(locale, 'panel.dp.noProfile')}
             </InlineCallout>
           ) : null}
-          <dl className="m-0 grid gap-2 sm:grid-cols-2">
-            <FormField label={t(locale, 'panel.dp.addressPostal')}>
-              <p className={cn(S.cardMuted, 'm-0')}>
-                {profile?.addressPostal ? formatCepBr(profile.addressPostal) : '—'}
-              </p>
-            </FormField>
-            <FormField label={t(locale, 'panel.dp.cpf')}>
-              <p className={cn(S.cardMuted, 'm-0')}>
-                {profile?.cpf ? formatCpfBr(profile.cpf) : '—'}
-              </p>
-            </FormField>
-            <FormField label={t(locale, 'panel.dp.addressLine')}>
-              <p className={cn(S.cardMuted, 'm-0')}>{profile?.addressLine || '—'}</p>
-            </FormField>
-            <FormField label={t(locale, 'panel.dp.addressNumber')}>
-              <p className={cn(S.cardMuted, 'm-0')}>{profile?.addressNumber || '—'}</p>
-            </FormField>
-            <FormField label={t(locale, 'panel.dp.addressCity')}>
-              <p className={cn(S.cardMuted, 'm-0')}>{profile?.addressCity || '—'}</p>
-            </FormField>
-            <FormField label={t(locale, 'panel.dp.addressState')}>
-              <p className={cn(S.cardMuted, 'm-0')}>{profile?.addressState || '—'}</p>
-            </FormField>
-            <FormField label={t(locale, 'panel.dp.emergencyName')}>
-              <p className={cn(S.cardMuted, 'm-0')}>{profile?.emergencyName || '—'}</p>
-            </FormField>
-            <FormField label={t(locale, 'panel.dp.emergencyPhone')}>
-              <p className={cn(S.cardMuted, 'm-0')}>
-                {profile?.emergencyPhone ? formatPhoneBr(profile.emergencyPhone) : '—'}
-              </p>
-            </FormField>
-            <FormField label={t(locale, 'panel.dp.emergencyRelation')}>
-              <p className={cn(S.cardMuted, 'm-0')}>{profile?.emergencyRelation || '—'}</p>
-            </FormField>
-          </dl>
+          {[
+            {
+              id: 'address',
+              title: t(locale, 'panel.dp.addressSection'),
+              fields: [
+                ['cpf', profile?.cpf ? formatCpfBr(profile.cpf) : ''],
+                ['addressLine', profile?.addressLine],
+                ['addressNumber', profile?.addressNumber],
+                ['addressCity', profile?.addressCity],
+                ['addressState', profile?.addressState],
+                ['addressPostal', profile?.addressPostal ? formatCepBr(profile.addressPostal) : ''],
+              ],
+            },
+            {
+              id: 'emergency',
+              title: t(locale, 'panel.dp.emergencySection'),
+              fields: [
+                ['emergencyName', profile?.emergencyName],
+                ['emergencyPhone', profile?.emergencyPhone ? formatPhoneBr(profile.emergencyPhone) : ''],
+                ['emergencyRelation', profile?.emergencyRelation],
+              ],
+            },
+          ].map((group) => (
+            <section key={group.id} className="mt-3 border-t border-ink/8 pt-3 first-of-type:mt-0 first-of-type:border-t-0 first-of-type:pt-0">
+              <h3 className={cn(S.cardTitle, 'mb-2 mt-0')}>{group.title}</h3>
+              <dl className="m-0 grid items-start gap-x-4 gap-y-2 sm:grid-cols-2 lg:grid-cols-3">
+                {group.fields.map(([key, value]) => (
+                  <FormField key={key} label={t(locale, `panel.dp.${key}`)}>
+                    <p className={cn(S.cardMuted, 'm-0')}>{value || '—'}</p>
+                  </FormField>
+                ))}
+              </dl>
+            </section>
+          ))}
         </div>
 
         <div role="tabpanel" id="employee-dp-panel-documents" aria-labelledby="employee-dp-tab-documents" hidden={activePanel !== 'documents'} className={cn(S.cardShell, 'p-4 sm:p-5')}>
@@ -645,10 +644,10 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
             <ul className="m-0 flex list-none flex-col gap-2 p-0">
               {[...documents]
                 .sort((a, b) => {
-                  const rank = (d) =>
-                    (d.signatureStatus || '') === DP_DOCUMENT_SIGNATURE_STATUS.REQUESTED
-                      ? 0
-                      : 1;
+                  const rank = (d) => {
+                    if ((d.signatureStatus || '') === DP_DOCUMENT_SIGNATURE_STATUS.REQUESTED) return 0;
+                    return d.status === DP_DOCUMENT_STATUS.PENDING ? 1 : 2;
+                  };
                   return rank(a) - rank(b);
                 })
                 .map((doc) => {
@@ -879,7 +878,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
                     <div className="text-xs text-ink-muted">
                       {formatDate(row.startsOn, locale)}–{formatDate(row.endsOn, locale)}
                       {days != null
-                        ? ` · ${t(locale, 'panel.dp.leaveDaysMeta', { n: days })}`
+                        ? ` · ${tCount(locale, 'panel.dp.leaveDaysMeta', days)}`
                         : ''}
                     </div>
                     {row.reason ? (

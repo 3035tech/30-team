@@ -2,6 +2,7 @@
 
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
+import { formatDisplayDate } from '../../lib/format-display-date';
 import { S } from '../dashboard/dashboard-shared';
 import { InlineCallout } from './InlineCallout';
 import { StatMetricTile } from './StatMetricTile';
@@ -58,8 +59,8 @@ export function LeaveBalanceSummary({
       {showPeriod && balance.periodStart && balance.periodEnd ? (
         <p className={cn(S.faint, 'mb-0 mt-2')}>
           {t(locale, 'panel.dp.balancePeriodMeta', {
-            start: String(balance.periodStart).slice(0, 10),
-            end: String(balance.periodEnd).slice(0, 10),
+            start: formatDisplayDate(balance.periodStart, locale),
+            end: formatDisplayDate(balance.periodEnd, locale),
           })}
         </p>
       ) : null}

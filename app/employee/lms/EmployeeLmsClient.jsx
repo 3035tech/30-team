@@ -1,14 +1,15 @@
 'use client';
 
+import { EmployeePageLoading } from '../../_components/EmployeeDedicatedShell';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { t, errorMessage } from '../../../lib/i18n';
+import { t, tCount, errorMessage } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { formatDisplayDate } from '../../../lib/format-display-date';
 import { S } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
-import { AppLoading, ContentEnter } from '../../_components/AppLoading';
+import { ContentEnter } from '../../_components/AppLoading';
 import { EmptyState } from '../../_components/EmptyState';
 import { MeterBar } from '../../_components/MeterBar';
 import { InlineCallout } from '../../_components/InlineCallout';
@@ -24,7 +25,7 @@ function dueLabel(locale, course) {
   if (course.daysLeft === 0) return t(locale, 'employeeHome.lmsDueToday');
   if (course.daysLeft === 1) return t(locale, 'employeeHome.lmsDueTomorrow');
   if (course.daysLeft != null && course.daysLeft > 1) {
-    return t(locale, 'employeeHome.lmsDueInDays', { n: course.daysLeft });
+    return tCount(locale, 'employeeHome.lmsDueInDays', course.daysLeft);
   }
   return t(locale, 'panel.employeePortal.courseDue', {
     date: formatDisplayDate(course.dueDate, locale),
@@ -37,7 +38,7 @@ function continueDueSuffix(locale, info) {
   if (info.daysLeft === 0) return t(locale, 'employeeHome.lmsDueToday');
   if (info.daysLeft === 1) return t(locale, 'employeeHome.lmsDueTomorrow');
   if (info.daysLeft != null && info.daysLeft > 1) {
-    return t(locale, 'employeeHome.lmsDueInDays', { n: info.daysLeft });
+    return tCount(locale, 'employeeHome.lmsDueInDays', info.daysLeft);
   }
   return '';
 }
@@ -389,19 +390,14 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
     if (course && lesson) openLesson(course, lesson);
   };
 
-  if (loading) return <AppLoading variant="panel" />;
+  if (loading) return <EmployeePageLoading locale={locale} />;
 
   const dueSuffix = continueDueSuffix(locale, continueInfo);
   const inCourseView = Boolean(activeCourse);
 
   return (
     <ContentEnter animKey={`emp-lms|${courses.length}|${activeEnrollmentId || 0}`}>
-      <div
-        className={cn(
-          'mx-auto w-full px-4 py-6 sm:px-6 sm:py-8',
-          inCourseView ? 'max-w-6xl' : 'max-w-3xl lg:max-w-4xl'
-        )}
-      >
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             {inCourseView ? (
@@ -467,7 +463,7 @@ export function EmployeeLmsClient({ locale = 'pt-BR' }) {
           </div>
         </div>
 
-        {!inCourseView && continueInfo && courses.some(course => course.enrollmentId === continueInfo.enrollmentId && !course.isComplete) ? (
+        {!inCourseView && continueInfo && courses.filter(course => !course.isComplete).length > 1 && courses.some(course => course.enrollmentId === continueInfo.enrollmentId && !course.isComplete) ? (
           <InlineCallout tone={continueInfo.overdue ? 'warning' : 'info'} className="mb-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-ui text-prose text-ink">

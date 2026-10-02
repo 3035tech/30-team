@@ -1,5 +1,6 @@
 'use client';
 
+import { EmployeePageLoading } from '../../_components/EmployeeDedicatedShell';
 import { SelectField } from '../../_components/SelectField';
 
 import { useCallback, useEffect, useState } from 'react';
@@ -9,9 +10,9 @@ import { errorMessage, t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { S, PanelSubNav } from '../../dashboard/dashboard-shared';
 import { useAppFeedback } from '../../_components/AppFeedback';
-import { AppLoading, ContentEnter } from '../../_components/AppLoading';
+import { ContentEnter } from '../../_components/AppLoading';
 import { DateField } from '../../_components/DateField';
-import { FormField, formFieldGrowClass, formFieldRowClass } from '../../_components/FormField';
+import { FormField, formFieldGrowClass } from '../../_components/FormField';
 import { profilePanelClass, profilePanelHeaderClass } from '../../_components/ProfileUi';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { InlineCallout } from '../../_components/InlineCallout';
@@ -220,7 +221,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
     }
   };
 
-  if (loading) return <AppLoading variant="panel" />;
+  if (loading) return <EmployeePageLoading locale={locale} />;
 
   if (loadFailed) {
     return (
@@ -236,12 +237,12 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
 
   return (
     <ContentEnter animKey="ready">
-      <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         <Link href="/employee" className={cn(S.cardLink, 'inline-flex')}>
           ← {t(locale, 'employeeHome.backHome')}
         </Link>
         <h1 className={cn(S.pageTitle, 'mt-3 font-ui text-2xl font-semibold tracking-tight')}>{t(locale, 'employeeHome.profileTitle')}</h1>
-        <div className={cn(S.card, 'mt-5 p-5 sm:p-7')}>
+        <div className={cn(S.cardShell, 'mt-5 max-w-4xl p-5 sm:p-7')}>
           <p className="m-0 max-w-2xl text-prose leading-[1.55] text-ink-muted">{t(locale, 'employeeHome.profileHint')}</p>
           <div className="mt-5">
             <PanelSubNav
@@ -260,7 +261,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
               <p className="mb-0 mt-1 text-sm leading-relaxed text-ink-muted">{t(locale, 'employeeHome.profileSectionContact')}</p>
             </div>
             <form className="flex flex-col gap-3" onSubmit={saveProfile}>
-              <div className={formFieldRowClass}>
+              <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
                 <FormField
                   label={t(locale, 'employeeHome.fullNameLabel')}
                   className={formFieldGrowClass}
@@ -282,7 +283,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                   />
                 </FormField>
               </div>
-              <div className={formFieldRowClass}>
+              <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
                 <FormField label={t(locale, 'employeeHome.phoneLabel')} className={formFieldGrowClass}>
                   <input
                     className={cn(S.input, 'w-full font-mono text-xs')}
@@ -293,7 +294,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                 </FormField>
                 <FormField
                   label={t(locale, 'employeeHome.linkedinLabel')}
-                  className="min-w-0 flex-[2_1_200px]"
+                  className="min-w-0"
                 >
                   <input
                     className={cn(S.input, 'w-full font-mono text-xs')}
@@ -303,7 +304,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                   />
                 </FormField>
               </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1.45fr)_minmax(7rem,0.65fr)_minmax(0,1fr)]">
+              <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
                 <FormField label={t(locale, 'employeeHome.cityLabel')} className="min-w-0">
                   <input
                     className={cn(S.input, 'w-full')}
@@ -312,6 +313,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                     disabled={busy}
                   />
                 </FormField>
+                <div className="grid grid-cols-[minmax(6rem,0.6fr)_minmax(0,1fr)] items-start gap-3">
                 <FormField label={t(locale, 'employeeHome.stateLabel')} className="min-w-0">
                   <SelectField
                     className={cn(S.select, 'w-full')}
@@ -335,6 +337,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                     disabled={busy}
                   />
                 </FormField>
+                </div>
               </div>
               <div className="mt-3 flex justify-end border-t border-ink/10 pt-4">
                 <button type="submit" disabled={busy} className={S.btnPrimary}>{t(locale, 'employeeHome.saveProfile')}</button>

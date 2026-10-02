@@ -5,9 +5,9 @@ import { t } from '../../../lib/i18n';
 import { cn } from '../../../lib/cn';
 import { formatDisplayDate } from '../../../lib/format-display-date';
 import { S, PanelSubNav } from '../../dashboard/dashboard-shared';
-import { AppLoading, ContentEnter } from '../../_components/AppLoading';
+import { ContentEnter } from '../../_components/AppLoading';
 import { EmptyState } from '../../_components/EmptyState';
-import { EmployeeDedicatedShell } from '../../_components/EmployeeDedicatedShell';
+import { EmployeeDedicatedShell, EmployeePageLoading } from '../../_components/EmployeeDedicatedShell';
 import { MeterBar } from '../../_components/MeterBar';
 import { StatusToneChip } from '../../_components/StatusToneChip';
 import { useAppFeedback } from '../../_components/AppFeedback';
@@ -72,7 +72,7 @@ export function EmployeePdiClient({ locale = 'pt-BR' }) {
     }
   };
 
-  if (loading) return <AppLoading variant="panel" />;
+  if (loading) return <EmployeePageLoading locale={locale} />;
   if (failed || !data) {
     return <EmptyState message={t(locale, 'employeeHome.loadError')} actionLabel={t(locale, 'employeeHome.loadRetry')} onAction={() => void load()} />;
   }

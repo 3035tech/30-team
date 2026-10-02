@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { EmployeeLmsClient } from './EmployeeLmsClient';
-import { AppLoading } from '../../_components/AppLoading';
+import { EmployeePageLoading } from '../../_components/EmployeeDedicatedShell';
 import { EMPLOYEE_COOKIE_NAME } from '../../../lib/employee-auth-constants.js';
 import { isEmployeeSessionPayload, verifyEmployeeToken } from '../../../lib/employee-auth.js';
 import { normalizeLocale } from '../../../lib/i18n.js';
@@ -20,7 +20,7 @@ export default async function EmployeeLmsPage(props) {
   }
   const locale = normalizeLocale(searchParams?.locale || payload.locale);
   return (
-    <Suspense fallback={<AppLoading variant="panel" />}>
+    <Suspense fallback={<EmployeePageLoading locale={locale} />}>
       <I18nBoot locales={[locale]}><EmployeeLmsClient locale={locale} /></I18nBoot>
     </Suspense>
   );

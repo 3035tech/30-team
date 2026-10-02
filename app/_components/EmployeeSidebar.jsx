@@ -14,7 +14,7 @@ export const EMPLOYEE_NAV_ITEMS = Object.freeze([
   { id: 'tasks', href: '/employee#tasks', icon: 'list', labelKey: 'employeeHome.tasksTitle', hash: 'tasks' },
   { id: 'journey', href: '/employee#journey', icon: 'sparkles', labelKey: 'employeeHome.journeyTitle', hash: 'journey' },
   { id: 'surveys', href: '/employee#surveys', icon: 'climate', labelKey: 'employeeHome.surveysTitle', hash: 'surveys' },
-  { id: 'pdi', href: '/employee/pdi', icon: 'clipboard', labelKey: 'panel.employeePortal.pdiTitle' },
+  { id: 'pdi', href: '/employee/pdi', icon: 'clipboard', labelKey: 'employeeHome.pdiPageTitle' },
   { id: 'formalReviews', href: '/employee#formalReviews', icon: 'clipboard', labelKey: 'dashboard.performanceReviews', hash: 'formalReviews' },
   { id: 'okr', href: '/employee#okr', icon: 'chart', labelKey: 'employeeHome.okrTitle', hash: 'okr' },
   { id: 'lms', href: '/employee/lms', icon: 'book', labelKey: 'employeeHome.lmsTitle' },

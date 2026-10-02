@@ -1,5 +1,6 @@
 'use client';
 
+import { EmployeePageLoading } from '../_components/EmployeeDedicatedShell';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '../../lib/i18n';
@@ -7,7 +8,7 @@ import { cn } from '../../lib/cn';
 import { formatDisplayDate, formatDisplayDateTime } from '../../lib/format-display-date';
 import { S } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from '../_components/AppFeedback';
-import { AppLoading, ContentEnter } from '../_components/AppLoading';
+import { ContentEnter } from '../_components/AppLoading';
 import { FormField } from '../_components/FormField';
 import { RichTextView } from '../_components/RichTextView';
 import { DEVELOPMENT_PLAN_ITEM_STATUS, OKR_CYCLE_STATUS, OKR_WEIGHT_DEFAULT } from '../../lib/domain-status';
@@ -486,7 +487,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     return () => window.removeEventListener('hashchange', onHash);
   }, [loading, openSection, scrollToSection, setActiveSection]);
 
-  if (loading) return <AppLoading variant="panel" />;
+  if (loading) return <EmployeePageLoading locale={locale} />;
 
   if (loadFailed || !data) {
     return (
@@ -571,7 +572,6 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           />
         ) : null}
         <div className="mb-6" hidden={Boolean(detailView)}>
-          <p className={cn(S.label, 'mb-2 mt-0')}>{t(locale, 'employeeHome.eyebrow')}</p>
           <h1 className={cn(S.pageTitle, 'm-0 font-ui text-2xl font-semibold tracking-tight')}>
             {t(locale, 'employeeHome.hello', { name: data.person?.fullName || '' })}
           </h1>
@@ -602,7 +602,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
           </section>
           <nav className="mt-3 flex flex-wrap gap-2" aria-label={t(locale, 'employeeHome.sectionNavAria')}>
             {sectionOk('pdi') ? (
-              <a href="/employee/pdi" className={cn(S.btnGhost, 'min-h-9 no-underline')}>{t(locale, 'panel.employeePortal.pdiTitle')}</a>
+              <a href="/employee/pdi" className={cn(S.btnGhost, 'min-h-9 no-underline')}>{t(locale, 'employeeHome.pdiPageTitle')}</a>
             ) : null}
             {sectionOk('lms') ? (
               <a href="/employee/lms" className={cn(S.btnGhost, 'min-h-9 no-underline')}>{t(locale, 'employeeHome.lmsTitle')}</a>
@@ -615,13 +615,15 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
             ) : null}
           </nav>
           {startHere ? (
-            <InlineCallout tone="info" className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <span>
-                {t(locale, startHere.labelKey, { count: startHere.count })}
-              </span>
-              <a href={startHere.href} onClick={() => { if (startHere.href.startsWith('#')) focusSection(startHere.href.slice(1)); }} className={cn(S.btnBrandSoft, 'min-h-touch no-underline')}>
-                {t(locale, 'employeeHome.startHereCta')}
-              </a>
+            <InlineCallout tone="info" className="mt-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span>
+                  {t(locale, startHere.labelKey, { count: startHere.count })}
+                </span>
+                <a href={startHere.href} onClick={() => { if (startHere.href.startsWith('#')) focusSection(startHere.href.slice(1)); }} className={cn(S.btnBrandSoft, 'min-h-touch shrink-0 no-underline')}>
+                  {t(locale, 'employeeHome.startHereCta')}
+                </a>
+              </div>
             </InlineCallout>
           ) : null}
         </div>
@@ -761,7 +763,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
         <CollapsibleSection
           id="pdi"
           hidden={detailView !== 'pdi'}
-          title={t(locale, 'panel.employeePortal.pdiTitle')}
+          title={t(locale, 'employeeHome.pdiPageTitle')}
           count={plans.length}
           open={openMap.pdi !== false}
           onToggle={() => toggleSection('pdi')}

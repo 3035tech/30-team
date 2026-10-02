@@ -4,7 +4,7 @@ import { DP_ADDRESS_NUMBER_MAX_LENGTH } from '../../lib/dp-profile-constants';
 import { dpUploadValidationKey, dpUploadResponseKey } from '../../lib/dp-upload-validation';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { t, localeHtmlLang, t as i18nT } from '../../lib/i18n';
+import { t, tCount, localeHtmlLang, t as i18nT } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import {
   S,
@@ -1276,7 +1276,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                     {(() => {
                       const days = leaveInclusiveDays(row.startsOn, row.endsOn);
                       return days != null ? (
-                        <span>{t(locale, 'panel.dp.leaveDaysMeta', { n: days })}</span>
+                        <span>{tCount(locale, 'panel.dp.leaveDaysMeta', days)}</span>
                       ) : null;
                     })()}
                     <StatusToneChip tone={leaveStatusTone(row.status)}>

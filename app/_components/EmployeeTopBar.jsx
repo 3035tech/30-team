@@ -268,7 +268,7 @@ export function EmployeeTopBar({
     <header className="emp-topbar sticky top-0 z-30 border-b border-ink/10 bg-canvas/90 backdrop-blur">
       <div
         ref={wrapRef}
-        className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 pl-14 md:pl-4 lg:px-6"
+        className="flex min-h-[68px] flex-wrap items-center justify-between gap-2 px-4 py-2.5 pl-16 md:min-h-0 md:pl-4 lg:px-6"
       >
         <div className="flex min-w-0 items-center gap-2 md:hidden">
           <BrandMark size={22} withWordmark href="/employee" />
@@ -282,9 +282,11 @@ export function EmployeeTopBar({
             : t(locale, 'employeeHome.eyebrow')}
         </p>
 
-        <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-1.5 [&>label>span]:hidden sm:[&>label>span]:inline">
-          <LanguageSelect locale={locale} onChange={persistLocale} compact />
-          <DarkModeToggle />
+        <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-1.5">
+          <div className="hidden items-center gap-1.5 sm:flex">
+            <LanguageSelect locale={locale} onChange={persistLocale} compact />
+            <DarkModeToggle />
+          </div>
 
           <div className="relative">
             <button
@@ -394,6 +396,10 @@ export function EmployeeTopBar({
                     </span>
                   </div>
                 ) : null}
+                <div className="mb-1 flex items-center justify-between gap-2 border-b border-ink/8 px-2.5 py-2 sm:hidden">
+                  <LanguageSelect locale={locale} onChange={persistLocale} compact />
+                  <DarkModeToggle />
+                </div>
                 {companyChoicesLoading ? (
                   <div className="px-2.5 py-2">
                     <AppLoading
