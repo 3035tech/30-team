@@ -267,7 +267,7 @@ export function EmployeeTopBar({
         </p>
 
         <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-1.5">
-          <DarkModeToggle />
+          <DarkModeToggle locale={locale} />
 
           <div className="relative">
             <button

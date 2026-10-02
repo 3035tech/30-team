@@ -283,7 +283,7 @@ export function DashboardTopBarMenus({
       <GlobalSearch locale={locale} />
       
       {/* Dark Mode Toggle */}
-      <DarkModeToggle />
+      <DarkModeToggle locale={locale} />
       
       <div className="relative">
         <button

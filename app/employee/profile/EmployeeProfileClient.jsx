@@ -321,7 +321,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                   />
                 </FormField>
               </div>
-              <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(5.5rem,0.5fr)_minmax(0,1fr)]">
                 <FormField label={t(locale, 'employeeHome.cityLabel')} className="min-w-0">
                   <input
                     className={cn(S.input, 'w-full')}
@@ -330,7 +330,6 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                     disabled={busy}
                   />
                 </FormField>
-                <div className="grid grid-cols-[minmax(6rem,0.6fr)_minmax(0,1fr)] items-start gap-3">
                 <FormField label={t(locale, 'employeeHome.stateLabel')} className="min-w-0">
                   <SelectField
                     className={cn(S.select, 'w-full')}
@@ -354,7 +353,6 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
                     disabled={busy}
                   />
                 </FormField>
-                </div>
               </div>
               <div className="mt-3 flex justify-end border-t border-ink/10 pt-4">
                 <button type="submit" disabled={busy} className={S.btnPrimary}>{t(locale, 'employeeHome.saveProfile')}</button>
@@ -364,7 +362,7 @@ export function EmployeeProfileClient({ locale = 'pt-BR' }) {
 
           <section hidden={profileSection !== 'account'} className={cn(profilePanelClass, 'mt-4')} aria-labelledby="employee-profile-locale-title">
             <div className={profilePanelHeaderClass}>
-              <h2 id="employee-profile-locale-title" className="m-0 font-ui text-base font-semibold text-ink">{t(locale, 'dashboard.profileLocale')}</h2>
+              <h2 id="employee-profile-locale-title" className="m-0 font-ui text-base font-semibold text-ink">{t(locale, 'employeeHome.profilePreferencesTitle')}</h2>
               <p className="mb-0 mt-1 text-sm leading-relaxed text-ink-muted">{t(locale, 'employeeHome.profileLocaleHint')}</p>
             </div>
             <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">

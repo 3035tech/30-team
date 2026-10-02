@@ -8,6 +8,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { cn } from '../../lib/cn';
+import { t } from '../../lib/i18n';
 import { DARK_MODE_STORAGE_KEY, resolveDarkMode } from '../../lib/theme-mode';
 
 export { DARK_MODE_STORAGE_KEY };
@@ -92,8 +93,9 @@ export function DarkModeProvider({ children }) {
 }
 
 /** Toggle in the dashboard top bar (persists via provider). */
-export function DarkModeToggle({ className = '' }) {
+export function DarkModeToggle({ className = '', locale = 'pt-BR' }) {
   const { isDark, toggle } = useDarkMode();
+  const label = t(locale, isDark ? 'common.switchToLight' : 'common.switchToDark');
 
   return (
     <button
@@ -106,8 +108,8 @@ export function DarkModeToggle({ className = '' }) {
           : 'bg-ink/[0.04] text-ink-muted hover:bg-ink/[0.08]',
         className
       )}
-      aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
-      title={isDark ? 'Modo claro' : 'Modo escuro'}
+      aria-label={label}
+      title={label}
     >
       {isDark ? (
         <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
