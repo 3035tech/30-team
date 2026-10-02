@@ -699,7 +699,7 @@ TeamCulture / Qulture / Alina. Ciclo já existia; faltava calibrar scores submet
 
 ### B-3002 — Mapa salarial por cargo ✅ ENTREGUE
 Alina / ImpulseUp. Dados: `job_roles` + salário vigente aprovado.
-1. Remuneração (lista): below / in band / above + barras empilhadas + simulação de aumento %.
+1. Remuneração (Salários da equipe): below / in band / above + barras empilhadas + simulação de aumento %.
 2. Drill-down na tabela; não é folha.
 3. Fora: survey salarial externo / benchmarking pago.
 

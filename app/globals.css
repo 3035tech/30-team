@@ -252,9 +252,9 @@ textarea:focus-visible {
     touch-action: none;
   }
   .db-main {
-    padding: 12px 14px 40px !important;
+    padding: 12px 14px 88px !important;
     padding-top: max(12px, env(safe-area-inset-top, 0px)) !important;
-    padding-bottom: max(40px, env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: max(88px, env(safe-area-inset-bottom, 0px)) !important;
     width: 100%;
     box-sizing: border-box;
   }

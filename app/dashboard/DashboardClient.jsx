@@ -968,7 +968,7 @@ function DashboardClientContent({
           ))}
         />
 
-        <main className="db-main relative mx-auto min-w-0 max-w-[1600px] flex-1 px-6 pb-[60px] pt-7">
+        <main className="db-main relative mx-auto min-w-0 max-w-[1600px] flex-1 px-6 pb-24 pt-7">
           <DashboardPageTitleContext.Provider value={isPersonFocus || isVacancyDetail ? null : t(locale, getDashboardTabNav(tab).labelKey)}>
           <NavLoadBar active={panelLoading || navPending} />
 

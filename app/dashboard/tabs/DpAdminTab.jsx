@@ -415,11 +415,11 @@ export function DpAdminTab({ locale = 'pt-BR', companyId, navigateDashboard }) {
     leaveTypeFilter !== 'all';
 
   const workspaceHeading = {
-    pending: ['panel.dp.workspacePending', null],
+    pending: ['panel.dp.workspacePending', 'panel.dp.workspacePendingHint'],
     leaves: ['panel.dp.inboxTitle', 'panel.dp.inboxSubtitle'],
-    documents: ['panel.dp.workspaceDocuments', null],
-    time: ['panel.dp.workspaceTime', null],
-    onboarding: ['panel.dp.workspaceOnboarding', null],
+    documents: ['panel.dp.workspaceDocuments', 'panel.dp.workspaceDocumentsHint'],
+    time: ['panel.dp.workspaceTime', 'panel.dp.workspaceTimeHint'],
+    onboarding: ['panel.dp.workspaceOnboarding', 'panel.dp.workspaceOnboardingHint'],
   }[workspaceSection] || ['panel.dp.inboxTitle', 'panel.dp.inboxSubtitle'];
 
   return (

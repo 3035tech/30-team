@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAppFeedback } from './AppFeedback';
 import { AppLoading } from './AppLoading';
 import { StatusToneChip } from './StatusToneChip';
-import { S, AdminPageHeader, AdminCreateButton, AdminEditButton, AdminDeleteButton } from '../dashboard/dashboard-shared';
+import { S, AdminPageHeader, AdminCreateButton, AdminEditButton, AdminDeleteButton, AdminListPager } from '../dashboard/dashboard-shared';
 import { t as i18nT, contentLocale } from '../../lib/i18n.js';
 
 export function CompetencyCategoriesBlock({ companyId, locale = 'pt-BR', onBack }) {
@@ -15,6 +15,7 @@ export function CompetencyCategoriesBlock({ companyId, locale = 'pt-BR', onBack 
   const [search, setSearch] = useState('');
   const [includeInactive, setIncludeInactive] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [version, setVersion] = useState(0);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -25,7 +26,7 @@ export function CompetencyCategoriesBlock({ companyId, locale = 'pt-BR', onBack 
     setLoading(true); setError('');
     const timer = setTimeout(async () => {
       try {
-        const params = new URLSearchParams({ companyId, q: search, includeInactive, page, pageSize: 20 });
+        const params = new URLSearchParams({ companyId, q: search, includeInactive, page, pageSize });
         const response = await fetch(`/api/admin/competency-categories?${params}`, { signal: controller.signal });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || String(response.status));
@@ -36,7 +37,7 @@ export function CompetencyCategoriesBlock({ companyId, locale = 'pt-BR', onBack 
       finally { if (!controller.signal.aborted) setLoading(false); }
     }, 200);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [companyId, search, includeInactive, page, version]);
+  }, [companyId, search, includeInactive, page, pageSize, version]);
 
   async function mutate(method, values, keepFormOpen = false) {
     setBusy(true); setError('');
@@ -87,11 +88,14 @@ export function CompetencyCategoriesBlock({ companyId, locale = 'pt-BR', onBack 
           </div></td>
         </tr>)}</tbody>
       </table></div> : <p className={S.muted}>{i18nT(locale, 'ui.competencyCategoriesBlock.noCategoriesFoundCreateA')}</p>}
-      <nav className="flex items-center justify-between gap-3" aria-label={i18nT(locale, 'ui.competencyCategoriesBlock.categoryPages')}>
-        <button type="button" className={S.btnGhost} disabled={page <= 1} onClick={() => setPage(p => p - 1)}>{i18nT(locale, 'ui.competencyCategoriesBlock.previous')}</button>
-        <span className={S.faint}>{page} / {Math.max(1, Math.ceil(total / 20))} · {total}</span>
-        <button type="button" className={S.btnGhost} disabled={page * 20 >= total} onClick={() => setPage(p => p + 1)}>{i18nT(locale, 'ui.competencyCategoriesBlock.next')}</button>
-      </nav>
+      <AdminListPager
+        locale={locale}
+        page={page}
+        pageSize={pageSize}
+        total={total}
+        onPageChange={setPage}
+        onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
+      />
     </>}
   </section>;
 }

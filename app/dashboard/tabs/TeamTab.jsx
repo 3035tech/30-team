@@ -1216,7 +1216,6 @@ export function TeamTab({
                 aria-label={`${t(locale, 'panel.team.openDetail')}: ${titleCasePersonName(r.name)}`}
                 className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-control border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
               >
-                <span className="shrink-0 text-lg leading-none" aria-hidden="true">{d.emoji}</span>
                 <div className="min-w-0 flex-1">
                 <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                   <span className="text-base leading-snug text-ink">

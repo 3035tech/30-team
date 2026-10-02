@@ -9,7 +9,7 @@
   --grow-border: #E5E7EB;
   --grow-input-border: #D1D5DB;
   --grow-text-primary: #111827;
-  --grow-text-secondary: #64748B;
+  --grow-text-secondary: #5A6980;
   --grow-text-muted: #94A3B8;
   --grow-action: #15803D;
   --grow-action-hover: #166534;
@@ -18,9 +18,9 @@
   --canvas-alt: 241 245 249;
   --surface: 255 255 255;
   --ink: 17 24 39;
-  --ink-secondary: 100 116 139;
-  --ink-faint: 100 116 139;
-  --ink-label: 100 116 139;
+  --ink-secondary: 90 105 128;
+  --ink-faint: 90 105 128;
+  --ink-label: 90 105 128;
   --border: 229 231 235;
   --input-border: 209 213 219;
   --action: 21 128 61;
@@ -32,7 +32,7 @@
   --danger: 220 38 38;
   --warning: 180 83 9;
   --info: 3 105 161;
-  --soft: 100 116 139;
+  --soft: 90 105 128;
   --brand-50: 240 253 244;
   --brand-100: 220 252 231;
   --brand-200: 187 247 208;

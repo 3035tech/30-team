@@ -416,8 +416,6 @@ export function PerformanceReviewsAdminTab({ locale = 'pt-BR', companyId }) {
         active={mode === 'goals' ? 'formal' : mode}
         onChange={setMode}
         scrollable
-        className="[&>button]:min-w-0 [&>button]:flex-1 [&>button]:px-2"
-        variant="pill"
         tabs={[
           { id: 'formal', label: i18nT(locale, 'ui.performanceReviewsAdminTab.reviews') },
           { id: 'catalog', label: i18nT(locale, 'ui.performanceReviewsAdminTab.competencies') },

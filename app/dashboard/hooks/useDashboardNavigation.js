@@ -16,6 +16,15 @@ import {
 } from '../../../lib/assessment-filters';
 import { VACANCY_LIST_FILTER, normalizeVacancyListFilter } from '../../../lib/domain-status.js';
 
+// Must match the defaults of the parsers in lib/assessment-filters.js so omitting them is lossless.
+const LIST_PREFIXES = ['team', 'vacancies', 'compare', 'compat', 'users', 'leads', 'fb', 'companies'];
+const LIST_PARAM_DEFAULTS = {
+  ...Object.fromEntries(LIST_PREFIXES.flatMap((k) => [[`${k}Page`, '1'], [`${k}PageSize`, '20']])),
+  auditPage: '1',
+  auditPageSize: '30',
+  ...Object.fromEntries(['team', 'vacancies', 'users', 'companies'].flatMap((k) => [[`${k}Sort`, 'createdAt'], [`${k}SortDir`, 'desc']])),
+};
+
 /**
  * Centraliza montagem da query do dashboard (filtros, paginação por aba, ordenação).
  */
@@ -272,6 +281,10 @@ export function useDashboardNavigation({
     const resolvedTab =
       opts.tab !== undefined ? opts.tab : urlParams.get('tab') || 'overview';
     p.set('tab', resolvedTab);
+
+    for (const [key, def] of Object.entries(LIST_PARAM_DEFAULTS)) {
+      if (p.get(key) === def) p.delete(key);
+    }
 
     return p;
   };

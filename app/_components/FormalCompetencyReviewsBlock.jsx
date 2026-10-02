@@ -836,7 +836,14 @@ export function FormalCompetencyReviewsBlock({ locale = 'pt-BR', companyId, onOp
         <AdminPageHeader
           title={tf(locale, 'title')}
           subtitle={tf(locale, 'subtitle')}
-          actions={<AdminCreateButton label={tf(locale, 'createCycle')} onClick={createCycle} disabled={busy} />}
+          actions={(
+            <AdminCreateButton
+              label={tf(locale, 'createCycle')}
+              onClick={createCycle}
+              disabled={busy}
+              variant={competencies.length === 0 ? 'secondary' : 'primary'}
+            />
+          )}
         />
 
         {competencies.length === 0 ? (
