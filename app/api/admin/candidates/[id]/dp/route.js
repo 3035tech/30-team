@@ -29,6 +29,7 @@ async function loadCandidateScope(candidateId, scope) {
             c.personal_email AS "personalEmail", c.phone,
             c.marital_status AS "maritalStatus",
             c.employee_number AS "employeeNumber", c.work_format AS "workFormat",
+            c.time_clock_override AS "timeClockOverride",
             c.work_history AS "workHistory", c.city, c.state,
             c.start_date AS "startDate", c.birth_date AS "birthDate",
             c.job_role_id AS "jobRoleId", jr.name AS "jobRoleName",
@@ -143,6 +144,7 @@ export async function PATCH(request, props) {
       action: 'dp.profile.updated',
       targetType: 'candidate',
       targetId: candidateId,
+      metadata: { changes: result.changes },
     });
     return NextResponse.json({ ok: true, profile: result.profile });
   } catch (err) {

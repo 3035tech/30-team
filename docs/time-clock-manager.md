@@ -22,6 +22,15 @@ Saldos paginados com cargo e caminho da unidade (`GET /api/admin/hour-bank?offse
 - Sobreposição rejeitada na mesma unidade ou quando um dos dois é da empresa inteira (serializado com `FOR UPDATE` na empresa).
 - Dia fechado bloqueia ajuste, justificativa, revisão de marcação e marcação manual (`TIME_CLOCK_PERIOD_CLOSED`, 409).
 
+## Ponto por colaborador
+
+- `candidates.time_clock_override BOOLEAN NULL` (migration 140): `NULL` segue o vínculo (`work_format`), `TRUE`/`FALSE` é exceção do RH. Sem ponto por padrão: `pj` e `cooperative`. CLT, estágio e vínculo vazio têm ponto (comportamento anterior preservado).
+- Regra única em `lib/people/time-clock-eligibility.js` (`resolveTimeClockEligibility` + `timeClockEnabledSql`). `getTimeClockAccess` (`lib/people/time-clock.js`) junta módulo DP da empresa e regra da pessoa numa query.
+- Edição: DP → Editar → Controle de ponto (`PATCH /api/admin/candidates/[id]` com `timeClockOverride`: `null` / `true` / `false`; exige `dp.view` ou `team.view`). Mudança gera `candidate.time_clock_override` no `audit_log` com de/para.
+- Portal: seção, atalho, badge e card de boas-vindas somem (`timeClockEnabled` em `GET /api/employee/home`); `/employee/time-clock` redireciona para `/employee`. Mobile: `features.timeClock` em `GET /api/mobile/v1/employee/home`.
+- API: `GET/POST /api/employee/time-clock` e mobile recusam com `TIME_CLOCK_DISABLED` (403), inclusive quando o módulo DP está desligado na empresa (antes não checava).
+- Gestor: lista mostra "Sem controle de ponto" (essas pessoas vão para o fim); espelho não calcula falta nem horas faltantes, mas mostra marcações antigas. Ajuste de dias passados pelo RH (`source = manager`) continua permitido.
+
 ## Regras assumidas
 
 - Dias úteis seg–sex; escala única da empresa; tolerância = carência de atraso da escala.
@@ -31,6 +40,8 @@ Saldos paginados com cargo e caminho da unidade (`GET /api/admin/hour-bank?offse
 ## Deploy
 
 Aplicar `migrations/137_time_clock_manager.sql` (aditiva; colunas novas nulas em `employee_time_punches` + 2 tabelas). Rollback: a UI nova para de funcionar, os dados antigos ficam intactos.
+
+`migrations/140_candidate_time_clock_override.sql`: coluna nula aditiva em `candidates`; ninguém perde o ponto até o vínculo ser PJ/Cooperado. Atenção: colaboradores **já cadastrados** como PJ ou Cooperado deixam de ver o ponto no deploy (é a regra pedida); para mantê-los, marque "Sempre ativo" no perfil.
 
 ## Prova
 

@@ -8,6 +8,7 @@ import { completeLmsLesson, uncompleteLmsLesson } from '../../../../lib/lms.js';
 import { updateEmployeePdiItemStatus } from '../../../../lib/employee-pdi.js';
 import { submitEmployeeOneOnOnePrep } from '../../../../lib/employee-one-on-one-prep.js';
 import { DEVELOPMENT_PLAN_ITEM_STATUS } from '../../../../lib/domain-status.js';
+import { getTimeClockAccess } from '../../../../lib/people/time-clock.js';
 import { normalizeLocale } from '../../../../lib/i18n.js';
 
 export const dynamic = 'force-dynamic';
@@ -30,9 +31,14 @@ export async function GET(request) {
     if (!home.ok) {
       return apiErrorFromResult(request, home, { fallbackCode: ERR.UNAUTHORIZED });
     }
+    const timeClock = await getTimeClockAccess(query, {
+      companyId: session.companyId,
+      candidateId: session.candidateId,
+    });
     return NextResponse.json({
       ...home,
       companyModules: session.companyModules ?? null,
+      timeClockEnabled: Boolean(timeClock.ok && timeClock.enabled),
     });
   } catch (err) {
     if (err?.code === '42P01' || err?.code === '42703') {

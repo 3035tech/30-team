@@ -39,6 +39,36 @@ function metadataPreview(meta) {
   }
 }
 
+function changeFieldLabel(locale, field) {
+  const key = `panel.audit.changeField.${field}`;
+  const label = t(locale, key);
+  return label === key ? field : label;
+}
+
+function changeValueLabel(locale, value) {
+  if (value == null || value === '') return '—';
+  if (typeof value === 'boolean') return t(locale, value ? 'panel.common.yes' : 'panel.common.no');
+  if (Array.isArray(value)) return value.join(', ');
+  return String(value);
+}
+
+function AuditChangeList({ changes, locale }) {
+  if (!Array.isArray(changes) || !changes.length) return null;
+  return (
+    <ul className="mt-1.5 mb-0 list-none space-y-0.5 p-0 text-2xs text-ink-muted" aria-label={t(locale, 'panel.audit.changesTitle')}>
+      {changes.map((change, index) => (
+        <li key={`${change.field}-${index}`} className="break-words">
+          <span className="font-semibold text-ink">{changeFieldLabel(locale, change.field)}</span>
+          {': '}
+          {'from' in change || 'to' in change
+            ? `${changeValueLabel(locale, change.from)} → ${changeValueLabel(locale, change.to)}`
+            : t(locale, 'panel.audit.changedNoValue')}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /**
  * Super admin: trilha de auditoria cross-tenant (append-only).
  */
@@ -256,7 +286,10 @@ export function AuditAdminTab({
                         </span>
                         {formatActor(row, locale)}
                       </td>
-                      <td className="px-3 py-2.5 font-mono text-xs">{row.action}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="font-mono text-xs">{row.action}</span>
+                        <AuditChangeList changes={row.metadata?.changes} locale={locale} />
+                      </td>
                       <td className="px-3 py-2.5 font-mono text-xs">{formatTarget(row)}</td>
                       <td className="px-3 py-2.5 text-ink-muted">
                         {row.companyName || (row.companyId ? `#${row.companyId}` : '—')}

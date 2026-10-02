@@ -60,6 +60,7 @@ export async function POST(request) {
     actorUserId: payload?.userId,
     locale: payload?.locale || 'pt-BR',
     appUrl: publicAppUrl(request),
+    allowPassword: scope.isAdmin,
   });
 
   if (!result.ok) {

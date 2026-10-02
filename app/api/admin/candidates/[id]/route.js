@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../lib/auth';
 import { query, queryRead, withTransaction } from '../../../../../lib/db';
 import { audit, auditFromRequest } from '../../../../../lib/audit';
-import { apiError, ERR } from '../../../../../lib/api-error';
+import { apiError, ERR, localeFromRequest } from '../../../../../lib/api-error';
 import { normalizeCandidateProfile } from '../../../../../lib/candidate-profile';
 import { titleCasePersonName } from '../../../../../lib/person-name';
 import { buildCandidateTimeline } from '../../../../../lib/hire';
@@ -14,7 +14,10 @@ import { CAP, requireAnyCapability, canAccessCandidateRecord, isAdminRole } from
 import { upsertDpProfile } from '../../../../../lib/people/employee-dp.js';
 import { listCandidateOverdueLms } from '../../../../../lib/lms.js';
 import { normalizeLocale } from '../../../../../lib/i18n.js';
-import { isValidEmployeeEmail } from '../../../../../lib/employee-auth.js';
+import { finishEmployeeEmailChange, isValidEmployeeEmail, revokeEmployeeAccessForEmailChange } from '../../../../../lib/employee-auth.js';
+import { WORK_FORMATS } from '../../../../../lib/domain-status.js';
+import { normalizeTimeClockOverride } from '../../../../../lib/people/time-clock-eligibility.js';
+import { CANDIDATE_AUDIT_PRESENCE_FIELDS, CANDIDATE_AUDIT_VALUE_FIELDS, diffAuditFields } from '../../../../../lib/audit-changes.js';
 
 export async function GET(request, props) {
   const params = await props.params;
@@ -181,8 +184,12 @@ export async function PATCH(request, props) {
   const hasExtendedProfile = [
     'personalEmail', 'personal_email', 'maritalStatus', 'marital_status',
     'employeeNumber', 'employee_number', 'workFormat', 'work_format',
-    'workHistory', 'work_history', 'email',
+    'workHistory', 'work_history', 'email', 'timeClockOverride',
   ].some((key) => body[key] !== undefined);
+  const hasTimeClockOverride = body.timeClockOverride !== undefined;
+  if (hasTimeClockOverride && !requireAnyCapability(payload, [CAP.DP_VIEW, CAP.TEAM_VIEW])) {
+    return apiError(request, ERR.UNAUTHORIZED, 401);
+  }
 
   if (!hasHrNotes && !hasProfile && !hasName && !hasBirthDate && !hasExtendedProfile) {
     return apiError(request, ERR.NO_FIELDS_TO_UPDATE, 400);
@@ -277,11 +284,18 @@ export async function PATCH(request, props) {
   }
   if (body.workFormat !== undefined || body.work_format !== undefined) {
     const value = body.workFormat !== undefined ? body.workFormat : body.work_format;
-    const allowed = new Set(['clt', 'intern', 'cooperative', 'pj']);
+    const allowed = new Set(WORK_FORMATS);
     const normalized = value == null ? null : String(value).trim().toLowerCase();
     if (normalized && !allowed.has(normalized)) return apiError(request, ERR.INVALID_DATA, 400);
     sets.push(`work_format = $${n++}`);
     sqlParams.push(normalized || null);
+  }
+  let nextTimeClockOverride = null;
+  if (hasTimeClockOverride) {
+    nextTimeClockOverride = normalizeTimeClockOverride(body.timeClockOverride);
+    if (nextTimeClockOverride === undefined) return apiError(request, ERR.INVALID_DATA, 400);
+    sets.push(`time_clock_override = $${n++}`);
+    sqlParams.push(nextTimeClockOverride);
   }
   if (body.workHistory !== undefined || body.work_history !== undefined) {
     const value = body.workHistory !== undefined ? body.workHistory : body.work_history;
@@ -292,7 +306,18 @@ export async function PATCH(request, props) {
   if (sets.length === 0) return apiError(request, ERR.NO_FIELDS_TO_UPDATE, 400);
 
   const up = await withTransaction(async (db) => {
-    const previous = await db.query('SELECT company_id AS "companyId", work_format AS "workFormat", email FROM candidates WHERE id = $1 FOR UPDATE', [id]);
+    const previous = await db.query(
+      `SELECT company_id AS "companyId", full_name AS "fullName", email,
+              personal_email AS "personalEmail", marital_status AS "maritalStatus",
+              employee_number AS "employeeNumber", work_format AS "workFormat",
+              time_clock_override AS "timeClockOverride",
+              work_history AS "workHistory", hr_notes AS "hrNotes",
+              phone, linkedin_url AS "linkedinUrl", city, state,
+              salary_expectation AS "salaryExpectation", availability, source,
+              birth_date AS "birthDate", start_date AS "startDate"
+       FROM candidates WHERE id = $1 FOR UPDATE`,
+      [id]
+    );
     if (!previous.rowCount) return { rowCount: 0, rows: [] };
     if (!isAdmin && String(previous.rows[0].companyId) !== String(companyId)) return { errorCode: ERR.UNAUTHORIZED, status: 401 };
     const oldFormat = previous.rows[0].workFormat || null;
@@ -309,6 +334,7 @@ export async function PATCH(request, props) {
      RETURNING id, full_name AS "fullName", email,
                personal_email AS "personalEmail", marital_status AS "maritalStatus",
                employee_number AS "employeeNumber", work_format AS "workFormat",
+               time_clock_override AS "timeClockOverride",
                work_history AS "workHistory", hr_notes AS "hrNotes",
                phone, linkedin_url AS "linkedinUrl", city, state,
                salary_expectation AS "salaryExpectation", availability, source,
@@ -332,10 +358,21 @@ export async function PATCH(request, props) {
       if (!dp.ok) throw Object.assign(new Error('Invalid DP profile'), { dpErrorCode: dp.errorCode });
       result.rows[0].dpProfile = dp.profile;
       result.companyId = previous.rows[0].companyId;
+      result.dpChanges = dp.changes;
+    }
+    result.changes = diffAuditFields(previous.rows[0], result.rows[0], {
+      valueFields: CANDIDATE_AUDIT_VALUE_FIELDS,
+      presenceFields: CANDIDATE_AUDIT_PRESENCE_FIELDS,
+    });
+    result.auditCompanyId = previous.rows[0].companyId;
+    const previousOverride = previous.rows[0].timeClockOverride ?? null;
+    if (hasTimeClockOverride && previousOverride !== nextTimeClockOverride) {
+      result.timeClockChange = { companyId: previous.rows[0].companyId, from: previousOverride };
     }
     const previousEmail = String(previous.rows[0].email || '').toLowerCase();
     if (nextEmail && nextEmail !== previousEmail) {
-      result.emailChange = { companyId: previous.rows[0].companyId, from: previousEmail };
+      const revoked = await revokeEmployeeAccessForEmailChange(db, { candidateId: id, companyId: previous.rows[0].companyId });
+      result.emailChange = { companyId: previous.rows[0].companyId, from: previousEmail, revoked };
     }
     return result;
   }).catch((error) => {
@@ -347,20 +384,40 @@ export async function PATCH(request, props) {
   if (up.errorCode) return apiError(request, up.errorCode, up.status || 400);
   if (up.rowCount === 0) return apiError(request, ERR.NOT_FOUND, 404);
 
-  await audit({
+  await auditFromRequest(request, {
     actorUserId: payload.userId || null,
+    companyId: up.auditCompanyId,
     action: 'candidate.profile_update',
     targetType: 'candidate',
     targetId: String(id),
+    metadata: { changes: up.changes },
   });
 
-  if (up.emailChange) await auditFromRequest(request, {
+  let portalAccessReset = null;
+  if (up.emailChange) {
+    portalAccessReset = await finishEmployeeEmailChange(query, {
+      candidateId: id,
+      companyId: up.emailChange.companyId,
+      revoked: up.emailChange.revoked,
+      locale: localeFromRequest(request),
+    });
+    await auditFromRequest(request, {
+      actorUserId: payload.userId || null,
+      companyId: up.emailChange.companyId,
+      action: 'candidate.email_change',
+      targetType: 'candidate',
+      targetId: String(id),
+      metadata: { from: up.emailChange.from, to: nextEmail, portalAccessReset: Boolean(portalAccessReset), inviteSent: Boolean(portalAccessReset?.inviteSent) },
+    });
+  }
+
+  if (up.timeClockChange) await auditFromRequest(request, {
     actorUserId: payload.userId || null,
-    companyId: up.emailChange.companyId,
-    action: 'candidate.email_change',
+    companyId: up.timeClockChange.companyId,
+    action: 'candidate.time_clock_override',
     targetType: 'candidate',
     targetId: String(id),
-    metadata: { from: up.emailChange.from, to: nextEmail },
+    metadata: { from: up.timeClockChange.from, to: nextTimeClockOverride },
   });
 
   if (hasDpProfile) await auditFromRequest(request, {
@@ -369,9 +426,10 @@ export async function PATCH(request, props) {
     action: 'dp.profile.updated',
     targetType: 'candidate',
     targetId: String(id),
+    metadata: { changes: up.dpChanges || [] },
   });
 
-  return NextResponse.json(up.rows[0]);
+  return NextResponse.json(portalAccessReset ? { ...up.rows[0], portalAccessReset } : up.rows[0]);
 }
 
 export async function DELETE(request, props) {

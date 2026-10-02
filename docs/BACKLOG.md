@@ -835,6 +835,45 @@ Overview `HrScoreCard` já lista byArea.
 
 ---
 
+## Aberto — Epic B-3100 (conta multiempresa: consultor / `account_admin`)
+
+Cenário: recrutador ou consultoria independente cria a conta via signup e atende várias empresas clientes. Hoje o dono da empresa (criador no signup) só administra **uma** empresa; o `admin` sem `company_id` é o super admin da plataforma (cross-tenant total). Decisão: **papel novo** `account_admin`, sem reaproveitar `admin` (renomear o admin da plataforma quebraria sessão, permissões, rotas `withAdminApi` e auditoria).
+
+### B-3101 — Modelo de conta (`accounts`)
+1. Tabela `accounts` (dono = usuário do signup); `companies.account_id` FK; empresa sem conta = legado / criada pela plataforma.
+2. `account_admin` vê só as empresas da própria conta (`company_id IN (empresas da conta)`), nunca cross-tenant da plataforma.
+3. Migration aditiva: cada empresa com `signup_creator_user_id` vira uma conta de 1 empresa; nada muda para quem não usa.
+
+### B-3102 — Criar empresas e convidar gestores por empresa
+1. `account_admin` cria nova empresa (reusa onboarding/módulos/licença) e convida gestores com vínculo a **uma** empresa (`user_company_memberships`).
+2. Gestor convidado vê só a empresa vinculada e seus colaboradores (escopo atual por `company_id`).
+3. Senha sempre por convite por e-mail (mesma regra do dono hoje).
+
+### B-3103 — Visão consolidada e seletor de empresa
+1. Seletor de empresa no painel para `account_admin` (reusar `companyFilter` do admin, limitado à conta).
+2. Visão consolidada: Usuários (criados pela conta) e colaboradores das empresas da conta; Overview agregado com cap.
+3. Fora: billing consolidado por conta (avaliar com pricing), white-label.
+
+### B-3104 — Permissões e auditoria
+1. `CAP` novo para gestão da conta; `getManagerScope` devolve lista de empresas permitidas; nunca confiar em `companyId` do body sem checar a conta.
+2. Audit com `account_id`; testes DTOV de isolamento (conta A não vê conta B; gestor da empresa X não vê Y da mesma conta).
+
+---
+
+## Aberto — Auditoria e LGPD
+
+Já entregue: diferença por campo em ficha, DP (gestor e colaborador) e Usuários, com dado pessoal só como “alterado” (`docs/audit-log.md`).
+
+### B-3201 — Retenção da auditoria
+1. Definir prazo com o jurídico (ex. 24 meses para eventos comuns; mais longo para segurança/acesso) e registrar em `docs/privacy-retention-policy.md`.
+2. Cron com `LIMIT` por lote apagando `audit_log` vencido (índice em `created_at`); nunca apagar o que estiver sob investigação/litígio.
+
+### B-3202 — Auditoria da própria empresa (controladora)
+1. Visão de auditoria filtrada por `company_id` para o dono da empresa (capability nova), sem cross-tenant.
+2. Filtros por pessoa (alvo) e por ação; exportação CSV para atender pedido do titular ou fiscalização.
+
+---
+
 ## Aberto — Observabilidade
 
 ### B-1701 — Logs estruturados (infra) ✅ ENTREGUE (básico)

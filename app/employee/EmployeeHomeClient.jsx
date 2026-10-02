@@ -26,7 +26,7 @@ import { Icon } from '../_components/Icon';
 import { EmployeeFormalReviewsSection } from '../_components/EmployeeFormalReviewsSection';
 import { EmployeeWelcomeCard } from '../_components/EmployeeWelcomeCard';
 import { redirectEmployeeIfUnauthorized } from '../../lib/employee-client-session';
-import { employeeSectionAllowedByCompanyModules } from '../../lib/company-modules';
+import { employeeSectionAllowedByCompanyModules, employeeSectionVisible } from '../../lib/company-modules';
 
 /** Home sections (dedicated LMS/DP/ponto live on their own routes). */
 const SECTION_KEYS = [
@@ -444,6 +444,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
     const lmsOverdue = courses.filter((c) => c.overdue).length;
     setNavMeta({
       companyModules: data.companyModules ?? null,
+      timeClockEnabled: data.timeClockEnabled ?? null,
       badges: {
         tasks: tasks.length,
         surveys: surveyMeta.openCount || 0,
@@ -508,7 +509,7 @@ export function EmployeeHomeClient({ locale = 'pt-BR' }) {
   const prompts = data.oneOnOnePrompts || [];
   const company = data.company;
   const companyModules = data.companyModules ?? null;
-  const sectionOk = (id) => employeeSectionAllowedByCompanyModules(companyModules, id);
+  const sectionOk = (id) => employeeSectionVisible(companyModules, id, { timeClockEnabled: data.timeClockEnabled });
   const hasJourney = Boolean(journey?.preItems?.length || journey?.checkins?.length);
   const hasCompany = company && (company.aboutHtml || company.website);
   const lmsOverdueCount = courses.filter((c) => c.overdue).length;

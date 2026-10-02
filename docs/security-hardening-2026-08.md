@@ -48,7 +48,7 @@ Hardening após auditoria estática das ~171 rotas API (auth, rate limit, sessã
 |------|---------|
 | Set-password sem bypass 2FA | Se `totp_enabled_at` ativo → `{ requires2fa, challengeToken }` sem cookie; senão auto-login com JWT `sv` |
 | Turnstile no login colaborador | `POST` login / magic / forgot / set-password / 2fa/verify + `TurnstileField` em `/employee/login` e set-password |
-| `candidates.session_version` | Migration `081`; JWT claim `sv`; `GET /api/auth/employee/session-edge` + Proxy; bump em troca/reset de senha e desativar 2FA |
+| `candidates.session_version` | Migration `081`; JWT claim `sv`; `GET /api/auth/employee/session-edge` + Proxy; bump em troca/reset de senha, desativar 2FA e troca do e-mail corporativo pelo gestor (que também zera a senha e reenvia o convite) |
 | Magic consume atômico | `UPDATE … WHERE used_at IS NULL … RETURNING` (sem TOCTOU) |
 | Anti-enumeração | magic/forgot públicos respondem `{ ok: true }` (sem `sent`); delay ~500 ms em falha de login; RL por e-mail + peek set-password |
 

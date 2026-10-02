@@ -38,6 +38,7 @@ import {
   EMPLOYMENT_STATUS,
 } from '../../lib/domain-status.js';
 import { leaveInclusiveDays } from '../../lib/leave-days.js';
+import { TIME_CLOCK_REASON, resolveTimeClockEligibility } from '../../lib/people/time-clock-eligibility.js';
 
 function formatDate(value, locale) {
   if (!value) return '—';
@@ -86,6 +87,16 @@ function maritalStatusLabel(locale, value) {
     widowed: 'maritalWidowed',
   };
   return value ? t(locale, `panel.dp.${keys[value] || 'notInformed'}`) : '—';
+}
+
+function timeClockStatusLabel(locale, candidate) {
+  const { enabled, reason } = resolveTimeClockEligibility({
+    workFormat: candidate?.workFormat,
+    override: candidate?.timeClockOverride,
+  });
+  const status = t(locale, enabled ? 'panel.dp.timeClockOn' : 'panel.dp.timeClockOff');
+  const why = t(locale, reason === TIME_CLOCK_REASON.OVERRIDE ? 'panel.dp.timeClockReasonOverride' : 'panel.dp.timeClockReasonWorkFormat');
+  return `${status} · ${why}`;
 }
 
 function workFormatLabel(locale, value) {
@@ -268,6 +279,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             employeeNumber: values.employeeNumber,
             workFormat: values.workFormat,
             workFormatEffectiveDate: values.workFormatEffectiveDate,
+            timeClockOverride: values.timeClockOverride,
             workHistory: values.workHistory,
             birthDate: values.birthDate,
             dpProfile: values,
@@ -275,10 +287,14 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data?.error || t(locale, 'panel.dp.saveError'));
-        const { dpProfile, ...savedCandidate } = data;
+        const { dpProfile, portalAccessReset, ...savedCandidate } = data;
         setProfile(dpProfile);
         setCandidate((prev) => ({ ...prev, ...savedCandidate }));
-        toast(t(locale, 'panel.dp.saved'), 'ok');
+        if (portalAccessReset) {
+          toast(t(locale, portalAccessReset.inviteSent ? 'panel.dp.emailChangedInviteSent' : 'panel.dp.emailChangedInviteFailed'), portalAccessReset.inviteSent ? 'ok' : 'info');
+        } else {
+          toast(t(locale, 'panel.dp.saved'), 'ok');
+        }
         await load();
       },
       fields: [
@@ -424,6 +440,19 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           required: true,
           label: t(locale, 'panel.dp.workFormatEffectiveDate'),
           showWhen: values => (values.workFormat || '') !== (candidate?.workFormat || ''),
+          width: 'half',
+        },
+        {
+          key: 'timeClockOverride',
+          type: 'select',
+          label: t(locale, 'panel.dp.timeClock'),
+          defaultValue: candidate?.timeClockOverride == null ? '' : String(candidate.timeClockOverride),
+          options: [
+            { value: '', label: t(locale, 'panel.dp.timeClockFollow') },
+            { value: 'true', label: t(locale, 'panel.dp.timeClockForceOn') },
+            { value: 'false', label: t(locale, 'panel.dp.timeClockForceOff') },
+          ],
+          help: t(locale, 'panel.dp.timeClockHelp'),
           width: 'half',
         },
         {
@@ -1014,6 +1043,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             <ProfileSection title={i18nT(locale, 'ui.dpBlock.professional')}>
               <ProfileInfo label={t(locale, 'panel.dp.employeeNumber')}>{candidate?.employeeNumber}</ProfileInfo>
               <ProfileInfo label={t(locale, 'panel.dp.workFormat')}>{candidate?.workFormat ? workFormatLabel(locale, candidate.workFormat) : null}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.timeClock')}>{timeClockStatusLabel(locale, candidate)}</ProfileInfo>
               <ProfileInfo label={t(locale, 'panel.dp.jobRole')}>{candidate?.jobRoleName}</ProfileInfo>
               <ProfileInfo label={t(locale, 'panel.dp.startDate')}>{candidate?.startDate ? formatDate(candidate.startDate, locale) : null}</ProfileInfo>
               {candidate?.workHistory ? (

@@ -1469,6 +1469,7 @@ function DashboardClientContent({
                   navigateDashboard={navigateWithOpts}
                   locale={locale}
                   canManageAllCompanies={can(sessionAuth, CAP.COMPANIES_MANAGE)}
+                  currentUserId={sessionAuth?.userId ?? null}
                 />
               )}
               {tab === 'job-roles' && showJobRoles && <JobRolesAdminTab locale={locale} companyId={scopedCompanyId} />}

@@ -11,6 +11,7 @@ import {
 import { notifyCompanyManagers } from '../../../../lib/manager-notifications.js';
 import { NOTIF } from '../../../../lib/manager-notification-catalog.js';
 import { checkRateLimit } from '../../../../lib/rate-limit.js';
+import { AUDIT_ACTOR_KIND, auditFromRequest } from '../../../../lib/audit.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +59,15 @@ export async function PATCH(request) {
       internalNotes: prev.internalNotes,
     });
     if (!result.ok) return apiErrorFromResult(request, result);
+    if (result.changes.length) await auditFromRequest(request, {
+      actorKind: AUDIT_ACTOR_KIND.EMPLOYEE,
+      actorCandidateId: candidateId,
+      companyId,
+      action: 'dp.profile.updated',
+      targetType: 'candidate',
+      targetId: candidateId,
+      metadata: { changes: result.changes },
+    });
     return NextResponse.json({
       ok: true,
       profile: { ...result.profile, internalNotes: undefined },

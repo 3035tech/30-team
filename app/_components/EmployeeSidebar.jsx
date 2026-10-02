@@ -6,7 +6,7 @@ import { BrandMark } from './BrandMark';
 import { EmployeeLogoutButton } from './EmployeeLogoutButton';
 import { SidebarNav, SidebarNavItem } from './SidebarNav';
 import { useEmployeeNav } from './EmployeeNavContext';
-import { employeeSectionAllowedByCompanyModules } from '../../lib/company-modules';
+import { employeeSectionVisible } from '../../lib/company-modules';
 
 /** @typedef {{ id: string, href: string, icon: string, labelKey: string, hash?: string }} EmpNavItem */
 
@@ -107,13 +107,13 @@ export function EmployeeSidebar({
   const onPdi = pathname.startsWith('/employee/pdi');
   const onDp = pathname.startsWith('/employee/dp');
   const onTimeClock = pathname.startsWith('/employee/time-clock');
-  const { activeSection, badges, navCollapsed, setNavCollapsed, focusSection, companyModules } =
+  const { activeSection, badges, navCollapsed, setNavCollapsed, focusSection, companyModules, timeClockEnabled } =
     useEmployeeNav();
 
   const itemById = Object.fromEntries(EMPLOYEE_NAV_ITEMS.map((it) => [it.id, it]));
   const allowedGroups = NAV_GROUPS.map((g) => ({
     ...g,
-    ids: g.ids.filter((id) => employeeSectionAllowedByCompanyModules(companyModules, id)),
+    ids: g.ids.filter((id) => employeeSectionVisible(companyModules, id, { timeClockEnabled })),
   })).filter((g) => g.ids.length > 0);
 
   const isDedicatedRoute = (itemId) =>

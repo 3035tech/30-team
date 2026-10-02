@@ -4,6 +4,7 @@ import { query } from '../../../../../../lib/db.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
 import { getDpProfile, getEmployeeDpHome, upsertDpProfile } from '../../../../../../lib/people/employee-dp.js';
 import { checkRateLimit, clientIpFromRequest } from '../../../../../../lib/rate-limit.js';
+import { AUDIT_ACTOR_KIND, auditFromRequest } from '../../../../../../lib/audit.js';
 
 export const dynamic = 'force-dynamic';
 const NO_STORE = Object.freeze({ 'Cache-Control': 'no-store' });
@@ -46,6 +47,15 @@ export async function PATCH(request) {
       addressPostal: body.addressPostal ?? previous.addressPostal, internalNotes: previous.internalNotes,
     });
     if (!result.ok) return apiErrorFromResult(request, result);
+    if (result.changes.length) await auditFromRequest(request, {
+      actorKind: AUDIT_ACTOR_KIND.EMPLOYEE,
+      actorCandidateId: session.candidateId,
+      companyId: session.companyId,
+      action: 'dp.profile.updated',
+      targetType: 'candidate',
+      targetId: session.candidateId,
+      metadata: { changes: result.changes },
+    });
     const home = await load(session);
     if (!home.ok) return apiErrorFromResult(request, home);
     return NextResponse.json(home, { headers: NO_STORE });

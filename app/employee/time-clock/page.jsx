@@ -6,6 +6,8 @@ import { AppLoading } from '../../_components/AppLoading';
 import { EMPLOYEE_COOKIE_NAME } from '../../../lib/employee-auth-constants.js';
 import { isEmployeeSessionPayload, verifyEmployeeToken } from '../../../lib/employee-auth.js';
 import { normalizeLocale } from '../../../lib/i18n.js';
+import { query } from '../../../lib/db.js';
+import { getTimeClockAccess } from '../../../lib/people/time-clock.js';
 import { I18nBoot } from '../../_components/I18nBoot';
 
 export const dynamic = 'force-dynamic';
@@ -18,6 +20,11 @@ export default async function EmployeeTimeClockPage(props) {
   if (!isEmployeeSessionPayload(payload)) {
     redirect('/employee/login?reason=expired');
   }
+  const access = await getTimeClockAccess(query, {
+    companyId: payload.companyId,
+    candidateId: payload.candidateId,
+  });
+  if (!access.ok || !access.enabled) redirect('/employee');
   const locale = normalizeLocale(searchParams?.locale || payload.locale);
   return (
     <Suspense fallback={<AppLoading variant="panel" />}>

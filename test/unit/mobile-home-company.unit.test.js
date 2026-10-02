@@ -12,6 +12,7 @@ test('mobile home exposes only the authenticated company introduction', async ()
       HTTP_STATUS: { UNAUTHORIZED: 401, INTERNAL_SERVER_ERROR: 500 }, ERR: { UNAUTHORIZED: 'UNAUTHORIZED', INTERNAL: 'INTERNAL' },
       authenticateMobileEmployee: async () => companyId ? { companyId, candidateId: companyId * 10 } : null,
       mobileEmployeeBearerToken: () => 'test', t: () => 'Task',
+      getTimeClockAccess: async (_db, scope) => ({ ok: true, enabled: scope.companyId === 1 }),
       getEmployeeHome: async (_db, scope) => {
         calls.push(scope);
         return { ok: true, person: { fullName: 'Pessoa' }, company: { name: `Empresa ${scope.companyId}`, aboutHtml: '<p>História</p>', website: 'https://example.com', logoUrl: 'private-unused-field' }, tasks: [], plans: [], courses: [], okrActivities: [] };
@@ -27,5 +28,6 @@ test('mobile home exposes only the authenticated company introduction', async ()
     assert.equal(calls[0].candidateId, companyId * 10);
     assert.equal(response.company.name, `Empresa ${companyId}`);
     assert.deepEqual(Object.keys(response.company).sort(), ['aboutHtml', 'name', 'website']);
+    assert.equal(response.features.timeClock, companyId === 1);
   }
 });

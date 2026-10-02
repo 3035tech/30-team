@@ -16,6 +16,14 @@ assert.equal(
   'self_service'
 );
 assert.equal(resolveUserOrigin({ companySignupAutoCreated: true }), 'self_service');
+assert.equal(resolveUserOrigin({ companySignupAutoCreated: true, isCompanySignupCreator: true }), 'self_service');
+assert.equal(resolveUserOrigin({ companySignupAutoCreated: true, isCompanySignupCreator: null }), 'self_service');
+// Manager invited by the signup creator: panel user, not self-service cohort.
+assert.equal(resolveUserOrigin({ companySignupAutoCreated: true, isCompanySignupCreator: false }), 'admin');
+assert.equal(
+  resolveUserOrigin({ signupSource: 'early_access', companySignupAutoCreated: true, isCompanySignupCreator: false }),
+  'early_access'
+);
 
 assert.equal(isSelfServiceOrigin('admin'), false);
 assert.equal(isSelfServiceOrigin('early_access'), true);

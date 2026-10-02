@@ -40,7 +40,7 @@ function companySelectOptions(locale, companyOptions) {
   }));
 }
 
-export function UsersAdminTab({ navigateDashboard, locale, canManageAllCompanies = true }) {
+export function UsersAdminTab({ navigateDashboard, locale, canManageAllCompanies = true, currentUserId = null }) {
   const { promptForm, notice } = useAppFeedback();
   const urlParams = useSearchParams();
   const spKey = urlParams.toString();
@@ -196,7 +196,7 @@ export function UsersAdminTab({ navigateDashboard, locale, canManageAllCompanies
     // Step 1: identity only (email, optional password, role, company).
     const step1 = await promptForm({
       title: t(locale, 'panel.admin.createUserStep1Title'),
-      message: t(locale, 'panel.admin.passwordOptionalHelp'),
+      message: t(locale, canManageAllCompanies ? 'panel.admin.passwordOptionalHelp' : 'panel.admin.inviteOnlyHelp'),
       confirmLabel: t(locale, 'panel.admin.createUserContinue'),
       fields: [
         {
@@ -205,13 +205,17 @@ export function UsersAdminTab({ navigateDashboard, locale, canManageAllCompanies
           placeholder: t(locale, 'panel.admin.emailPh'),
           defaultValue: '',
         },
-        {
-          key: 'password',
-          type: 'password',
-          label: t(locale, 'panel.admin.passwordPh'),
-          placeholder: t(locale, 'panel.admin.passwordPh'),
-          defaultValue: '',
-        },
+        ...(canManageAllCompanies
+          ? [
+            {
+              key: 'password',
+              type: 'password',
+              label: t(locale, 'panel.admin.passwordPh'),
+              placeholder: t(locale, 'panel.admin.passwordPh'),
+              defaultValue: '',
+            },
+          ]
+          : []),
         {
           key: 'role',
           type: 'select',
@@ -353,11 +357,18 @@ export function UsersAdminTab({ navigateDashboard, locale, canManageAllCompanies
   };
 
   const editUser = async (u) => {
+    const emailLocked = !canManageAllCompanies && Number(u?.id) !== Number(currentUserId);
     const values = await promptForm({
       title: t(locale, 'panel.admin.editUserTitle'),
       message: t(locale, 'panel.admin.userModulesHint'),
       fields: [
-        { key: 'email', label: t(locale, 'panel.admin.editUserEmail'), defaultValue: u?.email ?? '' },
+        {
+          key: 'email',
+          label: t(locale, 'panel.admin.editUserEmail'),
+          defaultValue: u?.email ?? '',
+          disabled: emailLocked,
+          help: emailLocked ? t(locale, 'panel.admin.emailLockedHelp') : undefined,
+        },
         {
           key: 'role',
           type: 'select',
@@ -383,12 +394,16 @@ export function UsersAdminTab({ navigateDashboard, locale, canManageAllCompanies
           label: t(locale, 'panel.admin.editUserActive'),
           defaultValue: Boolean(u?.active),
         },
-        {
-          key: 'password',
-          label: t(locale, 'panel.admin.editUserPassword'),
-          defaultValue: '',
-          type: 'password',
-        },
+        ...(canManageAllCompanies
+          ? [
+            {
+              key: 'password',
+              label: t(locale, 'panel.admin.editUserPassword'),
+              defaultValue: '',
+              type: 'password',
+            },
+          ]
+          : []),
         {
           key: 'modules',
           type: 'checkboxGroup',
@@ -407,17 +422,17 @@ export function UsersAdminTab({ navigateDashboard, locale, canManageAllCompanies
     const nextPassword = values.password;
 
     const payload = {
-      email: String(nextEmail).trim(),
       role: String(nextRole).trim(),
       active: nextActive,
       modules: Array.isArray(values.modules) ? values.modules : [],
     };
+    if (!emailLocked) payload.email = String(nextEmail).trim();
     if (canManageAllCompanies) {
       payload.companyId = payload.role !== 'admin' && String(nextCompanyIdRaw || '').trim()
         ? parseInt(String(nextCompanyIdRaw).trim(), 10)
         : null;
     }
-    if (String(nextPassword || '').trim()) payload.password = String(nextPassword).trim();
+    if (canManageAllCompanies && String(nextPassword || '').trim()) payload.password = String(nextPassword).trim();
 
     setLoading(true);
     setError('');

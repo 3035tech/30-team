@@ -43,6 +43,8 @@ export function EmployeeNavProvider({ children }) {
   const [sectionFocus, setSectionFocus] = useState(null);
   /** null = unrestricted (all modules). */
   const [companyModules, setCompanyModules] = useState(null);
+  /** null = unknown (show); false = collaborator without time clock. */
+  const [timeClockEnabled, setTimeClockEnabled] = useState(null);
 
   useEffect(() => {
     setNavCollapsedState(readCollapsed());
@@ -60,7 +62,7 @@ export function EmployeeNavProvider({ children }) {
     });
   }, []);
 
-  const setNavMeta = useCallback(({ badges: nextBadges, active, companyModules: nextModules } = {}) => {
+  const setNavMeta = useCallback(({ badges: nextBadges, active, companyModules: nextModules, timeClockEnabled: nextTimeClock } = {}) => {
     if (nextBadges) {
       setBadges((prev) => {
         let changed = false;
@@ -75,6 +77,7 @@ export function EmployeeNavProvider({ children }) {
     }
     if (active) setActiveSection(active);
     if (nextModules !== undefined) setCompanyModules(nextModules);
+    if (nextTimeClock !== undefined) setTimeClockEnabled(nextTimeClock);
   }, []);
 
   const focusSection = useCallback((id) => {
@@ -94,6 +97,7 @@ export function EmployeeNavProvider({ children }) {
       sectionFocus,
       focusSection,
       companyModules,
+      timeClockEnabled,
     }),
     [
       activeSection,
@@ -104,6 +108,7 @@ export function EmployeeNavProvider({ children }) {
       sectionFocus,
       focusSection,
       companyModules,
+      timeClockEnabled,
     ]
   );
 
@@ -123,6 +128,7 @@ export function useEmployeeNav() {
       sectionFocus: null,
       focusSection: () => {},
       companyModules: null,
+      timeClockEnabled: null,
     };
   }
   return ctx;

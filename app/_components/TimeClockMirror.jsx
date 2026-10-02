@@ -13,6 +13,7 @@ import {
   TIME_PUNCH_SOURCE,
 } from '../../lib/domain-status.js';
 import { formatMinutesClock, localIsoToday, shiftIsoDay } from '../../lib/time-clock-format.js';
+import { TIME_CLOCK_REASON } from '../../lib/people/time-clock-eligibility.js';
 import {
   S,
   AdminActionsCell,
@@ -514,6 +515,11 @@ export function TimeClockMirror({ locale = 'pt-BR', companyId, candidateId, onBa
             <h3 className={cn(S.sectionTitle, 'm-0')}>{person.fullName}</h3>
             {meta.length ? <p className={cn(S.muted, 'm-0 mt-1 text-prose')}>{meta.join(' · ')}</p> : null}
           </div>
+        ) : null}
+        {person?.timeClockEnabled === false ? (
+          <InlineCallout tone="info" className="mt-2">
+            {t(locale, person.timeClockReason === TIME_CLOCK_REASON.OVERRIDE ? `${K}.noTimeClockMirrorOverride` : `${K}.noTimeClockMirrorWorkFormat`)}
+          </InlineCallout>
         ) : null}
       </div>
 

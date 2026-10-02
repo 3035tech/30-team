@@ -3,6 +3,7 @@ import { apiError, HTTP_STATUS, ERR } from '../../../../../../lib/api-error.js';
 import { getEmployeeHome } from '../../../../../../lib/employee-home.js';
 import { t } from '../../../../../../lib/i18n.js';
 import { authenticateMobileEmployee, mobileEmployeeBearerToken } from '../../../../../../lib/mobile-employee-session.js';
+import { getTimeClockAccess } from '../../../../../../lib/people/time-clock.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,7 @@ export async function GET(request) {
     const onboardingPending = home.journey
       ? [...(home.journey.preItems || []), ...(home.journey.checkins || [])].filter((item) => !item.completedAt && item.status !== 'done').length
       : 0;
+    const timeClock = await getTimeClockAccess(null, { companyId: session.companyId, candidateId: session.candidateId });
     return NextResponse.json({
       person: { fullName: home.person.fullName },
       company: { name: home.company.name, aboutHtml: home.company.aboutHtml, website: home.company.website },
@@ -25,6 +27,7 @@ export async function GET(request) {
         title: t(home.locale, task.titleKey, task.titleValues || {}),
         dueDate: task.dueDate || task.expiresAt || null,
       })),
+      features: { timeClock: Boolean(timeClock.ok && timeClock.enabled) },
       summary: { courses: home.courses.filter((course) => !course.isComplete).length, onboardingPending, okrs: home.okrActivities.length, pdiItems },
     });
   } catch (error) {

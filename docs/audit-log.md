@@ -45,4 +45,16 @@ Best-effort: falha no insert **não** quebra o fluxo principal.
 
 Dezenas de rotas admin já chamam `audit()`. Novas rotas sensíveis devem usar `auditFromRequest` quando houver `Request` disponível.
 
+## Alterações cadastrais (diferença por campo, LGPD)
+
+`metadata.changes` = lista `[{ field, from?, to? }]` montada por `diffAuditFields` (`lib/audit-changes.js`), só com os campos que mudaram:
+
+| Ação | Onde | Campos com `from`/`to` | Campos só “alterado” (sem valor) |
+|------|------|------------------------|----------------------------------|
+| `candidate.profile_update` | `PATCH /api/admin/candidates/[id]` | nome, e-mail corporativo, matrícula, forma de contratação, ponto por colaborador | e-mail pessoal, estado civil, histórico, notas de RH, telefone, LinkedIn, cidade/UF, pretensão, disponibilidade, origem, nascimento, admissão |
+| `dp.profile.updated` | gestor (`/dp` e ficha) **e** colaborador (`/api/employee/dp`, `/api/mobile/v1/employee/dp`, `actor_kind = employee`) | nenhum | CPF, RG, dependentes, endereço, contato de emergência, notas internas |
+| `user.update` | Usuários | e-mail, função, ativo, empresa, módulos | senha |
+
+Minimização (LGPD): dado pessoal nunca vai para a auditoria; só o nome do campo. CPF, CEP e telefones são comparados por dígitos (reformatação não conta como mudança). O diff usa a leitura anterior já feita na transação (`FOR UPDATE` na ficha; leitura por PK no DP), sem consulta por campo. A aba Auditoria mostra “campo: antes → depois” ou “alterado (valor não registrado)”.
+
 Retenção: sem purge automático hoje — definir política ops (ex. 12–24 meses) se o volume crescer.

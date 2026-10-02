@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { t } from '../../lib/i18n';
 import { cn } from '../../lib/cn';
 import { formatMinutesClock } from '../../lib/time-clock-format.js';
+import { TIME_CLOCK_REASON } from '../../lib/people/time-clock-eligibility.js';
 import {
   S,
   AdminActionsCell,
@@ -164,7 +165,11 @@ function PeopleList({ locale, companyId, onOpen, reloadKey }) {
                   <td className={cn(WIDE_COL, 'px-4 py-2.5 align-middle text-ink-muted')}>{row.jobRoleName || '·'}</td>
                   <td className={cn(WIDE_COL, 'px-4 py-2.5 align-middle text-ink-muted')}>{row.orgUnitPath || t(locale, 'panel.orgUnits.none')}</td>
                   <td className="px-4 py-2.5 align-middle">
-                    {row.flaggedCount > 0 ? (
+                    {row.timeClockEnabled === false ? (
+                      <StatusToneChip tone="neutral" title={t(locale, row.timeClockReason === TIME_CLOCK_REASON.OVERRIDE ? `${K}.noTimeClockOverride` : `${K}.noTimeClockWorkFormat`)}>
+                        {t(locale, `${K}.noTimeClock`)}
+                      </StatusToneChip>
+                    ) : row.flaggedCount > 0 ? (
                       <StatusToneChip tone="warning">
                         {t(locale, `${K}.flaggedChip`, { n: row.flaggedCount })}
                       </StatusToneChip>
