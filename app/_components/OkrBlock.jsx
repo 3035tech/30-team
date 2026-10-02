@@ -613,7 +613,7 @@ export function OkrBlock({ locale = 'pt-BR', companyId }) {
                       {cycles.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.title}
-                          {` (${formatDisplayDate(c.startsOn, locale)} — ${formatDisplayDate(c.endsOn, locale)})`}
+                          {` (${formatDisplayDate(c.startsOn, locale)}–${formatDisplayDate(c.endsOn, locale)})`}
                           {c.progressPct != null ? ` · ${c.progressPct}%` : ''}
                         </option>
                       ))}

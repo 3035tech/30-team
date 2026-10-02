@@ -9,7 +9,10 @@ import { DateField } from './DateField';
 import { FormField } from './FormField';
 import { InlineCallout } from './InlineCallout';
 import { SegmentedControl } from './SegmentedControl';
-import { dialogBtnGhostClass, dialogBtnPrimaryClass, dialogFieldClass } from './app-dialog-styles';
+import { SelectField } from './SelectField';
+import { dialogBtnGhostClass, dialogBtnPrimaryClass, dialogFieldClass, dialogSelectClass } from './app-dialog-styles';
+import { DEPENDENT_KINSHIP_RELATIONS } from '../../lib/domain-status.js';
+import { kinshipOptions, normalizeDependentRelation } from '../../lib/kinship-relation.js';
 
 const emptyDependent = () => ({ name: '', cpf: '', relation: '', birthDate: '' });
 
@@ -23,7 +26,7 @@ function validBirthDate(value) {
 export function DpDependentsEditor({ locale, dependents, onClose, onSave }) {
   const initial = Array.isArray(dependents) ? dependents : [];
   const [rows, setRows] = useState(() => initial.length ? initial.map((item) => ({
-    name: item.name || '', cpf: formatCpfBr(item.cpf || ''), relation: item.relation || '',
+    name: item.name || '', cpf: formatCpfBr(item.cpf || ''), relation: normalizeDependentRelation(item.relation),
     birthDate: item.birthDate ? String(item.birthDate).slice(0, 10) : '',
   })) : [emptyDependent()]);
   const [hasDependents, setHasDependents] = useState(initial.length > 0);
@@ -100,8 +103,13 @@ export function DpDependentsEditor({ locale, dependents, onClose, onSave }) {
                       onChange={(event) => update(index, 'cpf', formatCpfBr(event.target.value))} />
                   </FormField>
                   <FormField label={i18nT(locale, 'ui.dpDependentsEditor.relationship')}>
-                    <input className={dialogFieldClass} value={row.relation} maxLength={80}
-                      onChange={(event) => update(index, 'relation', event.target.value)} />
+                    <SelectField className={dialogSelectClass} value={row.relation}
+                      aria-label={i18nT(locale, 'ui.dpDependentsEditor.relationship')}
+                      onChange={(event) => update(index, 'relation', event.target.value)}>
+                      {kinshipOptions(locale, DEPENDENT_KINSHIP_RELATIONS).map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </SelectField>
                   </FormField>
                   <FormField label={t(locale, 'panel.dp.birthDate')}>
                     <DateField locale={locale} className={dialogFieldClass} value={row.birthDate} min="1900-01-01" max="9999-12-31"

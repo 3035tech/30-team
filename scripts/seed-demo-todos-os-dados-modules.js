@@ -264,7 +264,7 @@ export async function seedTodosOsDadosModules(client, ctx) {
          candidate_id, company_id, emergency_name, emergency_phone, emergency_relation,
          address_line, address_city, address_state, address_postal, cpf,
          internal_notes, updated_by_user_id
-       ) VALUES ($1,$2,$3,$4,'cônjuge',$5,$6,$7,'01310-100',$8,$9,$10)
+       ) VALUES ($1,$2,$3,$4,'spouse',$5,$6,$7,'01310-100',$8,$9,$10)
        ON CONFLICT (candidate_id) DO UPDATE SET
          emergency_name = EXCLUDED.emergency_name,
          cpf = EXCLUDED.cpf,

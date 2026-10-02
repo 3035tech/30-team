@@ -6,6 +6,7 @@ import { cn } from '../../lib/cn';
 import { t } from '../../lib/i18n';
 import { fieldInputClass } from './form-control-styles';
 import { SelectField } from './SelectField';
+import { Icon } from './Icon';
 import { S } from '../dashboard/dashboard-shared';
 
 const CALENDAR_WIDTH = 336;
@@ -217,8 +218,9 @@ export function DateField({
       aria-expanded={open && !disabled} aria-controls={open ? popupId : undefined}
       aria-invalid={invalid || undefined} aria-required={required || undefined}
       onClick={() => open ? close() : show()}
-      className={cn(bare ? 'ui-field min-h-touch border-none bg-transparent text-ink-muted' : fieldInputClass, 'w-full cursor-pointer text-left', className)}>
-      {display}
+      className={cn(bare ? 'ui-field min-h-touch border-none bg-transparent text-ink-muted' : fieldInputClass, 'w-full cursor-pointer text-left', className, 'inline-flex items-center justify-between gap-2')}>
+      <span className={cn('min-w-0 truncate', !safeValue && 'text-ink-faint')}>{display}</span>
+      <Icon name={withTime ? 'calendarClock' : 'calendar'} className="h-4 w-4 shrink-0 text-ink-muted" />
     </button>
     <input ref={inputRef} type={inputType} hidden tabIndex={-1} aria-hidden="true" name={name}
       value={value ?? ''} disabled={disabled} required={required} min={min} max={max} step={step}

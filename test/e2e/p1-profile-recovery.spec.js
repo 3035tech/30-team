@@ -67,7 +67,7 @@ test('P1: profile errors preserve values, save is single/atomic and cancel is re
     await expect(name).toHaveValue('Teste Recuperacao Ficha');
     await expect(emergency).toHaveValue('Contato Recuperacao');
     await name.fill('Cancelar sem salvar');
-    await dialog.getByRole('combobox', { name: 'Formato de trabalho', exact: true }).click();
+    await dialog.getByRole('combobox', { name: 'Tipo de vínculo', exact: true }).click();
     await page.getByRole('option', { name: before.candidate.workFormat === 'pj' ? 'CLT' : 'PJ', exact: true }).click();
     await expect(dialog.getByLabel('Data de vigência', { exact: true })).toBeVisible();
     await expect(save).toBeDisabled();

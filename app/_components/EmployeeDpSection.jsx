@@ -5,6 +5,7 @@ import { dpUploadValidationKey, dpUploadResponseKey } from '../../lib/dp-upload-
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t, tCount, localeHtmlLang } from '../../lib/i18n';
+import { kinshipLabel, kinshipOptions } from '../../lib/kinship-relation.js';
 import { cn } from '../../lib/cn';
 import { S, PanelSubNav } from '../dashboard/dashboard-shared';
 import { useAppFeedback } from './AppFeedback';
@@ -26,6 +27,7 @@ import {
   DP_LEAVE_STATUS,
   DP_LEAVE_TYPE,
   DP_LEAVE_TYPES,
+  EMERGENCY_KINSHIP_RELATIONS,
 } from '../../lib/domain-status.js';
 import { leaveInclusiveDays } from '../../lib/leave-days.js';
 
@@ -249,7 +251,8 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
           key: 'emergencyRelation',
           label: t(locale, 'panel.dp.emergencyRelation'),
           defaultValue: profile?.emergencyRelation || '',
-          maxLength: 80,
+          type: 'select',
+          options: kinshipOptions(locale, EMERGENCY_KINSHIP_RELATIONS),
         },
       ],
     });
@@ -613,7 +616,7 @@ export function EmployeeDpSection({ locale = 'pt-BR', onBadge, showIntro = true 
               fields: [
                 ['emergencyName', profile?.emergencyName],
                 ['emergencyPhone', profile?.emergencyPhone ? formatPhoneBr(profile.emergencyPhone) : ''],
-                ['emergencyRelation', profile?.emergencyRelation],
+                ['emergencyRelation', kinshipLabel(locale, profile?.emergencyRelation)],
               ],
             },
           ].map((group) => (

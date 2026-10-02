@@ -10,7 +10,7 @@ test('P1: dependent-only edits preserve other personnel fields and cancel is rea
   const id = items[0].id;
   const endpoint = `/api/admin/candidates/${id}/dp`;
   const before = await json(page.request.get(endpoint));
-  const dependents = [{ name: 'Dependente P1', cpf: '12345678901', relation: 'Filho', birthDate: '2015-01-20' }];
+  const dependents = [{ name: 'Dependente P1', cpf: '12345678901', relation: 'child', birthDate: '2015-01-20' }];
   try {
     const after = await json(page.request.patch(endpoint, { data: { dependents } }));
     expect(after.profile.dependents).toEqual(dependents);

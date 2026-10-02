@@ -75,7 +75,7 @@ BEGIN
       candidate_id, company_id, emergency_name, emergency_phone, emergency_relation,
       address_line, address_city, address_state, address_postal, cpf, updated_by_user_id
     ) VALUES (
-      v_emp.id, v_company_id, 'Contato demo', '+55 11 98888-0000', 'cônjuge',
+      v_emp.id, v_company_id, 'Contato demo', '+55 11 98888-0000', 'spouse',
       'Rua Demo 10', 'São Paulo', 'SP', '01310-100',
       lpad(v_i::text, 11, '0'), v_hr_id
     )

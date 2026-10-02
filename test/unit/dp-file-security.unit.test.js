@@ -10,6 +10,7 @@ import * as dpUpload from '../../lib/dp-upload-validation.js';
 import * as auditChanges from '../../lib/audit-changes.js';
 import { ERR, httpStatusForError } from '../../lib/api-error-codes.js';
 import { privateAttachmentResponse } from '../../lib/private-attachment-response.js';
+import { normalizeDependentRelation, normalizeEmergencyRelation } from '../../lib/kinship-relation.js';
 
 const managerRoute = 'app/api/admin/candidates/[id]/dp/documents/[docKey]/file/route.js';
 const employeeRoute = 'app/api/employee/dp/documents/[docKey]/file/route.js';
@@ -68,6 +69,7 @@ async function fixture(options = {}) {
     putObject: async () => {}, deleteObjectBestEffort: async () => {}, isObjectStorageConfigured: () => true,
     leaveInclusiveDays: () => 1, expandLeaveCalendarByDay: () => [], sanitizeRichTextHtml: value => value,
     stripCep: value => value, stripCpf: value => value, stripPhone: value => value,
+    normalizeDependentRelation, normalizeEmergencyRelation,
     DB_FANOUT_CONCURRENCY: 4,
     privateAttachmentResponse,
     checkRateLimit: async key => { state.rateKeys.push(key); return { ok: !options.rateLimited }; },

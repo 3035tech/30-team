@@ -375,6 +375,22 @@ export function Icon({ name, className }) {
           <path d="M5 5.5V21.5" />
         </svg>
       );
+    case 'calendar':
+      return (
+        <svg {...props}>
+          <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+          <path d="M3.5 10h17M8 3v4M16 3v4" />
+        </svg>
+      );
+    case 'calendarClock':
+      return (
+        <svg {...props}>
+          <path d="M20.5 11V7a2 2 0 0 0-2-2h-13a2 2 0 0 0-2 2v11.5a2 2 0 0 0 2 2H11" />
+          <path d="M3.5 10h17M8 3v4M16 3v4" />
+          <circle cx="17" cy="17" r="4" />
+          <path d="M17 15.5V17l1 1" />
+        </svg>
+      );
     case 'clock':
     case 'timeClock':
       return (

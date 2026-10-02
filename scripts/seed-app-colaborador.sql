@@ -425,10 +425,10 @@ $html$,
     address_line, address_number, address_city, address_state, address_postal,
     cpf, rg, dependents, internal_notes, updated_by_user_id
   ) VALUES (
-    v_marina, v_company_id, 'Paulo Costa', '+55 11 98888-1200', 'cônjuge',
+    v_marina, v_company_id, 'Paulo Costa', '+55 11 98888-1200', 'spouse',
     'Rua Augusta', '1200', 'São Paulo', 'SP', '01304-001',
     '39053344705', '123456789',
-    '[{"name":"Lucas Costa","cpf":"52998224725","relation":"filho","birthDate":"2018-04-12"}]'::jsonb,
+    '[{"name":"Lucas Costa","cpf":"52998224725","relation":"child","birthDate":"2018-04-12"}]'::jsonb,
     'Ficha completa para teste do app. Contato de emergência conferido.',
     v_hr_id
   );
@@ -440,7 +440,7 @@ $html$,
   )
   SELECT c.id, v_company_id,
          'Contato ' || split_part(c.full_name, ' ', 1),
-         '+55 11 97777-1000', 'familiar',
+         '+55 11 97777-1000', 'other',
          'Rua da Empresa', '50', c.city, c.state, '01001-000',
          lpad((20000000000 + c.id % 100000)::text, 11, '0'),
          'MG' || lpad((c.id % 100000)::text, 6, '0'),

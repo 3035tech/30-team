@@ -10,6 +10,7 @@ import * as fileMagic from '../../lib/file-magic.js';
 import * as dpUpload from '../../lib/dp-upload-validation.js';
 import * as notificationCatalog from '../../lib/employee-notification-catalog.js';
 import { ERR, HTTP_STATUS } from '../../lib/api-error-codes.js';
+import { normalizeDependentRelation, normalizeEmergencyRelation } from '../../lib/kinship-relation.js';
 
 async function moduleAt(path, dependencies, globals = {}) {
   const context = vm.createContext({ URL, Buffer, Response, Request, console, queueMicrotask, setTimeout, clearTimeout, AbortController, ...globals });
@@ -88,7 +89,7 @@ test('attachment route: bearer, owned row lock before storage, no cross-tenant w
 });
 test('attachment domain checks employee/company/leave and storage prefix; upload reuses sick/status/magic guards', async () => {
   let downloads = 0, puts = 0;
-  const deps = { ...domainStatus, ...fileMagic, ...dpUpload, ...auditChanges, ERR, default: crypto, asDb: (db) => db, companyScopedObjectKey: (id, path) => `companies/${id}/${path}`, getObjectBytes: async () => { downloads++; return { body: Buffer.from('pdf'), contentType: 'application/pdf' }; }, putObject: async () => { puts++; return { url: 'private' }; }, deleteObjectBestEffort: async () => {}, isObjectStorageConfigured: () => true, leaveInclusiveDays: () => 1, expandLeaveCalendarByDay: () => [], sanitizeRichTextHtml: (text) => text, stripCep: (v) => v, stripCpf: (v) => v, stripPhone: (v) => v, DB_FANOUT_CONCURRENCY: 4, DP_ADDRESS_NUMBER_MAX_LENGTH: 20 };
+  const deps = { ...domainStatus, ...fileMagic, ...dpUpload, ...auditChanges, ERR, default: crypto, asDb: (db) => db, companyScopedObjectKey: (id, path) => `companies/${id}/${path}`, getObjectBytes: async () => { downloads++; return { body: Buffer.from('pdf'), contentType: 'application/pdf' }; }, putObject: async () => { puts++; return { url: 'private' }; }, deleteObjectBestEffort: async () => {}, isObjectStorageConfigured: () => true, leaveInclusiveDays: () => 1, expandLeaveCalendarByDay: () => [], sanitizeRichTextHtml: (text) => text, stripCep: (v) => v, stripCpf: (v) => v, stripPhone: (v) => v, normalizeDependentRelation, normalizeEmergencyRelation, DB_FANOUT_CONCURRENCY: 4, DP_ADDRESS_NUMBER_MAX_LENGTH: 20 };
   const domain = await moduleAt('../../lib/people/employee-dp.js', deps);
   for (const companyId of [1, 2]) {
     const candidateId = companyId * 10, id = 22, calls = [];

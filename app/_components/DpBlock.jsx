@@ -5,6 +5,7 @@ import { dpUploadValidationKey, dpUploadResponseKey } from '../../lib/dp-upload-
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t, tCount, localeHtmlLang, t as i18nT } from '../../lib/i18n';
+import { kinshipLabel, kinshipOptions } from '../../lib/kinship-relation.js';
 import { cn } from '../../lib/cn';
 import {
   S,
@@ -36,6 +37,7 @@ import {
   DP_LEAVE_TYPE,
   DP_LEAVE_TYPES,
   EMPLOYMENT_STATUS,
+  EMERGENCY_KINSHIP_RELATIONS,
 } from '../../lib/domain-status.js';
 import { leaveInclusiveDays } from '../../lib/leave-days.js';
 import { TIME_CLOCK_REASON, resolveTimeClockEligibility } from '../../lib/people/time-clock-eligibility.js';
@@ -483,7 +485,8 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
           key: 'emergencyRelation',
           label: t(locale, 'panel.dp.emergencyRelation'),
           defaultValue: profile?.emergencyRelation || '',
-          maxLength: 80,
+          type: 'select',
+          options: kinshipOptions(locale, EMERGENCY_KINSHIP_RELATIONS),
           row: 'emergency',
         },
         {
@@ -1080,7 +1083,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
                     <li key={`${dependent.name}-${index}`} className="min-w-0 rounded-control border border-ink/10 bg-surface px-3 py-2">
                       <div className="truncate text-sm font-medium text-ink" title={dependent.name || ''}>{dependent.name || '—'}</div>
                       <div className="text-xs text-ink-muted">
-                        {[dependent.relation, dependent.birthDate ? formatDate(dependent.birthDate, locale) : null, dependent.cpf ? formatCpfBr(dependent.cpf) : null].filter(Boolean).join(' · ') || '—'}
+                        {[kinshipLabel(locale, dependent.relation), dependent.birthDate ? formatDate(dependent.birthDate, locale) : null, dependent.cpf ? formatCpfBr(dependent.cpf) : null].filter(Boolean).join(' · ') || '—'}
                       </div>
                     </li>
                   ))}
@@ -1092,7 +1095,7 @@ export function DpBlock({ locale, candidateId, employmentStatus, companyId }) {
             <ProfileSection title={i18nT(locale, 'ui.dpBlock.emergency')}>
               <ProfileInfo className="lg:col-span-2" label={t(locale, 'panel.dp.emergencyName')}>{profile.emergencyName}</ProfileInfo>
               <ProfileInfo label={t(locale, 'panel.dp.emergencyPhone')}>{profile.emergencyPhone ? formatPhoneBr(profile.emergencyPhone) : null}</ProfileInfo>
-              <ProfileInfo label={t(locale, 'panel.dp.emergencyRelation')}>{profile.emergencyRelation}</ProfileInfo>
+              <ProfileInfo label={t(locale, 'panel.dp.emergencyRelation')}>{kinshipLabel(locale, profile.emergencyRelation)}</ProfileInfo>
             </ProfileSection>
           </div>
         ) : (

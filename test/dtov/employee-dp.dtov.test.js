@@ -100,6 +100,7 @@ async function main() {
   assert.equal(profile.profile.cpf, '52998224725');
   assert.equal(profile.profile.addressPostal, '01001000');
   assert.equal(profile.profile.emergencyPhone, '11999990000');
+  assert.equal(profile.profile.emergencyRelation, 'spouse');
 
   const loaded = await getDpProfile({ query }, { companyId, candidateId });
   assert.equal(loaded.ok, true);

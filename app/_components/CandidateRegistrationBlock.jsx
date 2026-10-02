@@ -33,7 +33,7 @@ export function CandidateRegistrationBlock({ candidate, lmsOverdue = [], locale 
       confirmLabel: t(locale, 'panel.dp.save'),
       fields: [
         { key: 'linkedinUrl', label: t(locale, 'recruiting.linkedinLabel'), defaultValue: candidate.linkedinUrl || '', maxLength: 500 },
-        { key: 'state', label: t(locale, 'recruiting.stateLabel'), type: 'select', defaultValue: candidate.state || '', options: [{ value: '', label: t(locale, 'panel.dp.notInformed') }, ...BR_STATES.map(item => ({ value: item.uf, label: `${item.uf} — ${item.name}` }))] },
+        { key: 'state', label: t(locale, 'recruiting.stateLabel'), type: 'select', defaultValue: candidate.state || '', options: [{ value: '', label: t(locale, 'panel.dp.notInformed') }, ...BR_STATES.map(item => ({ value: item.uf, label: `${item.uf} · ${item.name}` }))] },
         { key: 'city', label: t(locale, 'recruiting.cityLabel'), defaultValue: candidate.city || '', maxLength: 120 },
         { key: 'salaryExpectation', label: t(locale, 'recruiting.salaryExpectationLabel'), type: 'salary', defaultValue: salaryToCentsDigits(candidate.salaryExpectation) },
         { key: 'availability', label: t(locale, 'recruiting.availabilityLabel'), type: 'select', defaultValue: candidate.availability || '', options: enumOptions(AVAILABILITY_VALUES, availabilityKeys, candidate.availability) },
