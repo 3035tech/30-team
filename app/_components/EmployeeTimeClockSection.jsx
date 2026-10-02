@@ -30,7 +30,8 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [useGeo, setUseGeo] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState('');
   const onBadgeRef = useRef(onBadge);
   onBadgeRef.current = onBadge;
 
@@ -57,19 +58,16 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
   }, [load]);
 
   const readGeo = () =>
-    new Promise((resolve) => {
-      if (!useGeo || typeof navigator === 'undefined' || !navigator.geolocation) {
-        resolve({ latitude: null, longitude: null });
+    new Promise((resolve, reject) => {
+      const fail = (key) => reject(Object.assign(new Error(t(locale, key)), { geo: true }));
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        fail('employeeHome.timeClock.geoUnsupported');
         return;
       }
       navigator.geolocation.getCurrentPosition(
-        (pos) =>
-          resolve({
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-          }),
-        () => resolve({ latitude: null, longitude: null }),
-        { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+        (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        (err) => fail(err?.code === (err?.PERMISSION_DENIED ?? 1) ? 'employeeHome.timeClock.geoDenied' : 'employeeHome.timeClock.geoUnavailable'),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
       );
     });
 
@@ -77,8 +75,10 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
     if (!data?.nextKind) return;
     const kind = data.nextKind;
     setBusy(true);
+    setLocating(true);
     try {
-      const geo = await readGeo();
+      const geo = await readGeo().finally(() => setLocating(false));
+      setGeoError('');
       const res = await fetch('/api/employee/time-clock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,7 +99,8 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
         'ok'
       );
     } catch (e) {
-      toast(e?.message || t(locale, 'employeeHome.timeClock.punchError'), 'error');
+      if (e?.geo) setGeoError(e.message);
+      else toast(e?.message || t(locale, 'employeeHome.timeClock.punchError'), 'error');
     } finally {
       setBusy(false);
     }
@@ -142,7 +143,11 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
           disabled={busy}
           aria-busy={busy}
         >
-          {busy ? t(locale, 'employeeHome.timeClock.punching') : nextLabel}
+          {locating
+            ? t(locale, 'employeeHome.timeClock.geoLocating')
+            : busy
+              ? t(locale, 'employeeHome.timeClock.punching')
+              : nextLabel}
         </button>
         <div className="flex flex-wrap items-center gap-3">
           {data.open ? (
@@ -150,18 +155,15 @@ export function EmployeeTimeClockSection({ locale = 'pt-BR', onBadge = null }) {
           ) : (
             <StatusToneChip tone="neutral">{t(locale, 'employeeHome.timeClock.closedShift')}</StatusToneChip>
           )}
-          <label className="inline-flex min-h-touch cursor-pointer items-center gap-2 text-xs text-ink-muted">
-            <input
-              type="checkbox"
-              className={S.checkbox}
-              checked={useGeo}
-              onChange={(e) => setUseGeo(e.target.checked)}
-              disabled={busy}
-            />
-            {t(locale, 'employeeHome.timeClock.geoOpt')}
-          </label>
+          <span className="text-xs text-ink-muted">{t(locale, 'employeeHome.timeClock.geoNotice')}</span>
         </div>
       </div>
+
+      {geoError ? (
+        <InlineCallout tone="warning" className="mb-3" role="alert">
+          {geoError}
+        </InlineCallout>
+      ) : null}
 
       <p className="mb-2 mt-0 text-xs text-ink-muted">
         {t(locale, 'employeeHome.timeClock.dayLabel', { day: formatDisplayDate(data.day, locale) })}

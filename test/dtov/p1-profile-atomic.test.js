@@ -10,6 +10,10 @@ import { normalizeCandidateProfile } from '../../lib/candidate-profile.js';
 import { titleCasePersonName } from '../../lib/person-name.js';
 import { sanitizeRichTextHtml, isRichTextEmpty } from '../../lib/sanitize-html.js';
 import { upsertDpProfile } from '../../lib/people/employee-dp.js';
+import * as auditChanges from '../../lib/audit-changes.js';
+import { WORK_FORMATS } from '../../lib/domain-status.js';
+import { normalizeLocale } from '../../lib/i18n.js';
+import { normalizeTimeClockOverride } from '../../lib/people/time-clock-eligibility.js';
 
 const db = new pg.Client({ host: '127.0.0.1', port: 55432, database: 'enneagram_dtov', user: 'dtov', password: 'dtov_local_only', ssl: false });
 await db.connect();
@@ -22,7 +26,7 @@ try {
   let failAfterDp = false;
   const audits = [];
   const deps = {
-    ...permissions, ERR, normalizeCandidateProfile, titleCasePersonName, sanitizeRichTextHtml, isRichTextEmpty,
+    ...permissions, ...auditChanges, ERR, WORK_FORMATS, normalizeLocale, normalizeTimeClockOverride, normalizeCandidateProfile, titleCasePersonName, sanitizeRichTextHtml, isRichTextEmpty,
     NextResponse: { json: Response.json }, COOKIE_NAME: 'session',
     cookies: async () => ({ get: () => ({ value: 'synthetic' }) }),
     verifySessionWithCapabilities: async () => payload,
@@ -37,7 +41,9 @@ try {
       if (failAfterDp) throw new Error('Synthetic storage failure after DP write');
       return result;
     },
-    apiError: (_req, code, status) => Response.json({ errorCode: code }, { status }),
+    apiError: (_req, code, status) => Response.json({ errorCode: code }, { status }), localeFromRequest: () => 'pt-BR',
+    isValidEmployeeEmail: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '')),
+    revokeEmployeeAccessForEmailChange: async () => null, finishEmployeeEmailChange: async () => null,
     audit: async entry => audits.push(entry), auditFromRequest: async (_req, entry) => audits.push(entry),
     buildCandidateTimeline: async () => [], buildCandidatePeopleBrief: async () => null, listCandidateOverdueLms: async () => [],
   };

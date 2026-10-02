@@ -1,7 +1,7 @@
 /**
  * DTOV: a manager changing a collaborator's corporate e-mail must not hand over the portal.
  * Old password + setup link are cleared, sessions are revoked, and the invite goes to the new address.
- * Run with SMTP_MOCK=1.
+ * Run with SMTP_MOCK=1 and NEXT_PUBLIC_APP_URL set.
  */
 import assert from 'node:assert/strict';
 import { pool, query, withTransaction } from '../../lib/db.js';
@@ -19,6 +19,7 @@ const DEMO_PASSWORD = 'DemoTodosDados!2026';
 
 async function main() {
   assert.equal(process.env.SMTP_MOCK, '1', 'run with SMTP_MOCK=1');
+  assert.ok(process.env.NEXT_PUBLIC_APP_URL, 'run with NEXT_PUBLIC_APP_URL (invite link needs it)');
   const row = await query(
     `SELECT id, company_id AS "companyId", password_hash AS "passwordHash",
             COALESCE(session_version, 1) AS "sessionVersion"

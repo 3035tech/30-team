@@ -1,6 +1,6 @@
 /**
  * GET  /api/employee/time-clock — today's punches + next kind
- * POST /api/employee/time-clock — punch in/out (optional geo)
+ * POST /api/employee/time-clock — punch in/out (location required)
  */
 
 import { NextResponse } from 'next/server';
@@ -9,6 +9,7 @@ import { query } from '../../../../lib/db.js';
 import { getEmployeeSessionPayload } from '../../../../lib/employee-session.js';
 import { checkRateLimit } from '../../../../lib/rate-limit.js';
 import { TIME_PUNCH_KINDS } from '../../../../lib/domain-status.js';
+import { parsePunchCoordinates } from '../../../../lib/time-clock-format.js';
 import {
   createTimePunch,
   getEmployeeTimeClockToday,
@@ -47,12 +48,15 @@ export async function POST(request) {
       return apiError(request, ERR.INVALID_DATA, 400);
     }
 
+    const coords = parsePunchCoordinates(body.latitude, body.longitude);
+    if (!coords) return apiError(request, ERR.GEOLOCATION_REQUIRED, 400);
+
     const result = await createTimePunch({ query }, {
       companyId,
       candidateId,
       punchKind,
-      latitude: body.latitude,
-      longitude: body.longitude,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
       notes: body.notes,
     });
     if (!result.ok) return apiErrorFromResult(request, result);

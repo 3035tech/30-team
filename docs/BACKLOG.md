@@ -872,6 +872,10 @@ Já entregue: diferença por campo em ficha, DP (gestor e colaborador) e Usuári
 1. Visão de auditoria filtrada por `company_id` para o dono da empresa (capability nova), sem cross-tenant.
 2. Filtros por pessoa (alvo) e por ação; exportação CSV para atender pedido do titular ou fiscalização.
 
+### B-3203 — Reautenticação ao trocar o próprio e-mail
+1. Gestor não admin trocando o próprio e-mail: exigir senha/2FA de novo e avisar o endereço antigo.
+2. Evita que uma sessão roubada troque o e-mail e recupere a conta por "esqueci a senha".
+
 ---
 
 ## Aberto — Observabilidade

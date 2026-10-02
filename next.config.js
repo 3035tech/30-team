@@ -35,6 +35,10 @@ const nextConfig = {
           { key: 'X-DNS-Prefetch-Control', value: 'off' },
         ],
       },
+      {
+        source: '/employee/:path*',
+        headers: [{ key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' }],
+      },
     ];
   },
 };

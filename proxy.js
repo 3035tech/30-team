@@ -92,11 +92,11 @@ async function applySessionSlide(response, kind, payload) {
 }
 
 /** Cabeçalhos de segurança (baseline + HSTS/CSP opcionais via env). */
-function withSecurityHeaders(response, { noindex = false } = {}) {
+function withSecurityHeaders(response, { noindex = false, geolocation = false } = {}) {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'SAMEORIGIN');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  response.headers.set('Permissions-Policy', `camera=(), microphone=(), geolocation=${geolocation ? '(self)' : '()'}`);
 
   if (noindex) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow');
@@ -120,10 +120,12 @@ function withSecurityHeaders(response, { noindex = false } = {}) {
 }
 
 function secureResponse(request, response) {
-  const noindex = isCrawlerNoIndexPath(request.nextUrl.pathname);
+  const { pathname } = request.nextUrl;
+  const noindex = isCrawlerNoIndexPath(pathname);
+  const geolocation = pathname === '/employee' || pathname.startsWith('/employee/');
   return withDetectedLocaleCookie(
     request,
-    withJobAttributionCookie(request, withSecurityHeaders(response, { noindex }))
+    withJobAttributionCookie(request, withSecurityHeaders(response, { noindex, geolocation }))
   );
 }
 

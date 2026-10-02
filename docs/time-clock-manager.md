@@ -31,6 +31,14 @@ Saldos paginados com cargo e caminho da unidade (`GET /api/admin/hour-bank?offse
 - API: `GET/POST /api/employee/time-clock` e mobile recusam com `TIME_CLOCK_DISABLED` (403), inclusive quando o módulo DP está desligado na empresa (antes não checava).
 - Gestor: lista mostra "Sem controle de ponto" (essas pessoas vão para o fim); espelho não calcula falta nem horas faltantes, mas mostra marcações antigas. Ajuste de dias passados pelo RH (`source = manager`) continua permitido.
 
+## Localização da batida
+
+- Obrigatória em toda batida do colaborador. Web: o portal sempre pede a localização (sem checkbox) e `POST /api/employee/time-clock` recusa sem coordenadas válidas com `GEOLOCATION_REQUIRED` (400). Mobile já exigia (`INVALID_DATA`, contrato mantido). Ajuste do RH (`source = manager`) não tem localização.
+- `parsePunchCoordinates` (`lib/time-clock-format.js`, puro) valida faixa e formato; `createTimePunch` grava com 6 casas (`latitude`/`longitude` em `employee_time_punches`).
+- Antes desta mudança o cabeçalho `Permissions-Policy: geolocation=()` (em `proxy.js` e `next.config.js`) bloqueava a localização no navegador, então batidas web antigas não têm coordenadas. Agora é `geolocation=(self)`.
+- Gestor: no detalhe do dia do espelho, cada batida do colaborador tem "Ver local no mapa" (`CollapsibleBlock`). O mapa é um iframe do OpenStreetMap (sem chave de API) montado só ao abrir, então as coordenadas só saem para o OpenStreetMap quando o gestor pede. CSP: `frame-src` inclui `https://www.openstreetmap.org`.
+- LGPD: o portal avisa "A localização é registrada a cada batida". A finalidade é comprovar o local do registro de ponto; não há rastreio contínuo, só o ponto no momento da batida.
+
 ## Regras assumidas
 
 - Dias úteis seg–sex; escala única da empresa; tolerância = carência de atraso da escala.

@@ -45,7 +45,14 @@ function changeFieldLabel(locale, field) {
   return label === key ? field : label;
 }
 
-function changeValueLabel(locale, value) {
+const TIME_CLOCK_OVERRIDE_LABEL_KEY = Object.freeze({
+  null: 'panel.dp.timeClockFollow',
+  true: 'panel.dp.timeClockForceOn',
+  false: 'panel.dp.timeClockForceOff',
+});
+
+function changeValueLabel(locale, value, field) {
+  if (field === 'timeClockOverride') return t(locale, TIME_CLOCK_OVERRIDE_LABEL_KEY[String(value ?? null)]);
   if (value == null || value === '') return '—';
   if (typeof value === 'boolean') return t(locale, value ? 'panel.common.yes' : 'panel.common.no');
   if (Array.isArray(value)) return value.join(', ');
@@ -61,7 +68,7 @@ function AuditChangeList({ changes, locale }) {
           <span className="font-semibold text-ink">{changeFieldLabel(locale, change.field)}</span>
           {': '}
           {'from' in change || 'to' in change
-            ? `${changeValueLabel(locale, change.from)} → ${changeValueLabel(locale, change.to)}`
+            ? `${changeValueLabel(locale, change.from, change.field)} → ${changeValueLabel(locale, change.to, change.field)}`
             : t(locale, 'panel.audit.changedNoValue')}
         </li>
       ))}

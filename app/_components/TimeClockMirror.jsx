@@ -24,6 +24,7 @@ import {
 } from '../dashboard/dashboard-shared';
 import { AdminRichFormDrawer } from './AdminRichFormDrawer';
 import { AppLoading, ContentEnter } from './AppLoading';
+import { CollapsibleBlock } from './CollapsibleBlock';
 import { useAppFeedback } from './AppFeedback';
 import { DateField } from './DateField';
 import { EmptyState } from './EmptyState';
@@ -155,6 +156,37 @@ function MinutesCell({ value, tone }) {
   );
 }
 
+const MAP_SPAN_DEG = 0.004;
+
+function PunchLocationMap({ latitude, longitude, locale }) {
+  const bbox = [longitude - MAP_SPAN_DEG, latitude - MAP_SPAN_DEG, longitude + MAP_SPAN_DEG, latitude + MAP_SPAN_DEG]
+    .map((n) => n.toFixed(6))
+    .join(',');
+  const marker = `${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <iframe
+        title={t(locale, `${K}.punchMapTitle`)}
+        src={`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${marker}`}
+        className="h-48 w-full rounded-control border border-ink/10"
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className={cn(S.faint, 'font-mono tabular-nums')}>{marker}</span>
+        <a
+          href={`https://www.openstreetmap.org/?mlat=${latitude.toFixed(6)}&mlon=${longitude.toFixed(6)}#map=17/${latitude.toFixed(6)}/${longitude.toFixed(6)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-touch items-center text-prose text-brand-600 dark:text-brand-300"
+        >
+          {t(locale, `${K}.punchMapOpen`)}
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function DayDetail({ day, locale, onMarkOk, busy }) {
   const punches = [...(day.punches || [])].sort(
     (a, b) => new Date(a.punchedAt).getTime() - new Date(b.punchedAt).getTime()
@@ -268,6 +300,17 @@ function DayDetail({ day, locale, onMarkOk, busy }) {
                   >
                     {t(locale, 'panel.timeClock.markOk')}
                   </button>
+                ) : null}
+                {p.source !== TIME_PUNCH_SOURCE.MANAGER ? (
+                  <div className="basis-full">
+                    {p.latitude != null && p.longitude != null ? (
+                      <CollapsibleBlock locale={locale} title={t(locale, `${K}.punchLocation`)} bordered={false} titleClassName="text-prose text-ink-muted">
+                        <PunchLocationMap latitude={p.latitude} longitude={p.longitude} locale={locale} />
+                      </CollapsibleBlock>
+                    ) : (
+                      <span className={S.faint}>{t(locale, `${K}.punchNoLocation`)}</span>
+                    )}
+                  </div>
                 ) : null}
               </li>
             ))}
