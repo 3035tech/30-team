@@ -45,6 +45,18 @@ export async function dismissManagerOnboarding(page) {
 }
 
 /**
+ * Sidebar groups remember their open state, so toggling blindly can collapse
+ * a group that is already open and hide the target item.
+ */
+export async function clickSidebarItem(sidebar, groupName, itemName) {
+  const item = sidebar.getByRole('button', { name: itemName }).first();
+  if (!(await item.isVisible())) {
+    await sidebar.getByRole('button', { name: groupName }).first().click();
+  }
+  await item.click();
+}
+
+/**
  * HTML5 DnD for React handlers that use dataTransfer.setData/getData.
  * Playwright mouse dragTo often skips DataTransfer; this exercises the real onDrop path.
  */

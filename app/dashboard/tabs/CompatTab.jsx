@@ -30,7 +30,7 @@ function PersonCard({ person, locale }) {
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <TypeBadge type={person.topType} locale={locale} compact />
             {person.areaLabel ? (
-              <span className="rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink-muted">
+              <span className="max-w-full break-words rounded-full border border-ink/12 bg-ink/[0.04] px-2 py-0.5 font-mono text-2xs text-ink/80">
                 {person.areaLabel}
               </span>
             ) : null}
@@ -203,6 +203,7 @@ export function CompatTab({
               key={x.id}
               type="button"
               onClick={() => goSection(x.id)}
+              aria-pressed={active}
               className="cursor-pointer rounded-card border bg-surface px-5 py-[18px] text-left"
               style={{
                 borderColor: active ? x.c : `${x.c}25`,
@@ -214,7 +215,7 @@ export function CompatTab({
                 {x.l}
               </div>
               <div className="mb-2.5 text-xs text-ink-faint">{x.d}</div>
-              <div className="font-mono text-2xs" style={{ color: x.c }}>{x.action}</div>
+              <div className="font-mono text-2xs font-semibold text-ink/80">{x.action}</div>
             </button>
           );
         })}

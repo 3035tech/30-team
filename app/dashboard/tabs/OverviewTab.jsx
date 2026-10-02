@@ -45,17 +45,35 @@ const FUNNEL_COLORS = { ...PIPELINE_STAGE_COLORS };
 const PRIORITY_CLASS = {
   high: {
     card: 'border-danger/25 bg-danger/[0.08]',
-    label: 'text-danger',
+    label: 'text-red-800 dark:text-danger',
   },
   medium: {
     card: 'border-warning/25 bg-warning/[0.08]',
-    label: 'text-warning',
+    label: 'text-amber-800 dark:text-warning',
   },
   low: {
     card: 'border-ink/12 bg-ink/[0.04]',
-    label: 'text-ink-muted',
+    label: 'text-ink/80',
   },
 };
+
+/** Unit for attention rows whose server context is a bare count. */
+const ATTENTION_COUNT_UNIT = {
+  pdi_no_plan: 'people',
+  onboarding_overdue: 'checkins',
+  lms_overdue: 'enrollments',
+  dp_leave_requested: 'requests',
+  dp_docs_pending: 'people',
+  comp_below_market: 'people',
+  climate_open: 'surveys',
+};
+
+function attentionContext(locale, item) {
+  const raw = item.context == null ? '' : String(item.context);
+  if (!/^\d+$/.test(raw)) return raw;
+  const unit = ATTENTION_COUNT_UNIT[item.kind] || 'items';
+  return t(locale, `panel.overview.attnCount.${unit}`, { n: Number(raw) });
+}
 
 export function OverviewTab({
   overview = null,
@@ -229,8 +247,8 @@ export function OverviewTab({
                     <span className="min-w-0 text-prose text-ink">
                       {t(locale, item.titleKey)}
                     </span>
-                    <span className="col-span-2 min-w-0 text-xs text-ink-muted sm:col-span-1">
-                      {item.context}
+                    <span className="col-span-2 min-w-0 text-xs text-ink/80 sm:col-span-1">
+                      {attentionContext(locale, item)}
                     </span>
                     {item.days != null ? (
                       <span className="shrink-0 font-mono text-2xs text-ink-faint">

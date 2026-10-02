@@ -974,7 +974,7 @@ function DashboardClientContent({
 
           <div className="db-top-row mb-4 flex flex-wrap items-start gap-3">
           {showGlobalSearch ? (
-          <div className="relative min-w-0 flex-[1_1_280px]">
+          <div className="relative min-w-0 flex-[1_1_280px] max-sm:order-last max-sm:-ml-14 max-sm:basis-[calc(100%+3.5rem)]">
             <input
               type="search"
               id="dashboard-global-search"

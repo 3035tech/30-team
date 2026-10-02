@@ -278,7 +278,7 @@ export function DashboardTopBarMenus({
     'absolute right-0 top-[calc(100%+8px)] z-40 w-80 max-w-[min(320px,92vw)] overflow-hidden rounded-xl border border-ink/12 bg-surface shadow-menu';
 
   return (
-    <div ref={wrapRef} className="flex shrink-0 items-center gap-2">
+    <div ref={wrapRef} className="ml-auto flex shrink-0 items-center gap-2">
       {/* Global Search */}
       <GlobalSearch locale={locale} />
       

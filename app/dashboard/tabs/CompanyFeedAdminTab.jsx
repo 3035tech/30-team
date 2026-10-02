@@ -304,20 +304,22 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
                   <td className="font-mono text-2xs text-ink-faint">
                     {formatDisplayDateTime(p.createdAt, locale)}
                   </td>
-                  <AdminActionsCell>
-                    <AdminViewButton
-                      label={t(locale, 'panel.common.view')}
-                      onClick={() => viewPost(p)}
-                    />
-                    <AdminEditButton
-                      label={t(locale, 'panel.common.edit')}
-                      onClick={() => editPost(p)}
-                    />
-                    <AdminDeleteButton
-                      label={t(locale, 'panel.common.delete')}
-                      onClick={() => removePost(p)}
-                    />
-                  </AdminActionsCell>
+                  <td className="text-right align-middle">
+                    <AdminActionsCell>
+                      <AdminViewButton
+                        label={t(locale, 'panel.common.view')}
+                        onClick={() => viewPost(p)}
+                      />
+                      <AdminEditButton
+                        label={t(locale, 'panel.common.edit')}
+                        onClick={() => editPost(p)}
+                      />
+                      <AdminDeleteButton
+                        label={t(locale, 'panel.common.delete')}
+                        onClick={() => removePost(p)}
+                      />
+                    </AdminActionsCell>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -369,16 +371,18 @@ export function CompanyFeedAdminTab({ locale = 'pt-BR', companyId }) {
                       <td className="font-mono text-2xs text-ink-faint whitespace-nowrap">
                         {formatDisplayDateTime(k.createdAt, locale)}
                       </td>
-                      <AdminActionsCell>
-                        <AdminViewButton
-                          label={t(locale, 'panel.common.view')}
-                          onClick={() => viewKudo(k)}
-                        />
-                        <AdminDeleteButton
-                          label={t(locale, 'panel.common.delete')}
-                          onClick={() => removeKudo(k)}
-                        />
-                      </AdminActionsCell>
+                      <td className="text-right align-middle">
+                        <AdminActionsCell>
+                          <AdminViewButton
+                            label={t(locale, 'panel.common.view')}
+                            onClick={() => viewKudo(k)}
+                          />
+                          <AdminDeleteButton
+                            label={t(locale, 'panel.common.delete')}
+                            onClick={() => removeKudo(k)}
+                          />
+                        </AdminActionsCell>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

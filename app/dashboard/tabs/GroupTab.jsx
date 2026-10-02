@@ -500,10 +500,12 @@ export function GroupTab({
         ) : (
           <div className="flex flex-col gap-2.5">
             <input
+              type="search"
               value={baseSearch}
               onChange={(e)=>{ setBaseSearch(e.target.value); setShowAllBase(false); }}
               placeholder={t(locale, 'panel.group.searchBasePh')}
-              className="rounded-control border border-ink/12 bg-ink/[0.07] px-3 py-2.5 font-mono text-xs text-ink"
+              aria-label={t(locale, 'panel.group.searchBasePh')}
+              className={S.input}
             />
             {results
               .filter(r=>!baseSearch.trim() || r.name.toLowerCase().includes(baseSearch.trim().toLowerCase()))

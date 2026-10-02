@@ -145,7 +145,7 @@ export function OrgChartBlock({ locale = 'pt-BR', companyId, navigateDashboard =
         </label>
         <div className="flex flex-wrap items-center gap-1" role="group" aria-label={msg('viewControls')}>
           <button type="button" className={S.btnGhost} aria-label={msg('zoomOut')} disabled={zoom <= .1} onClick={() => setZoom((value) => Math.max(.1, Number((value - .2).toFixed(2))))}>−</button>
-          <span className="w-12 text-center font-ui text-xs tabular-nums" aria-live="polite">{Math.round(zoom * 100)}%</span>
+          <span className="w-12 text-center font-ui text-xs tabular-nums text-ink" aria-live="polite">{Math.round(zoom * 100)}%</span>
           <button type="button" className={S.btnGhost} aria-label={msg('zoomIn')} disabled={zoom >= 1.6} onClick={() => setZoom((value) => Math.min(1.6, Number((value + .2).toFixed(2))))}>+</button>
           <button type="button" className={S.btnGhost} onClick={() => { setZoom(Math.min(1, (viewport.current?.clientWidth || layout.width) / layout.width)); viewport.current?.scrollTo({ top: 0, left: 0 }); }}>{msg('fit')}</button>
           <button type="button" className={S.btnGhost} onClick={() => setCollapsed(new Set())}>{msg('expandAll')}</button>

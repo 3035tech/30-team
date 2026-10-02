@@ -4,7 +4,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { TOK, HR, PUBLIC, dismissManagerOnboarding, fillLogin } from './fixtures.js';
+import { TOK, HR, PUBLIC, clickSidebarItem, dismissManagerOnboarding, fillLogin } from './fixtures.js';
 
 test.describe('public pages', () => {
   for (const viewport of [
@@ -73,12 +73,10 @@ test.describe('dashboard navigation (HR)', () => {
     const sidebar = page.locator('#dashboard-sidebar');
     await expect(sidebar).toBeVisible();
 
-    await sidebar.getByRole('button', { name: /pessoas|people/i }).click();
-    await sidebar.getByRole('button', { name: /equipe|team/i }).click();
+    await clickSidebarItem(sidebar, /pessoas|people/i, /equipe|team/i);
     await expect(page).toHaveURL(/tab=team/);
 
-    await sidebar.getByRole('button', { name: /recrutamento|recruitment/i }).click();
-    await sidebar.getByRole('button', { name: /vagas|vacancies/i }).click();
+    await clickSidebarItem(sidebar, /recrutamento|recruitment/i, /vagas|vacancies/i);
     await expect(page).toHaveURL(/tab=vacancies/);
     await expect(page.getByText(/engenheiro|vaga|vacancy|criar|new/i).first()).toBeVisible({
       timeout: 20_000,

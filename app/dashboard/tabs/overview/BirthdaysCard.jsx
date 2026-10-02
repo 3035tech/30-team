@@ -114,13 +114,13 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
           {items.map((row) => (
             <li
               key={`${row.kind}-${row.candidateId}-${row.nextOn}`}
-              className="flex flex-wrap items-baseline justify-between gap-2 px-1 py-2.5 first:pt-1 last:pb-0"
+              className="flex items-start justify-between gap-3 px-1 py-2.5 first:pt-1 last:pb-0"
             >
-              <div className="min-w-0">
+              <div className="flex min-w-0 flex-1 flex-col items-start">
                 {typeof navigateDashboard === 'function' ? (
                   <button
                     type="button"
-                    className="cursor-pointer truncate rounded-sm border-none bg-transparent p-0 text-left text-sm font-medium text-ink hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
+                    className="max-w-full cursor-pointer truncate rounded-sm border-none bg-transparent p-0 text-left text-sm font-medium text-ink hover:text-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/35"
                     onClick={() =>
                       navigateDashboard({
                         tab: 'team',
@@ -132,18 +132,18 @@ export default function BirthdaysCard({ locale = 'pt-BR', companyId, navigateDas
                     {row.fullName}
                   </button>
                 ) : (
-                  <span className="text-sm font-medium text-ink">{row.fullName}</span>
+                  <span className="max-w-full truncate text-sm font-medium text-ink">{row.fullName}</span>
                 )}
-                <span className="ml-2 font-mono text-2xs uppercase tracking-wide text-ink-faint">
+                <span className="mt-0.5 font-mono text-2xs uppercase tracking-wide text-ink-muted">
                   {row.kind === 'birth'
                     ? t(locale, 'panel.birthdays.kindBirth')
                     : t(locale, 'panel.birthdays.kindWork')}
                 </span>
               </div>
-              <div className="shrink-0 font-mono text-xs text-ink-muted">
-                {formatNext(row.nextOn)}
+              <div className="flex shrink-0 flex-col items-end font-mono text-xs text-ink/80">
+                <span>{formatNext(row.nextOn)}</span>
                 {row.kind === 'work' && row.years ? (
-                  <span className="ml-1.5 text-ink-faint">
+                  <span className="mt-0.5 text-2xs text-ink-muted">
                     {t(locale, 'panel.birthdays.years', { n: row.years })}
                   </span>
                 ) : null}

@@ -547,10 +547,12 @@ export function AnalyticsTab({ companyId, locale: initialLocale = 'pt-BR', navig
           <MetricCard
             title={t(locale, 'panel.analytics.avgHiredFit')}
             value={metrics.fitComparison.hiredCount ? `${metrics.fitComparison.hiredAvgFit.toFixed(1)}/10` : t(locale, 'panel.analytics.unavailable')}
-            subtitle={t(locale, 'panel.analytics.fitPoolDelta', {
-              pool: metrics.fitComparison.poolAvgFit.toFixed(1),
-              delta: `${metrics.fitComparison.delta > 0 ? '+' : ''}${metrics.fitComparison.delta.toFixed(1)}`,
-            })}
+            subtitle={metrics.fitComparison.hiredCount
+              ? t(locale, 'panel.analytics.fitPoolDelta', {
+                  pool: metrics.fitComparison.poolAvgFit.toFixed(1),
+                  delta: `${metrics.fitComparison.delta > 0 ? '+' : ''}${metrics.fitComparison.delta.toFixed(1)}`,
+                })
+              : t(locale, 'panel.analytics.fitPoolOnly', { pool: metrics.fitComparison.poolAvgFit.toFixed(1) })}
             locale={locale}
             onClick={canNav ? () => navigateDashboard({ tab: 'vacancies' }) : undefined}
           />

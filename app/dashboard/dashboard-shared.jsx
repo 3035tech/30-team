@@ -526,7 +526,7 @@ function PanelSubNav({
               <span
                 className={cn(
                   'ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-2xs tabular-nums',
-                  on ? 'bg-brand-500/15 text-brand-700' : 'bg-ink/[0.07] text-ink-muted'
+                  on ? 'bg-brand-500/15 text-brand-700' : 'bg-ink/[0.07] text-ink/80'
                 )}
                 aria-label={tab.badgeLabel || undefined}
               >

@@ -43,7 +43,8 @@ for (const viewport of [
         const activeItem = page.locator(`#${tab}-tab`).last();
         await expect(activeItem).toBeVisible();
         await expect(activeItem).toHaveAttribute('aria-current', 'page');
-        const activeLabel = await activeItem.getAttribute('aria-label');
+        const activeLabel =
+          (await activeItem.getAttribute('aria-label')) || (await activeItem.innerText());
         expect(activeLabel || '').toMatch(label);
         await page.getByRole('button', { name: /fechar menu|close menu/i }).last().click();
       }

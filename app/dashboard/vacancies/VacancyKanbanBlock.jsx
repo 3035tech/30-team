@@ -348,7 +348,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                 {workspace.recruiters.map((recruiter) => <option key={recruiter.id} value={recruiter.id}>{recruiter.name}</option>)}
               </SelectField>
             </label>
-            {!workspace.vacancyOwnerUserId ? <span className="rounded-full bg-warning/10 px-2 py-1 font-ui text-xs text-warning">{t(locale, 'recruiting.ownerMissing')}</span> : null}
+            {!workspace.vacancyOwnerUserId ? <span className="rounded-full bg-warning/10 px-2 py-1 font-ui text-xs text-amber-800 dark:text-warning">{t(locale, 'recruiting.ownerMissing')}</span> : null}
             <button type="button" className="ml-auto min-h-touch rounded-control border border-brand-500/30 bg-brand-500/[0.07] px-3 font-ui text-xs font-semibold text-brand-600" onClick={saveView}>
               {t(locale, 'recruiting.savedViewSave')}
             </button>
@@ -376,7 +376,7 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
       ) : null}
 
       {hasAny && hasFiltered && (
-        <div className="kanban-scroll overflow-x-visible pb-2 md:overflow-x-auto md:[-webkit-overflow-scrolling:touch]">
+        <div className="kanban-scroll relative overflow-x-visible pb-2 md:overflow-x-auto md:[-webkit-overflow-scrolling:touch]">
           <div className="flex w-full flex-col items-stretch gap-2.5 md:min-w-max md:flex-row md:items-start">
             {visibleStages.map((stage) => {
               const cards = grouped[stage.id] || [];
@@ -428,20 +428,17 @@ export function VacancyKanbanBlock({ vacancyId, locale, refreshKey = 0, onPerson
                       className="inline-block h-[7px] w-[7px] shrink-0 rounded-full"
                       style={{ background: stage.color }}
                     />
-                    <span
-                      className="flex-1 font-mono text-2xs font-bold uppercase tracking-[0.8px]"
-                      style={{ color: stage.color }}
-                    >
+                    <span className="flex-1 font-mono text-2xs font-bold uppercase tracking-[0.8px] text-ink">
                       {stage.label}
                     </span>
                     <span
-                      className="rounded-lg px-[7px] py-px font-mono text-2xs font-bold"
-                      style={{ color: stage.color, background: `${stage.color}25` }}
+                      className="rounded-lg px-[7px] py-px font-mono text-2xs font-bold text-ink"
+                      style={{ background: `${stage.color}25` }}
                     >
                       {cards.length}
                     </span>
                     {(avgDays != null || stalled > 0) ? (
-                      <span className="basis-full pl-[13px] font-mono text-[10px] text-ink-muted">
+                      <span className="basis-full pl-[13px] font-mono text-2xs text-ink-muted">
                         {avgDays != null ? t(locale, 'recruiting.pipelineAvgDays', { n: avgDays }) : null}
                         {avgDays != null && stalled > 0 ? ' · ' : null}
                         {stalled > 0 ? t(locale, 'recruiting.pipelineStalled', { n: stalled }) : null}

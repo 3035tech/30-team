@@ -236,7 +236,7 @@ export function PdiAdminTab({ locale = 'pt-BR', companyId, navigateDashboard, in
                           </div> : hasPlan ? <span className="text-ink-muted">{copy.noItems}</span> : '—'}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <button type="button" onClick={() => openPerson(row)} className={cn(S.btnBrandSoft, 'min-h-touch whitespace-nowrap text-prose')}>
+                          <button type="button" onClick={() => openPerson(row)} className={cn(hasPlan ? S.btnGhost : S.btnBrandSoft, 'min-h-touch whitespace-nowrap text-prose')}>
                             <Icon name={hasPlan ? 'externalLink' : 'plus'} className="h-3.5 w-3.5" />{hasPlan ? copy.open : copy.create}
                           </button>
                         </td>

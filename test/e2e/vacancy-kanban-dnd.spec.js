@@ -5,7 +5,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { HR, dismissManagerOnboarding, fillLogin, html5DragAndDrop } from './fixtures.js';
+import { HR, clickSidebarItem, dismissManagerOnboarding, fillLogin, html5DragAndDrop } from './fixtures.js';
 
 const CANDIDATE = /Nina Barbosa/i;
 
@@ -34,8 +34,7 @@ test.describe('vacancy kanban drag-and-drop', () => {
     await dismissManagerOnboarding(page);
 
     const sidebar = page.locator('#dashboard-sidebar');
-    await sidebar.getByRole('button', { name: /recrutamento|recruitment/i }).click();
-    await sidebar.getByRole('button', { name: /vagas|vacancies/i }).click();
+    await clickSidebarItem(sidebar, /recrutamento|recruitment/i, /vagas|vacancies/i);
     await expect(page).toHaveURL(/tab=vacancies/);
 
     const listRes = await page.request.get('/api/admin/vacancies?page=1&pageSize=20');

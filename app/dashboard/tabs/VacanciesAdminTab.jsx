@@ -1037,7 +1037,7 @@ export function VacanciesAdminTab({ isAdmin, navigateDashboard, locale = 'pt-BR'
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-2.5">
-                    <h2 className="m-0 text-xl font-bold text-ink">{v.title}</h2>
+                    <h1 className="m-0 text-xl font-bold text-ink">{v.title}</h1>
                     <span className="font-ui text-prose text-ink/75">{i18nT(locale, 'ui.vacanciesAdminTab.vacancy')}:</span>
                     <span
                       className={cn(

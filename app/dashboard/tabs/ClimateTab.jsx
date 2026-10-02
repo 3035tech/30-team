@@ -888,7 +888,7 @@ export function ClimateTab({ locale, isAdmin, companies = [], section, navigateD
         />
       ) : (
         <>
-          <div className="grid gap-4 lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] lg:items-start">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(240px,300px)_minmax(0,1fr)] lg:items-start">
             <div>
               <div className="mb-2 font-mono text-2xs uppercase tracking-wider text-ink-faint">
                 {t(locale, 'panel.climate.listHeading', { n: items.length })}
