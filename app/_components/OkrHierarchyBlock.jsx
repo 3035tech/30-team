@@ -14,6 +14,7 @@ import { RowActionsMenu } from './RowActionsMenu';
 import { RichTextView } from './RichTextView';
 import { EmptyState } from './EmptyState';
 import { htmlToPlainText, plainOrMarkdownToSimpleHtml } from '../../lib/sanitize-html';
+import { OKR_CYCLE_STATUS } from '../../lib/domain-status';
 
 const RICH_TEXT_MAX = 2000;
 const asRichHtml = value => !value ? '' : /<[a-z][\s\S]*>/i.test(value) ? value : plainOrMarkdownToSimpleHtml(value);
@@ -57,7 +58,8 @@ function OkrHierarchyContent({ locale, companyId }) {
   const cycle = cycles.find(c => c.id === activeId);
   useEffect(() => { if (areaId !== 'all' && !cycle?.areas.some(area => String(area.id) === areaId)) setAreaId('all'); }, [cycle, areaId]);
   const visibleAreas = cycle?.areas.filter(area => areaId === 'all' || String(area.id) === areaId) || [];
-  const locked = busy || cycle?.status === 'closed';
+  const cycleClosed = cycle?.status === OKR_CYCLE_STATUS.CLOSED;
+  const locked = busy || cycleClosed;
   const date = value => formatDisplayDate(value, locale);
   const number = value => new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);
   const pct = value => value == null ? label('Sem medição', 'No measurement') : `${number(value)}%`;
@@ -155,18 +157,18 @@ function OkrHierarchyContent({ locale, companyId }) {
           <div className="flex flex-wrap items-center justify-end gap-2 md:col-span-2 xl:col-span-1">
             <button disabled={locked} className={S.btnBrandSoft} onClick={()=>editArea()}>{label('Nova área','New area')}</button>
             <RowActionsMenu label={moreLabel(cycle.title)} disabled={busy} items={[
-              {id:'status',label:cycle.status==='closed'?label('Reabrir ciclo','Reopen cycle'):label('Encerrar ciclo','Close cycle'),onSelect:()=>mutate({status:cycle.status==='closed'?'active':'closed'},`/api/admin/okr/cycles/${cycle.id}`,'PATCH')},
+              {id:'status',label:cycleClosed?label('Reabrir ciclo','Reopen cycle'):label('Encerrar ciclo','Close cycle'),onSelect:()=>mutate({status:cycleClosed?OKR_CYCLE_STATUS.ACTIVE:OKR_CYCLE_STATUS.CLOSED},`/api/admin/okr/cycles/${cycle.id}`,'PATCH')},
               {id:'delete',label:label('Excluir ciclo','Delete cycle'),danger:true,disabled:locked,onSelect:()=>remove('cycle',cycle,`/api/admin/okr/cycles/${cycle.id}${qs}`)},
             ]} />
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-ink/12 pt-3">
-          <p className={cn(muted,'m-0')}>{label(`${date(cycle.startsOn)} a ${date(cycle.endsOn)}`,`${date(cycle.startsOn)} to ${date(cycle.endsOn)}`)} · {cycle.status==='closed'?label('Encerrado · somente leitura','Closed · read only'):label('Em andamento','Active')}</p>
+          <p className={cn(muted,'m-0')}>{label(`${date(cycle.startsOn)} a ${date(cycle.endsOn)}`,`${date(cycle.startsOn)} to ${date(cycle.endsOn)}`)} · {cycleClosed?label('Encerrado · somente leitura','Closed · read only'):label('Em andamento','Active')}</p>
           {progress(cycle.title,cycle.progressPct,'sm:w-48')}
         </div>
         <CollapsibleBlock locale={locale} className="mt-2" bordered={false} title={label('Como o progresso é calculado?','How is progress calculated?')} titleClassName="font-ui text-prose text-ink-muted"><p className={cn(muted,'m-0 pb-1')}>{label('Resultado-chave: (atual − inicial) ÷ (meta − inicial), limitado entre 0% e 100%. Objetivo: média ponderada dos resultados-chave. Área: média dos objetivos com medição. Ciclo: média das áreas com medição. Registros vazios não entram na média.','Key result: (current − baseline) ÷ (target − baseline), limited to 0–100%. Objective: weighted mean of key results. Area: mean of measured objectives. Cycle: mean of measured areas. Empty records are excluded.')}</p></CollapsibleBlock>
       </div>
-      {!cycle.areas.length && <p className={muted}>{label('Adicione uma área; os objetivos ficam dentro dela.','Add an area; objectives belong inside it.')}</p>}
+      {!cycle.areas.length && <p className={muted}>{cycleClosed ? label('Ciclo encerrado. Para adicionar áreas, reabra o ciclo em Mais ações (⋯).','This cycle is closed. To add areas, reopen it from More actions (⋯).') : label('Adicione uma área; os objetivos ficam dentro dela.','Add an area; objectives belong inside it.')}</p>}
       {visibleAreas.map(area=><section key={area.id} className="min-w-0 rounded-card border border-ink/12 bg-surface p-4" aria-label={`${label('Área','Area')}: ${area.title}`}>
         <div className="flex flex-wrap items-center gap-3">
           <h3 className={`${S.cardTitle} m-0 min-w-0 flex-1 break-words`}>{area.title}</h3>
