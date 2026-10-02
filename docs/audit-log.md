@@ -51,9 +51,13 @@ Dezenas de rotas admin já chamam `audit()`. Novas rotas sensíveis devem usar `
 
 | Ação | Onde | Campos com `from`/`to` | Campos só “alterado” (sem valor) |
 |------|------|------------------------|----------------------------------|
-| `candidate.profile_update` | `PATCH /api/admin/candidates/[id]` | nome, e-mail corporativo, matrícula, forma de contratação, ponto por colaborador | e-mail pessoal, estado civil, histórico, notas de RH, telefone, LinkedIn, cidade/UF, pretensão, disponibilidade, origem, nascimento, admissão |
+| `candidate.profile_update` | `PATCH /api/admin/candidates/[id]` | matrícula, forma de contratação, ponto por colaborador | nome, e-mail pessoal, estado civil, histórico, notas de RH, telefone, LinkedIn, cidade/UF, pretensão, disponibilidade, origem, nascimento, admissão |
 | `dp.profile.updated` | gestor (`/dp` e ficha) **e** colaborador (`/api/employee/dp`, `/api/mobile/v1/employee/dp`, `actor_kind = employee`) | nenhum | CPF, RG, dependentes, endereço, contato de emergência, notas internas |
 | `user.update` | Usuários | e-mail, função, ativo, empresa, módulos | senha |
+
+O e-mail corporativo sai do diff da ficha: a troca fica só em `candidate.email_change` (`from`/`to`, trilha de segurança contra tomada de conta), sem duplicar.
+
+Troca do e-mail corporativo de colaborador/ex-colaborador exige `DP_VIEW` ou `TEAM_VIEW` (`EMPLOYEE_EMAIL_CHANGE_FORBIDDEN`, 403): perfil só de vagas não consegue redirecionar o convite de senha. O endereço antigo recebe um aviso (`buildEmployeeEmailChangedMail`, novo endereço mascarado, sem link).
 
 Minimização (LGPD): dado pessoal nunca vai para a auditoria; só o nome do campo. CPF, CEP e telefones são comparados por dígitos (reformatação não conta como mudança). O diff usa a leitura anterior já feita na transação (`FOR UPDATE` na ficha; leitura por PK no DP), sem consulta por campo. A aba Auditoria mostra “campo: antes → depois” ou “alterado (valor não registrado)”.
 

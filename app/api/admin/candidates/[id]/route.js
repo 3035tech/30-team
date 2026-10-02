@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { COOKIE_NAME } from '../../../../../lib/auth';
 import { query, queryRead, withTransaction } from '../../../../../lib/db';
 import { audit, auditFromRequest } from '../../../../../lib/audit';
-import { apiError, ERR, localeFromRequest } from '../../../../../lib/api-error';
+import { apiError, ERR, httpStatusForError, localeFromRequest } from '../../../../../lib/api-error';
 import { normalizeCandidateProfile } from '../../../../../lib/candidate-profile';
 import { titleCasePersonName } from '../../../../../lib/person-name';
 import { buildCandidateTimeline } from '../../../../../lib/hire';
@@ -15,7 +15,7 @@ import { upsertDpProfile } from '../../../../../lib/people/employee-dp.js';
 import { listCandidateOverdueLms } from '../../../../../lib/lms.js';
 import { normalizeLocale } from '../../../../../lib/i18n.js';
 import { finishEmployeeEmailChange, isValidEmployeeEmail, revokeEmployeeAccessForEmailChange } from '../../../../../lib/employee-auth.js';
-import { WORK_FORMATS } from '../../../../../lib/domain-status.js';
+import { EMPLOYMENT_STATUS, WORK_FORMATS } from '../../../../../lib/domain-status.js';
 import { normalizeTimeClockOverride } from '../../../../../lib/people/time-clock-eligibility.js';
 import { CANDIDATE_AUDIT_PRESENCE_FIELDS, CANDIDATE_AUDIT_VALUE_FIELDS, diffAuditFields } from '../../../../../lib/audit-changes.js';
 
@@ -314,12 +314,18 @@ export async function PATCH(request, props) {
               work_history AS "workHistory", hr_notes AS "hrNotes",
               phone, linkedin_url AS "linkedinUrl", city, state,
               salary_expectation AS "salaryExpectation", availability, source,
-              birth_date AS "birthDate", start_date AS "startDate"
+              birth_date AS "birthDate", start_date AS "startDate",
+              employment_status AS "employmentStatus"
        FROM candidates WHERE id = $1 FOR UPDATE`,
       [id]
     );
     if (!previous.rowCount) return { rowCount: 0, rows: [] };
     if (!isAdmin && String(previous.rows[0].companyId) !== String(companyId)) return { errorCode: ERR.UNAUTHORIZED, status: 401 };
+    const employeeRecord = [EMPLOYMENT_STATUS.EMPLOYEE, EMPLOYMENT_STATUS.ALUMNI].includes(previous.rows[0].employmentStatus);
+    if (nextEmail && employeeRecord && nextEmail !== String(previous.rows[0].email || '').toLowerCase()
+      && !requireAnyCapability(payload, [CAP.DP_VIEW, CAP.TEAM_VIEW])) {
+      return { errorCode: ERR.EMPLOYEE_EMAIL_CHANGE_FORBIDDEN, status: httpStatusForError(ERR.EMPLOYEE_EMAIL_CHANGE_FORBIDDEN) };
+    }
     const oldFormat = previous.rows[0].workFormat || null;
     const changesFormat = body.workFormat !== undefined || body.work_format !== undefined;
     const nextFormat = changesFormat ? String(body.workFormat ?? body.work_format ?? '').trim().toLowerCase() || null : oldFormat;
@@ -399,6 +405,7 @@ export async function PATCH(request, props) {
       candidateId: id,
       companyId: up.emailChange.companyId,
       revoked: up.emailChange.revoked,
+      previousEmail: up.emailChange.from,
       locale: localeFromRequest(request),
     });
     await auditFromRequest(request, {

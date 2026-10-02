@@ -33,10 +33,11 @@ Saldos paginados com cargo e caminho da unidade (`GET /api/admin/hour-bank?offse
 
 ## Localização da batida
 
-- Obrigatória em toda batida do colaborador. Web: o portal sempre pede a localização (sem checkbox) e `POST /api/employee/time-clock` recusa sem coordenadas válidas com `GEOLOCATION_REQUIRED` (400). Mobile já exigia (`INVALID_DATA`, contrato mantido). Ajuste do RH (`source = manager`) não tem localização.
+- Obrigatória em toda batida do colaborador. Web: o portal sempre pede a localização (sem checkbox) e `POST /api/employee/time-clock` recusa sem coordenadas válidas com `GEOLOCATION_REQUIRED` (400). Mobile também exige, agora pelo mesmo `parsePunchCoordinates` (`null`/vazio não viram mais 0,0; erro segue `INVALID_DATA`, contrato mantido). Ajuste do RH (`source = manager`) não tem localização.
 - `parsePunchCoordinates` (`lib/time-clock-format.js`, puro) valida faixa e formato; `createTimePunch` grava com 6 casas (`latitude`/`longitude` em `employee_time_punches`).
-- Antes desta mudança o cabeçalho `Permissions-Policy: geolocation=()` (em `proxy.js` e `next.config.js`) bloqueava a localização no navegador, então batidas web antigas não têm coordenadas. Agora é `geolocation=(self)`.
+- Antes desta mudança o cabeçalho `Permissions-Policy: geolocation=()` (em `proxy.js` e `next.config.js`) bloqueava a localização no navegador, então batidas web antigas não têm coordenadas. Agora é `geolocation=(self)` só em `/employee*`; o resto do site (painel, `/t`, `/v`, assessment) segue `geolocation=()`.
 - Gestor: no detalhe do dia do espelho, cada batida do colaborador tem "Ver local no mapa" (`CollapsibleBlock`). O mapa é um iframe do OpenStreetMap (sem chave de API) montado só ao abrir, então as coordenadas só saem para o OpenStreetMap quando o gestor pede. CSP: `frame-src` inclui `https://www.openstreetmap.org`.
+- Portal: enquanto pede a localização o botão mostra "Obtendo localização…"; se negada/indisponível, um aviso fixo explica o que fazer e some na próxima batida bem-sucedida.
 - LGPD: o portal avisa "A localização é registrada a cada batida". A finalidade é comprovar o local do registro de ponto; não há rastreio contínuo, só o ponto no momento da batida.
 
 ## Regras assumidas

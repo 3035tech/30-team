@@ -5,13 +5,13 @@ import crypto from 'node:crypto';
 import vm from 'node:vm';
 import pg from 'pg';
 import * as permissions from '../../lib/permissions.js';
-import { ERR } from '../../lib/api-error-codes.js';
+import { ERR, httpStatusForError } from '../../lib/api-error-codes.js';
 import { normalizeCandidateProfile } from '../../lib/candidate-profile.js';
 import { titleCasePersonName } from '../../lib/person-name.js';
 import { sanitizeRichTextHtml, isRichTextEmpty } from '../../lib/sanitize-html.js';
 import { upsertDpProfile } from '../../lib/people/employee-dp.js';
 import * as auditChanges from '../../lib/audit-changes.js';
-import { WORK_FORMATS } from '../../lib/domain-status.js';
+import { EMPLOYMENT_STATUS, WORK_FORMATS } from '../../lib/domain-status.js';
 import { normalizeLocale } from '../../lib/i18n.js';
 import { normalizeTimeClockOverride } from '../../lib/people/time-clock-eligibility.js';
 
@@ -26,7 +26,7 @@ try {
   let failAfterDp = false;
   const audits = [];
   const deps = {
-    ...permissions, ...auditChanges, ERR, WORK_FORMATS, normalizeLocale, normalizeTimeClockOverride, normalizeCandidateProfile, titleCasePersonName, sanitizeRichTextHtml, isRichTextEmpty,
+    ...permissions, ...auditChanges, ERR, httpStatusForError, EMPLOYMENT_STATUS, WORK_FORMATS, normalizeLocale, normalizeTimeClockOverride, normalizeCandidateProfile, titleCasePersonName, sanitizeRichTextHtml, isRichTextEmpty,
     NextResponse: { json: Response.json }, COOKIE_NAME: 'session',
     cookies: async () => ({ get: () => ({ value: 'synthetic' }) }),
     verifySessionWithCapabilities: async () => payload,
@@ -74,6 +74,9 @@ try {
   assert.equal((await patch(body)).status, 401);
   payload = { userId: actorId, role: 'hr', companyId, capabilitiesCustomized: true, capabilityOverrides: [{ capability: permissions.CAP.VACANCIES_VIEW, granted: true }] };
   assert.equal((await patch(body)).status, 401);
+  const recruiterEmail = await patch({ email: `moved-${crypto.randomUUID()}@example.com` });
+  assert.equal(recruiterEmail.status, 403, 'recruiter-only role cannot change an employee corporate e-mail');
+  assert.equal((await recruiterEmail.json()).errorCode, ERR.EMPLOYEE_EMAIL_CHANGE_FORBIDDEN);
   payload = { userId: actorId, role: 'hr', companyId };
   body.dpProfile.companyId = Number(companyId) + 99999;
   body.dpProfile.candidateId = Number(id) + 99999;

@@ -14,7 +14,7 @@ test('value fields keep from/to; presence fields never carry values', () => {
     { valueFields: CANDIDATE_AUDIT_VALUE_FIELDS, presenceFields: CANDIDATE_AUDIT_PRESENCE_FIELDS }
   );
   assert.equal(changes.length, 2);
-  assert.equal(JSON.stringify(changes[0]), JSON.stringify({ field: 'fullName', from: 'Ana', to: 'Ana Souza' }));
+  assert.equal(JSON.stringify(changes[0]), JSON.stringify({ field: 'fullName' }));
   assert.equal(JSON.stringify(changes[1]), JSON.stringify({ field: 'phone' }));
   assert.ok(!JSON.stringify(changes).includes('11888880000'), 'phone value must not leak');
 });
@@ -48,4 +48,13 @@ test('formatting-only changes in CPF, CEP and phones are not changes', () => {
     { presenceFields: DP_AUDIT_PRESENCE_FIELDS }
   );
   assert.equal(changes.length, 0);
+});
+
+test('corporate e-mail and full name never carry values in candidate profile diffs', () => {
+  const changes = diffAuditFields(
+    { fullName: 'Ana', email: 'old@x.com' },
+    { fullName: 'Ana Souza', email: 'new@x.com' },
+    { valueFields: CANDIDATE_AUDIT_VALUE_FIELDS, presenceFields: CANDIDATE_AUDIT_PRESENCE_FIELDS }
+  );
+  assert.equal(JSON.stringify(changes), JSON.stringify([{ field: 'fullName' }]));
 });

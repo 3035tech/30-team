@@ -1,6 +1,7 @@
 /**
  * DTOV: a manager changing a collaborator's corporate e-mail must not hand over the portal.
- * Old password + setup link are cleared, sessions are revoked, and the invite goes to the new address.
+ * Old password + setup link are cleared, sessions are revoked, the invite goes to the new address
+ * and the old address only gets a notice (masked new address, no link).
  * Run with SMTP_MOCK=1 and NEXT_PUBLIC_APP_URL set.
  */
 import assert from 'node:assert/strict';
@@ -43,11 +44,17 @@ async function main() {
     });
     assert.equal(revoked.hadPortalAccess, true);
     assert.equal(revoked.sessionVersion, oldSv + 1);
+    assert.equal(revoked.isEmployeeRecord, true);
 
-    const reset = await finishEmployeeEmailChange(query, { candidateId, companyId, revoked, locale: 'pt-BR' });
+    const reset = await finishEmployeeEmailChange(query, { candidateId, companyId, revoked, previousEmail: DEMO_EMAIL, locale: 'pt-BR' });
     assert.deepEqual({ ...reset }, { inviteSent: true });
     assert.ok(__getMailMockLog().some((m) => m.to === newEmail), 'invite goes to the new address');
-    assert.ok(!__getMailMockLog().some((m) => m.to === DEMO_EMAIL), 'nothing sent to the old address');
+    const toOld = __getMailMockLog().filter((m) => m.to === DEMO_EMAIL);
+    assert.equal(toOld.length, 1, 'old address gets exactly one notice');
+    const notice = `${toOld[0].subject}\n${toOld[0].text}\n${toOld[0].html}`;
+    assert.ok(!/token=|set-password/.test(notice), 'notice carries no access link');
+    assert.ok(!notice.includes(newEmail), 'new address is masked');
+    assert.ok(notice.includes('dt***@example.com'), 'masked new address shown');
 
     const after = await query(
       `SELECT password_hash IS NULL AS "noPassword", password_setup_token IS NOT NULL AS "pendingInvite"
